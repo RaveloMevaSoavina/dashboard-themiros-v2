@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query"
-import { LoaderCircle } from "lucide-react"
+import { Eye, EyeOff, LoaderCircle } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useLocation, useNavigate } from "react-router-dom"
@@ -17,6 +17,7 @@ export function LoginScreen() {
   const location = useLocation()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const signInMutation = useMutation({
     mutationFn: async () => signInWithPassword(email, password),
@@ -89,18 +90,44 @@ export function LoginScreen() {
             >
               {t("auth.login.passwordLabel")}
             </Label>
-            <Input
-              autoComplete="current-password"
-              className="h-10"
-              id="password"
-              onChange={(event) => {
-                setPassword(event.target.value)
-              }}
-              placeholder={t("auth.login.passwordPlaceholder")}
-              required
-              type="password"
-              value={password}
-            />
+            <div className="relative">
+              <Input
+                autoComplete="current-password"
+                // Reserve la place du bouton pour que le texte saisi ne
+                // passe jamais dessous.
+                className="h-10 pr-10"
+                id="password"
+                onChange={(event) => {
+                  setPassword(event.target.value)
+                }}
+                placeholder={t("auth.login.passwordPlaceholder")}
+                required
+                type={isPasswordVisible ? "text" : "password"}
+                value={password}
+              />
+              <button
+                aria-label={
+                  isPasswordVisible
+                    ? t("auth.login.hidePassword")
+                    : t("auth.login.showPassword")
+                }
+                aria-pressed={isPasswordVisible}
+                className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-lg text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                onClick={() => {
+                  setIsPasswordVisible((visible) => !visible)
+                }}
+                // `tabIndex={-1}` : au clavier on passe du mot de passe
+                // directement au bouton de connexion.
+                tabIndex={-1}
+                type="button"
+              >
+                {isPasswordVisible ? (
+                  <EyeOff aria-hidden="true" className="h-4 w-4" />
+                ) : (
+                  <Eye aria-hidden="true" className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
           {errorMessage ? (
             <p className="text-[13px] text-foreground">{errorMessage}</p>
