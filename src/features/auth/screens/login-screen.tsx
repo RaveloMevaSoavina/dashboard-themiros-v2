@@ -2,11 +2,10 @@ import { useMutation } from "@tanstack/react-query"
 import { LoaderCircle } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 
 import { signInWithPassword } from "@/features/auth/services/auth-service"
-import { languageQueryParam } from "@/shared/i18n/resources"
 import { Button } from "@/shared/ui/base/button"
 import { Input } from "@/shared/ui/base/input"
 import { Label } from "@/shared/ui/base/label"
@@ -16,7 +15,6 @@ export function LoginScreen() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const [searchParams] = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -24,14 +22,11 @@ export function LoginScreen() {
     mutationFn: async () => signInWithPassword(email, password),
   })
 
-  const language = searchParams.get(languageQueryParam)
-  const redirectPath =
+  // La langue est persistee dans localStorage par i18next : inutile de la
+  // reporter sur l'URL de destination.
+  const redirectTo =
     (location.state as { from?: { pathname?: string } } | null)?.from
       ?.pathname ?? "/dashboard"
-  // La langue choisie avant connexion doit survivre a la redirection.
-  const redirectTo = language
-    ? `${redirectPath}?${new URLSearchParams({ [languageQueryParam]: language }).toString()}`
-    : redirectPath
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
