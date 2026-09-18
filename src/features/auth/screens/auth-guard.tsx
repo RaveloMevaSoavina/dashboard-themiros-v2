@@ -1,7 +1,8 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom"
+import { Outlet, useLocation } from "react-router-dom"
 
 import { AuthLoadingShell } from "@/features/auth/components/auth-loading-shell"
 import { useAuth } from "@/features/auth/model/auth-provider"
+import { NavigateKeepingLanguage } from "@/shared/i18n/navigate-keeping-language"
 
 export function AuthGuard() {
   const { isLoading, session } = useAuth()
@@ -12,7 +13,7 @@ export function AuthGuard() {
   }
 
   if (!session) {
-    return <Navigate replace state={{ from: location }} to="/login" />
+    return <NavigateKeepingLanguage state={{ from: location }} to="/login" />
   }
 
   return <Outlet />

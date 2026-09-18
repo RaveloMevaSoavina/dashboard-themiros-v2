@@ -2,10 +2,11 @@ import { useMutation } from "@tanstack/react-query"
 import { LoaderCircle } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { useLocation, useNavigate } from "react-router-dom"
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 
 import { signInWithPassword } from "@/features/auth/services/auth-service"
+import { languageQueryParam } from "@/shared/i18n/resources"
 import { Button } from "@/shared/ui/base/button"
 import { Input } from "@/shared/ui/base/input"
 import { Label } from "@/shared/ui/base/label"
@@ -15,6 +16,7 @@ export function LoginScreen() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -22,9 +24,14 @@ export function LoginScreen() {
     mutationFn: async () => signInWithPassword(email, password),
   })
 
-  const redirectTo =
+  const language = searchParams.get(languageQueryParam)
+  const redirectPath =
     (location.state as { from?: { pathname?: string } } | null)?.from
       ?.pathname ?? "/dashboard"
+  // La langue choisie avant connexion doit survivre a la redirection.
+  const redirectTo = language
+    ? `${redirectPath}?${new URLSearchParams({ [languageQueryParam]: language }).toString()}`
+    : redirectPath
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -47,14 +54,11 @@ export function LoginScreen() {
   return (
     <main className="flex min-h-svh flex-col items-center justify-center bg-background px-6 py-24">
       <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <BrandMark size={30} />
-          <h1 className="text-[15px] font-semibold tracking-tight">
+        <div className="flex flex-col items-center gap-5 text-center">
+          <BrandMark size={56} />
+          <h1 className="text-[28px] font-semibold leading-none tracking-tight">
             {t("brand.name")}
           </h1>
-          <p className="text-[13px] text-muted-foreground">
-            {t("auth.login.description")}
-          </p>
         </div>
 
         <form
@@ -107,7 +111,7 @@ export function LoginScreen() {
             <p className="text-[13px] text-foreground">{errorMessage}</p>
           ) : null}
           <Button
-            className="h-10 w-full text-[13px]"
+            className="h-11 w-full text-[15px] font-semibold"
             disabled={signInMutation.isPending}
             size="lg"
             type="submit"

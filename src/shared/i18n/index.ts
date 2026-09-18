@@ -5,6 +5,7 @@ import { initReactI18next } from "react-i18next"
 import {
   defaultNamespace,
   fallbackLanguage,
+  languageQueryParam,
   languageStorageKey,
   resources,
   supportedLanguages,
@@ -20,9 +21,13 @@ void i18n
     defaultNS: defaultNamespace,
     ns: [defaultNamespace],
     detection: {
-      caches: ["localStorage"],
+      // `?lang=` d'abord : une URL partagee impose sa langue, meme si le
+      // visiteur avait deja choisi autre chose. Le choix est ensuite
+      // persiste, donc il survit a la navigation interne.
+      order: ["querystring", "localStorage", "navigator", "htmlTag"],
+      lookupQuerystring: languageQueryParam,
       lookupLocalStorage: languageStorageKey,
-      order: ["localStorage", "navigator", "htmlTag"],
+      caches: ["localStorage"],
     },
     interpolation: {
       escapeValue: false,

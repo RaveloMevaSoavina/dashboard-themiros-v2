@@ -1,6 +1,8 @@
 export const fallbackLanguage = "fr"
 export const defaultNamespace = "translation"
 export const languageStorageKey = "themiros-language"
+/** Parametre d'URL qui impose la langue, ex. /login?lang=en */
+export const languageQueryParam = "lang"
 export const supportedLanguages = ["fr", "en"] as const
 
 export type SupportedLanguage = (typeof supportedLanguages)[number]

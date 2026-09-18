@@ -1,35 +1,42 @@
-import { createBrowserRouter, Navigate } from "react-router-dom"
+import { createBrowserRouter } from "react-router-dom"
 
+import { RootLayout } from "@/app/root-layout"
 import { AuthGuard } from "@/features/auth/screens/auth-guard"
 import { LoginScreen } from "@/features/auth/screens/login-screen"
 import { PublicOnlyRoute } from "@/features/auth/screens/public-only-route"
 import { DashboardScreen } from "@/features/dashboard/screens/dashboard-screen"
+import { NavigateKeepingLanguage } from "@/shared/i18n/navigate-keeping-language"
 
 export const appRouter = createBrowserRouter([
   {
-    path: "/",
-    element: <Navigate replace to="/login" />,
-  },
-  {
-    element: <PublicOnlyRoute />,
+    element: <RootLayout />,
     children: [
       {
-        path: "/login",
-        element: <LoginScreen />,
+        path: "/",
+        element: <NavigateKeepingLanguage to="/login" />,
       },
-    ],
-  },
-  {
-    element: <AuthGuard />,
-    children: [
       {
-        path: "/dashboard",
-        element: <DashboardScreen />,
+        element: <PublicOnlyRoute />,
+        children: [
+          {
+            path: "/login",
+            element: <LoginScreen />,
+          },
+        ],
+      },
+      {
+        element: <AuthGuard />,
+        children: [
+          {
+            path: "/dashboard",
+            element: <DashboardScreen />,
+          },
+        ],
+      },
+      {
+        path: "*",
+        element: <NavigateKeepingLanguage to="/login" />,
       },
     ],
-  },
-  {
-    path: "*",
-    element: <Navigate replace to="/login" />,
   },
 ])
