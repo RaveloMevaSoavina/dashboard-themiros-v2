@@ -3,8 +3,30 @@ import { createBrowserRouter, Navigate } from "react-router-dom"
 import { RootLayout } from "@/app/root-layout"
 import { AuthGuard } from "@/features/auth/screens/auth-guard"
 import { LoginScreen } from "@/features/auth/screens/login-screen"
+import { ProfileScreen } from "@/features/auth/screens/profile-screen"
 import { PublicOnlyRoute } from "@/features/auth/screens/public-only-route"
-import { DashboardScreen } from "@/features/dashboard/screens/dashboard-screen"
+import { navSections } from "@/features/dashboard/model/navigation"
+import { DashboardLayout } from "@/features/dashboard/screens/dashboard-layout"
+import { PlaceholderScreen } from "@/features/dashboard/screens/placeholder-screen"
+import { WorkspaceRedirect } from "@/features/workspaces/screens/workspace-redirect"
+import { WorkspacesScreen } from "@/features/workspaces/screens/workspaces-screen"
+
+/**
+ * Les routes d'espace derivent du meme modele que la barre laterale : une
+ * entree de navigation ne peut donc pas pointer vers une route absente.
+ */
+const workspaceRoutes = navSections.flatMap((section) =>
+  section.items.map((item) => ({
+    path: item.segment,
+    children: [
+      { index: true, element: <PlaceholderScreen labelKey={item.labelKey} /> },
+      ...(item.children ?? []).map((child) => ({
+        path: child.segment,
+        element: <PlaceholderScreen labelKey={child.labelKey} />,
+      })),
+    ],
+  }))
+)
 
 export const appRouter = createBrowserRouter([
   {
@@ -12,7 +34,7 @@ export const appRouter = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <Navigate replace to="/login" />,
+        element: <Navigate replace to="/workspaces" />,
       },
       {
         element: <PublicOnlyRoute />,
@@ -27,8 +49,28 @@ export const appRouter = createBrowserRouter([
         element: <AuthGuard />,
         children: [
           {
-            path: "/dashboard",
-            element: <DashboardScreen />,
+            element: <DashboardLayout />,
+            children: [
+              {
+                path: "/workspaces",
+                element: <WorkspacesScreen />,
+              },
+              {
+                path: "/profile",
+                element: <ProfileScreen />,
+              },
+              {
+                path: "/workspaces/:workspaceId",
+                children: [
+                  { index: true, element: <WorkspaceRedirect /> },
+                  ...workspaceRoutes,
+                ],
+              },
+              {
+                path: "/dashboard",
+                element: <Navigate replace to="/workspaces" />,
+              },
+            ],
           },
         ],
       },

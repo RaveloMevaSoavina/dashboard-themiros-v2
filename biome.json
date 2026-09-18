@@ -45,5 +45,20 @@
         "organizeImports": "on"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/shared/ui/base/sidebar.tsx"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "useExhaustiveDependencies": "off"
+          },
+          "suspicious": {
+            "noDocumentCookie": "off"
+          }
+        }
+      }
+    }
+  ]
 }

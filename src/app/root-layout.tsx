@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { Outlet } from "react-router-dom"
 
 import { useLanguageFromUrl } from "@/shared/i18n/use-language-from-url"
+import { ThemeProvider } from "@/shared/theme/theme-provider"
 
 /**
  * Layout racine : applique la langue demandee dans l'URL et tient
@@ -19,5 +20,9 @@ export function RootLayout() {
     }
   }, [i18n.resolvedLanguage])
 
-  return <Outlet />
+  return (
+    <ThemeProvider>
+      <Outlet />
+    </ThemeProvider>
+  )
 }
