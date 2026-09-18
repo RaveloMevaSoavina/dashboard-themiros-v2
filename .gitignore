@@ -1,0 +1,109 @@
+# ============================================================
+# Dependances
+# ============================================================
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+jspm_packages/
+web_modules/
+bower_components/
+
+# ============================================================
+# Build / sortie
+# ============================================================
+dist/
+dist-ssr/
+build/
+out/
+.output/
+*.tsbuildinfo
+
+# Caches sortis de node_modules (voir vite.config.ts) parce que la
+# dependance est installee en root sur ce poste.
+.vite/
+.tsbuild/
+
+# ============================================================
+# Caches d'outillage
+# ============================================================
+.cache/
+.temp/
+.tmp/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+.rollup.cache/
+.swc/
+.turbo/
+.rspack-cache/
+*.tgz
+
+# ============================================================
+# Variables d'environnement
+# Les secrets (cle Supabase anon, URL d'instance) vivent ici.
+# Seul .env.example est versionne.
+# ============================================================
+.env
+.env.*
+!.env.example
+*.local
+
+# ============================================================
+# Logs et rapports
+# ============================================================
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# ============================================================
+# Tests / couverture
+# ============================================================
+coverage/
+*.lcov
+.nyc_output/
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+/playwright/.cache/
+
+# ============================================================
+# Editeurs et IDE
+# ============================================================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+.history/
+
+# ============================================================
+# Systeme d'exploitation
+# ============================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ============================================================
+# Deploiement
+# ============================================================
+.vercel/
+.netlify/

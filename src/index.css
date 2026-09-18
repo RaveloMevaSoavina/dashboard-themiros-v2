@@ -1,0 +1,205 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+/* Montserrat (400 et 600) est charge depuis index.html, comme sur la landing. */
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: "Montserrat", system-ui, -apple-system, sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* ============================================================
+   Themiros — charte de presentation (consigne 1.4).
+   Reprise de landingpage/styles/tokens.css : noir #000000, encre
+   blanche, gris a 52% pour le texte secondaire, filets blancs a 13%,
+   aucun relief. Le vert #55A930 est reserve au point de la marque.
+   La charte est inconditionnelle : `.dark` reprend les memes valeurs
+   pour que le theme ne depende pas d'un toggle runtime.
+   ============================================================ */
+:root {
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #000000;
+  --card-foreground: #ffffff;
+  --popover: #000000;
+  --popover-foreground: #ffffff;
+  /* Action primaire : encre blanche sur noir, sans degrade. */
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --secondary: rgb(255 255 255 / 0.06);
+  --secondary-foreground: #ffffff;
+  --muted: rgb(255 255 255 / 0.06);
+  --muted-foreground: rgb(255 255 255 / 0.52);
+  --accent: rgb(255 255 255 / 0.1);
+  --accent-foreground: #ffffff;
+  /* Aucun accent colore : l'erreur retombe aussi sur l'encre blanche. */
+  --destructive: #ffffff;
+  --border: rgb(255 255 255 / 0.13);
+  --input: rgb(255 255 255 / 0.13);
+  --ring: rgb(255 255 255 / 0.32);
+  --chart-1: #ffffff;
+  --chart-2: rgb(255 255 255 / 0.78);
+  --chart-3: rgb(255 255 255 / 0.58);
+  --chart-4: rgb(255 255 255 / 0.38);
+  --chart-5: rgb(255 255 255 / 0.22);
+  --radius: 0.625rem;
+  --sidebar: #000000;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: rgb(255 255 255 / 0.1);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgb(255 255 255 / 0.13);
+  --sidebar-ring: rgb(255 255 255 / 0.32);
+
+  /* Le seul vert du produit : le point de la marque. */
+  --brand-dot: #55a930;
+}
+
+.dark {
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #000000;
+  --card-foreground: #ffffff;
+  --popover: #000000;
+  --popover-foreground: #ffffff;
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --secondary: rgb(255 255 255 / 0.06);
+  --secondary-foreground: #ffffff;
+  --muted: rgb(255 255 255 / 0.06);
+  --muted-foreground: rgb(255 255 255 / 0.52);
+  --accent: rgb(255 255 255 / 0.1);
+  --accent-foreground: #ffffff;
+  --destructive: #ffffff;
+  --border: rgb(255 255 255 / 0.13);
+  --input: rgb(255 255 255 / 0.13);
+  --ring: rgb(255 255 255 / 0.32);
+  --chart-1: #ffffff;
+  --chart-2: rgb(255 255 255 / 0.78);
+  --chart-3: rgb(255 255 255 / 0.58);
+  --chart-4: rgb(255 255 255 / 0.38);
+  --chart-5: rgb(255 255 255 / 0.22);
+  --sidebar: #000000;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: rgb(255 255 255 / 0.1);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgb(255 255 255 / 0.13);
+  --sidebar-ring: rgb(255 255 255 / 0.32);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  html {
+    @apply font-sans;
+  }
+  /* Consigne 1.4 — seuls 400 et 600 existent : le 700 par defaut des
+     titres et des elements gras revient au poids de la charte. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  b,
+  strong,
+  th,
+  dt,
+  legend,
+  optgroup {
+    font-weight: 600;
+  }
+  ::selection {
+    background: rgb(255 255 255 / 0.22);
+    color: var(--foreground);
+  }
+}
+
+html[dir="ltr"],
+[data-sonner-toaster][dir="ltr"] {
+  --toast-close-button-start: unset;
+  --toast-close-button-end: 0;
+  --toast-close-button-transform: translate(35%, -35%);
+}
+
+@keyframes loader-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loader-spin-reverse {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes loader-orbit {
+  0% {
+    transform: scale(0.94);
+    opacity: 0.32;
+  }
+  50% {
+    transform: scale(1.03);
+    opacity: 0.78;
+  }
+  100% {
+    transform: scale(0.94);
+    opacity: 0.32;
+  }
+}
