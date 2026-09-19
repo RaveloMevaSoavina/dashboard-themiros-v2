@@ -110,11 +110,11 @@ export function WorkspaceSwitcher() {
 
             <DropdownMenuItem
               onSelect={() => {
-                void navigate("/workspaces")
+                void navigate("/workspaces/new")
               }}
             >
               <Plus />
-              {t("workspaces.switcher.manage")}
+              {t("workspaces.create")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

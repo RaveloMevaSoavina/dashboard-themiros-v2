@@ -33,10 +33,12 @@ export function WorkspaceCard({ workspace, onOpen }: WorkspaceCardProps) {
             {workspace.organization ?? t("workspaces.card.noOrganization")}
           </p>
         </div>
-        {workspace.frameworkStatus === "validated" ? (
-          <Badge variant="outline">{t("workspaces.framework.validated")}</Badge>
-        ) : (
+        {workspace.frameworkStatus === "draft" ? (
           <Badge variant="warning">{t("workspaces.framework.draft")}</Badge>
+        ) : (
+          <Badge variant="outline">
+            {t(`workspaces.framework.${workspace.frameworkStatus}`)}
+          </Badge>
         )}
       </div>
 

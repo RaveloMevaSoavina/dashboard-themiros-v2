@@ -1,10 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import {
   createContext,
   type ReactNode,
   useCallback,
   useContext,
   useMemo,
+  useState,
 } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 
@@ -15,16 +16,10 @@ import {
   type Persona,
   type Workspace,
 } from "@/features/workspaces/model/types"
-import {
-  listWorkspaces,
-  updatePersona,
-} from "@/features/workspaces/services/workspace-service"
+import { listWorkspaces } from "@/features/workspaces/services/workspace-service"
 
 const lastWorkspaceStorageKey = "themiros-last-workspace"
 const personaStorageKey = "themiros-persona"
-/* Repli tant qu'aucun espace n'existe : les ecrans sont des
-   maquettes, la navigation doit rester parcourable sans donnees. */
-export const previewWorkspaceId = "preview"
 
 export const workspacesQueryKey = ["workspaces", "list"] as const
 
@@ -35,12 +30,12 @@ type WorkspaceContextValue = {
   /**
    * Identifiant vers lequel pointe la navigation laterale quand aucun
    * espace n'est ouvert : dernier espace utilise, a defaut le premier
-   * disponible, a defaut un identifiant de demonstration.
+   * disponible. Le dashboard n'est pas rendu quand la liste est vide.
    */
   navigationWorkspaceId: string
   isLoading: boolean
   error: Error | null
-  /** Persona de lecture : celui de l'espace ouvert, sinon la preference locale. */
+  /** Persona de lecture conserve localement (absent du schema SQL). */
   persona: Persona
   selectWorkspace: (workspaceId: string) => void
   setPersona: (persona: Persona) => void
@@ -84,8 +79,8 @@ type WorkspaceProviderProps = {
 export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
   const { session } = useAuth()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const { workspaceId } = useParams<{ workspaceId?: string }>()
+  const [persona, setLocalPersona] = useState(readStoredPersona)
 
   const workspacesQuery = useQuery({
     queryKey: workspacesQueryKey,
@@ -103,46 +98,12 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     [workspaceId, workspaces]
   )
 
+  const lastWorkspaceId = readLastWorkspaceId()
   const navigationWorkspaceId =
     activeWorkspace?.id ??
-    readLastWorkspaceId() ??
+    workspaces.find((workspace) => workspace.id === lastWorkspaceId)?.id ??
     workspaces.at(0)?.id ??
-    previewWorkspaceId
-
-  const personaMutation = useMutation({
-    mutationFn: ({
-      targetWorkspaceId,
-      persona,
-    }: {
-      targetWorkspaceId: string
-      persona: Persona
-    }) => updatePersona(targetWorkspaceId, persona),
-    /* US-2.2 : la bascule est immediate et ne recharge rien. On applique
-       donc le persona au cache avant la reponse du serveur. */
-    onMutate: async ({ targetWorkspaceId, persona }) => {
-      await queryClient.cancelQueries({ queryKey: workspacesQueryKey })
-
-      const previous = queryClient.getQueryData<Workspace[]>(workspacesQueryKey)
-
-      queryClient.setQueryData<Workspace[]>(workspacesQueryKey, (current) =>
-        current?.map((workspace) =>
-          workspace.id === targetWorkspaceId
-            ? { ...workspace, persona }
-            : workspace
-        )
-      )
-
-      return { previous }
-    },
-    onError: (_error, _variables, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(workspacesQueryKey, context.previous)
-      }
-    },
-    onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: workspacesQueryKey })
-    },
-  })
+    ""
 
   const selectWorkspace = useCallback(
     (nextWorkspaceId: string) => {
@@ -152,19 +113,10 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     [navigate]
   )
 
-  const setPersona = useCallback(
-    (persona: Persona) => {
-      writeStorage(personaStorageKey, persona)
-
-      if (activeWorkspace) {
-        personaMutation.mutate({
-          targetWorkspaceId: activeWorkspace.id,
-          persona,
-        })
-      }
-    },
-    [activeWorkspace, personaMutation]
-  )
+  const setPersona = useCallback((nextPersona: Persona) => {
+    writeStorage(personaStorageKey, nextPersona)
+    setLocalPersona(nextPersona)
+  }, [])
 
   const value = useMemo<WorkspaceContextValue>(
     () => ({
@@ -173,7 +125,7 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
       navigationWorkspaceId,
       isLoading: workspacesQuery.isPending,
       error: workspacesQuery.error,
-      persona: activeWorkspace?.persona ?? readStoredPersona(),
+      persona,
       selectWorkspace,
       setPersona,
       refetch: () => {
@@ -183,6 +135,7 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     [
       activeWorkspace,
       navigationWorkspaceId,
+      persona,
       selectWorkspace,
       setPersona,
       workspaces,

@@ -18,7 +18,7 @@ export function DashboardTopbar() {
           {activeWorkspace?.name ?? t("workspaces.title")}
         </span>
         {/* US-1.1 : le cadre non valide doit se signaler partout. */}
-        {activeWorkspace && activeWorkspace.frameworkStatus !== "validated" ? (
+        {activeWorkspace && activeWorkspace.frameworkStatus === "draft" ? (
           <Badge variant="warning">{t("workspaces.framework.draft")}</Badge>
         ) : null}
       </div>

@@ -1,5 +1,6 @@
 import { FolderPlus, Plus, RotateCcw } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { useNavigate } from "react-router-dom"
 
 import { WorkspaceCard } from "@/features/workspaces/components/workspace-card"
 import { useWorkspaces } from "@/features/workspaces/model/workspace-provider"
@@ -12,6 +13,7 @@ import { Skeleton } from "@/shared/ui/base/skeleton"
  */
 export function WorkspacesScreen() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { workspaces, isLoading, error, refetch, selectWorkspace } =
     useWorkspaces()
 
@@ -30,7 +32,12 @@ export function WorkspacesScreen() {
         {/* US-1.2 : sur l'etat vide, le bouton de creation est le seul
             element interactif — on le retire donc de l'en-tete. */}
         {!isLoading && !error && workspaces.length > 0 ? (
-          <Button size="lg">
+          <Button
+            onClick={() => {
+              void navigate("/workspaces/new")
+            }}
+            size="lg"
+          >
             <Plus />
             {t("workspaces.create")}
           </Button>
@@ -68,7 +75,12 @@ export function WorkspacesScreen() {
               {t("workspaces.empty.description")}
             </p>
           </div>
-          <Button size="lg">
+          <Button
+            onClick={() => {
+              void navigate("/workspaces/new")
+            }}
+            size="lg"
+          >
             <Plus />
             {t("workspaces.empty.action")}
           </Button>
