@@ -20,6 +20,8 @@ export type WorkspaceStage =
 export type WorkspaceLanguage = "fr" | "en" | "pt" | "es"
 
 export type WorkspaceFinancierInput = {
+  /** Stable code resolved by the database when the UI only provides a name. */
+  code?: string
   name: string
   principal: boolean
 }

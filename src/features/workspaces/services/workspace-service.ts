@@ -145,6 +145,7 @@ export async function createWorkspace(
         input.financiers.at(0)?.name ??
         null,
       financiers: input.financiers.map((financier) => ({
+        ...(financier.code ? { code: financier.code } : {}),
         name: financier.name.trim(),
         principal: financier.principal,
       })),
