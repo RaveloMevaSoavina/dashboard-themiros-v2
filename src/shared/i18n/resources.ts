@@ -136,7 +136,7 @@ export const resources = {
               label: "Identité",
               title: "Identifiez l'espace",
               description:
-                "Donnez un nom clair à l'évaluation et vérifiez son organisation de rattachement.",
+                "Donnez un nom clair à l'évaluation. L'organisation est automatiquement celle liée à votre compte.",
               whyTitle: "Pourquoi cette étape ?",
               why: "L'identité de l'espace permet à votre équipe de retrouver rapidement l'évaluation, sans dupliquer les informations déjà portées par votre compte.",
               points: {
@@ -450,7 +450,7 @@ export const resources = {
               label: "Identity",
               title: "Identify the workspace",
               description:
-                "Give the evaluation a clear name and confirm its organization.",
+                "Give the evaluation a clear name. The organization is automatically inherited from your account.",
               whyTitle: "Why this step?",
               why: "The workspace identity helps your team find the evaluation without duplicating information already held by your account.",
               points: {

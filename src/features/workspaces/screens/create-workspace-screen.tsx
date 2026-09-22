@@ -2,9 +2,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   ArrowLeft,
   ArrowRight,
+  BriefcaseBusiness,
   Check,
   CircleAlert,
   CirclePlus,
+  Landmark,
   Layers2,
   LoaderCircle,
   LogOut,
@@ -52,6 +54,11 @@ const stages: WorkspaceStage[] = [
 ]
 const themeOptions = ["agriculture", "water", "nature", "gender", "energy"]
 const moduleOptions: ObjectType[] = ["program", "project", "policy"]
+const moduleIcons = {
+  program: Layers2,
+  project: BriefcaseBusiness,
+  policy: Landmark,
+} satisfies Record<ObjectType, typeof Layers2>
 
 type EditableFinancier = {
   id: string
@@ -462,6 +469,7 @@ export function CreateWorkspaceScreen() {
                         <div className="mt-3 grid gap-3 sm:grid-cols-3">
                           {moduleOptions.map((module) => {
                             const isAvailable = module === "program"
+                            const ModuleIcon = moduleIcons[module]
 
                             return (
                               <button
@@ -476,6 +484,19 @@ export function CreateWorkspaceScreen() {
                                 key={module}
                                 type="button"
                               >
+                                <span
+                                  className={cn(
+                                    "mb-3 flex size-9 items-center justify-center rounded-lg border",
+                                    isAvailable
+                                      ? "border-foreground/15 bg-background text-foreground"
+                                      : "border-border bg-muted text-muted-foreground"
+                                  )}
+                                >
+                                  <ModuleIcon
+                                    aria-hidden="true"
+                                    className="size-4.5"
+                                  />
+                                </span>
                                 <span className="block text-[13px] font-semibold">
                                   {t(
                                     `workspaces.creation.modules.${module}.name`
