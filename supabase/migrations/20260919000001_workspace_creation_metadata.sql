@@ -8,7 +8,7 @@ alter table public.workspaces
   drop constraint if exists workspaces_declared_stage_check,
   add constraint workspaces_declared_stage_check check (
     declared_stage is null or declared_stage in (
-      'conception', 'demarrage', 'mise_en_oeuvre', 'cloture', 'clos'
+      'design', 'startup', 'implementation', 'closing', 'closed'
     )
   ),
   drop constraint if exists workspaces_years_check,

@@ -12,11 +12,11 @@ export type MemberRole = "admin" | "member" | "viewer"
 export type ObjectType = "policy" | "program" | "project"
 export type FrameworkStatus = "draft" | "validated" | "locked"
 export type WorkspaceStage =
-  | "conception"
-  | "demarrage"
-  | "mise_en_oeuvre"
-  | "cloture"
-  | "clos"
+  | "design"
+  | "startup"
+  | "implementation"
+  | "closing"
+  | "closed"
 export type WorkspaceLanguage = "fr" | "en" | "pt" | "es"
 
 export type WorkspaceFinancierInput = {

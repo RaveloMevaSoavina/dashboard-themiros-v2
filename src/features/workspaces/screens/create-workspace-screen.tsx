@@ -44,11 +44,11 @@ const totalSteps = 3
 const currentYear = new Date().getFullYear()
 const languages: WorkspaceLanguage[] = ["fr", "en", "pt", "es"]
 const stages: WorkspaceStage[] = [
-  "conception",
-  "demarrage",
-  "mise_en_oeuvre",
-  "cloture",
-  "clos",
+  "design",
+  "startup",
+  "implementation",
+  "closing",
+  "closed",
 ]
 const themeOptions = ["agriculture", "water", "nature", "gender", "energy"]
 const moduleOptions: ObjectType[] = ["program", "project", "policy"]
@@ -89,7 +89,7 @@ export function CreateWorkspaceScreen() {
   const [expectedLanguages, setExpectedLanguages] = useState<
     WorkspaceLanguage[]
   >(["fr", "en"])
-  const [stage, setStage] = useState<WorkspaceStage>("mise_en_oeuvre")
+  const [stage, setStage] = useState<WorkspaceStage>("implementation")
   const [startYear, setStartYear] = useState(String(currentYear))
   const [endYear, setEndYear] = useState(String(currentYear))
   const [versions, setVersions] = useState<EditableVersion[]>([
@@ -196,7 +196,7 @@ export function CreateWorkspaceScreen() {
       (!start ||
         !end ||
         end < start ||
-        (stage === "clos" && end >= currentYear) ||
+        (stage === "closed" && end >= currentYear) ||
         versions.length === 0 ||
         invalidVersions)
     ) {
