@@ -484,23 +484,25 @@ export function CreateWorkspaceScreen() {
                                 key={module}
                                 type="button"
                               >
-                                <span
-                                  className={cn(
-                                    "mb-3 flex size-9 items-center justify-center rounded-lg border",
-                                    isAvailable
-                                      ? "border-foreground/15 bg-background text-foreground"
-                                      : "border-border bg-muted text-muted-foreground"
-                                  )}
-                                >
-                                  <ModuleIcon
-                                    aria-hidden="true"
-                                    className="size-4.5"
-                                  />
-                                </span>
-                                <span className="block text-[13px] font-semibold">
-                                  {t(
-                                    `workspaces.creation.modules.${module}.name`
-                                  )}
+                                <span className="flex items-center gap-2 pr-5">
+                                  <span
+                                    className={cn(
+                                      "flex size-7 shrink-0 items-center justify-center rounded-md border",
+                                      isAvailable
+                                        ? "border-foreground/15 bg-background text-foreground"
+                                        : "border-border bg-muted text-muted-foreground"
+                                    )}
+                                  >
+                                    <ModuleIcon
+                                      aria-hidden="true"
+                                      className="size-3.5"
+                                    />
+                                  </span>
+                                  <span className="text-[13px] font-semibold">
+                                    {t(
+                                      `workspaces.creation.modules.${module}.name`
+                                    )}
+                                  </span>
                                 </span>
                                 <span className="mt-2 block text-[11px] leading-4 text-muted-foreground">
                                   {t(
