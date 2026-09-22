@@ -14,7 +14,7 @@ import {
   Sparkles,
   Trash2,
 } from "lucide-react"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { toast } from "sonner"
@@ -36,6 +36,7 @@ import {
   getPillarGenerationJob,
   getWorkspaceAccountContext,
 } from "@/features/workspaces/services/workspace-service"
+import { countryCodes } from "@/shared/data/country-codes"
 import { cn } from "@/shared/lib/utils"
 import { Button } from "@/shared/ui/base/button"
 import { Input } from "@/shared/ui/base/input"
@@ -76,7 +77,7 @@ const selectClassName =
   "h-10 w-full rounded-lg border border-input bg-background px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
 
 export function CreateWorkspaceScreen() {
-  const { t } = useTranslation()
+  const { i18n, t } = useTranslation()
   const queryClient = useQueryClient()
   const { session, signOut } = useAuth()
   const { workspaces, selectWorkspace } = useWorkspaces()
@@ -102,6 +103,15 @@ export function CreateWorkspaceScreen() {
   const [versions, setVersions] = useState<EditableVersion[]>([
     { id: "version-1", label: "", year: String(currentYear) },
   ])
+  const countryOptions = useMemo(() => {
+    const locale = i18n.resolvedLanguage ?? i18n.language
+    const displayNames = new Intl.DisplayNames([locale], { type: "region" })
+    const collator = new Intl.Collator(locale)
+
+    return countryCodes
+      .map((code) => ({ code, label: displayNames.of(code) ?? code }))
+      .sort((first, second) => collator.compare(first.label, second.label))
+  }, [i18n.language, i18n.resolvedLanguage])
 
   const accountContext = useQuery({
     queryKey: ["workspaces", "creation-context", session?.user.id],
@@ -530,18 +540,23 @@ export function CreateWorkspaceScreen() {
                         id="workspace-country"
                         label={t("workspaces.creation.countryLabel")}
                       >
-                        <Input
-                          autoFocus
-                          className="h-10"
+                        <select
+                          className={selectClassName}
                           id="workspace-country"
                           onChange={(event) =>
                             setTargetCountry(event.target.value)
                           }
-                          placeholder={t(
-                            "workspaces.creation.countryPlaceholder"
-                          )}
                           value={targetCountry}
-                        />
+                        >
+                          <option disabled value="">
+                            {t("workspaces.creation.countryPlaceholder")}
+                          </option>
+                          {countryOptions.map((country) => (
+                            <option key={country.code} value={country.code}>
+                              {country.label}
+                            </option>
+                          ))}
+                        </select>
                       </Field>
 
                       <fieldset>
@@ -933,13 +948,18 @@ function GenerationReview({
   themes,
   versions,
 }: GenerationReviewProps) {
-  const { t } = useTranslation()
+  const { i18n, t } = useTranslation()
   const isComplete = generationStatus === "completed"
   const isRunning =
     isCreating ||
     isEnqueuing ||
     generationStatus === "queued" ||
     generationStatus === "running"
+  const targetCountryLabel =
+    new Intl.DisplayNames(
+      [i18n.resolvedLanguage ?? i18n.language],
+      { type: "region" }
+    ).of(targetCountry) ?? targetCountry
   const processIndex = isComplete
     ? 4
     : generationStatus === "running"
@@ -1093,7 +1113,7 @@ function GenerationReview({
           />
           <SummaryItem
             label={t("workspaces.creation.countryLabel")}
-            value={targetCountry}
+            value={targetCountryLabel}
           />
           <SummaryItem
             label={t("workspaces.creation.summary.mainFinancier")}
