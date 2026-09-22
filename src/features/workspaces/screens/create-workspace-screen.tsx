@@ -16,7 +16,7 @@ import {
 } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 
 import { useAuth } from "@/features/auth/model/auth-provider"
@@ -32,8 +32,6 @@ import {
 } from "@/features/workspaces/model/workspace-provider"
 import {
   createWorkspace,
-  enqueuePillarGeneration,
-  getPillarGenerationJob,
   getWorkspaceAccountContext,
 } from "@/features/workspaces/services/workspace-service"
 import { countryCodes } from "@/shared/data/country-codes"
@@ -79,14 +77,11 @@ const selectClassName =
 export function CreateWorkspaceScreen() {
   const { i18n, t } = useTranslation()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const { session, signOut } = useAuth()
-  const { workspaces, selectWorkspace } = useWorkspaces()
+  const { workspaces } = useWorkspaces()
   const [step, setStep] = useState(1)
   const [isConfigurationComplete, setIsConfigurationComplete] = useState(false)
-  const [createdWorkspace, setCreatedWorkspace] = useState<Workspace | null>(
-    null
-  )
-  const [generationJobId, setGenerationJobId] = useState<string | null>(null)
   const [validationError, setValidationError] = useState<string | null>(null)
   const [name, setName] = useState("")
   const [targetCountry, setTargetCountry] = useState("")
@@ -117,26 +112,6 @@ export function CreateWorkspaceScreen() {
     queryKey: ["workspaces", "creation-context", session?.user.id],
     queryFn: () => getWorkspaceAccountContext(session?.user.id ?? ""),
     enabled: Boolean(session?.user.id),
-  })
-
-  const generation = useMutation({
-    mutationFn: enqueuePillarGeneration,
-    onSuccess: (job) => {
-      setGenerationJobId(job.id)
-    },
-    onError: () => {
-      toast.error(t("workspaces.creation.generation.error"))
-    },
-  })
-
-  const generationJob = useQuery({
-    queryKey: ["workspaces", "pillar-generation", generationJobId],
-    queryFn: () => getPillarGenerationJob(generationJobId ?? ""),
-    enabled: Boolean(generationJobId),
-    refetchInterval: (query) => {
-      const status = query.state.data?.status
-      return status === "completed" || status === "failed" ? false : 1500
-    },
   })
 
   const creation = useMutation({
@@ -172,9 +147,8 @@ export function CreateWorkspaceScreen() {
         workspace,
         ...(current ?? []).filter((item) => item.id !== workspace.id),
       ])
-      setCreatedWorkspace(workspace)
-      generation.mutate(workspace.id)
       void queryClient.invalidateQueries({ queryKey: workspacesQueryKey })
+      void navigate(`/workspaces/${workspace.id}/framework/approach`)
     },
     onError: () => {
       toast.error(t("workspaces.creation.error"))
@@ -249,12 +223,6 @@ export function CreateWorkspaceScreen() {
   }
 
   function launchGeneration() {
-    if (createdWorkspace) {
-      setGenerationJobId(null)
-      generation.mutate(createdWorkspace.id)
-      return
-    }
-
     creation.mutate()
   }
 
@@ -326,30 +294,21 @@ export function CreateWorkspaceScreen() {
       <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-5 lg:px-6 lg:py-16">
         {isConfigurationComplete ? (
           <GenerationReview
-            createdWorkspace={createdWorkspace}
+            createdWorkspace={null}
             endYear={endYear}
             expectedLanguages={expectedLanguages}
             financiers={financiers}
-            generationError={
-              creation.isError ||
-              generation.isError ||
-              generationJob.isError ||
-              generationJob.data?.status === "failed"
-            }
-            generationStatus={generationJob.data?.status ?? null}
+            generationError={creation.isError}
+            generationStatus={null}
             isCreating={creation.isPending}
-            isEnqueuing={generation.isPending}
+            isEnqueuing={false}
             name={name}
             onEdit={() => {
               setIsConfigurationComplete(false)
               setStep(3)
             }}
             onLaunch={launchGeneration}
-            onOpenWorkspace={() => {
-              if (createdWorkspace) {
-                selectWorkspace(createdWorkspace.id)
-              }
-            }}
+            onOpenWorkspace={() => undefined}
             stage={stage}
             startYear={startYear}
             targetCountry={targetCountry}
@@ -956,10 +915,9 @@ function GenerationReview({
     generationStatus === "queued" ||
     generationStatus === "running"
   const targetCountryLabel =
-    new Intl.DisplayNames(
-      [i18n.resolvedLanguage ?? i18n.language],
-      { type: "region" }
-    ).of(targetCountry) ?? targetCountry
+    new Intl.DisplayNames([i18n.resolvedLanguage ?? i18n.language], {
+      type: "region",
+    }).of(targetCountry) ?? targetCountry
   const processIndex = isComplete
     ? 4
     : generationStatus === "running"
