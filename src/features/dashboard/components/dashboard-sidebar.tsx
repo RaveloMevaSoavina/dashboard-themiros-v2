@@ -1,4 +1,4 @@
-import { ChevronRight, LayoutGrid } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { NavLink, useLocation } from "react-router-dom"
 
@@ -134,31 +134,10 @@ export function DashboardSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        <WorkspaceSwitcher />
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === "/workspaces"}
-                  tooltip={t("nav.items.workspaces")}
-                >
-                  <NavLink onClick={closeOnMobile} to="/workspaces">
-                    <LayoutGrid />
-                    <span>{t("nav.items.workspaces")}</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-            <div className="mt-1">
-              <WorkspaceSwitcher />
-            </div>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
         {sections.map((section) => (
           <SidebarGroup key={section.titleKey}>
             <SidebarGroupLabel>

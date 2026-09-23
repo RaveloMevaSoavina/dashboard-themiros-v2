@@ -64,8 +64,9 @@ export function WorkspaceSwitcher() {
                   {activeWorkspace?.name ?? t("workspaces.switcher.none")}
                 </span>
                 <span className="truncate text-[11px] text-muted-foreground">
-                  {activeWorkspace?.organization ??
-                    t("workspaces.switcher.selectPrompt")}
+                  {activeWorkspace
+                    ? t(`workspaces.objectType.${activeWorkspace.objectType}`)
+                    : t("workspaces.switcher.selectPrompt")}
                 </span>
               </span>
               <ChevronsUpDown className="ml-auto" />
