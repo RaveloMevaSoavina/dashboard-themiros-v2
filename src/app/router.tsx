@@ -12,6 +12,7 @@ import { CreateWorkspaceScreen } from "@/features/workspaces/screens/create-work
 import { WorkspaceAccessLayout } from "@/features/workspaces/screens/workspace-access-layout"
 import { WorkspaceProviderLayout } from "@/features/workspaces/screens/workspace-provider-layout"
 import { WorkspaceRedirect } from "@/features/workspaces/screens/workspace-redirect"
+import { WorkspaceSettingsScreen } from "@/features/workspaces/screens/workspace-settings-screen"
 import { WorkspacesScreen } from "@/features/workspaces/screens/workspaces-screen"
 
 /**
@@ -22,10 +23,23 @@ const workspaceRoutes = navSections.flatMap((section) =>
   section.items.map((item) => ({
     path: item.segment,
     children: [
-      { index: true, element: <PlaceholderScreen labelKey={item.labelKey} /> },
+      {
+        index: true,
+        element:
+          item.segment === "settings" ? (
+            <WorkspaceSettingsScreen />
+          ) : (
+            <PlaceholderScreen labelKey={item.labelKey} />
+          ),
+      },
       ...(item.children ?? []).map((child) => ({
         path: child.segment,
-        element: <PlaceholderScreen labelKey={child.labelKey} />,
+        element:
+          item.segment === "settings" && child.segment === "general" ? (
+            <WorkspaceSettingsScreen />
+          ) : (
+            <PlaceholderScreen labelKey={child.labelKey} />
+          ),
       })),
     ],
   }))

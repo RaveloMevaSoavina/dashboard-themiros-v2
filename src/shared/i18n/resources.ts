@@ -212,6 +212,11 @@ export const resources = {
           addFinancier: "Ajouter un financeur",
           remove: "Supprimer",
           themesLabel: "Thématiques principales",
+          customThemeLabel: "Autre thématique principale",
+          customThemePlaceholder: "Ex. Santé, éducation, gouvernance",
+          addTheme: "Ajouter",
+          removeTheme: "Retirer la thématique {{theme}}",
+          themeAlreadyAdded: "Cette thématique a déjà été ajoutée.",
           themes: {
             agriculture: "Agriculture",
             water: "Eau",
@@ -322,6 +327,39 @@ export const resources = {
           success: "Espace de travail créé.",
           error:
             "Impossible de créer l'espace. Vérifiez les informations et réessayez.",
+        },
+        settings: {
+          eyebrow: "Paramètres du workspace",
+          title: "Informations générales",
+          description:
+            "Modifiez l'identité, le périmètre et le cycle de cet espace de travail.",
+          identityTitle: "Identité",
+          identityDescription:
+            "Le nom apparaît dans la navigation, les exports et le journal.",
+          scopeTitle: "Périmètre",
+          scopeDescription:
+            "Ces informations composent l'empreinte sémantique de l'évaluation.",
+          cycleTitle: "Cycle du programme",
+          cycleDescription:
+            "Le calendrier permet d'adapter l'approche d'évaluation.",
+          adminOnly:
+            "Seuls les administrateurs peuvent modifier ou supprimer ce workspace.",
+          save: "Enregistrer les modifications",
+          saving: "Enregistrement...",
+          saveSuccess: "Les informations du workspace ont été mises à jour.",
+          saveError: "Impossible d'enregistrer les modifications.",
+          loadError: "Impossible de charger les informations du workspace.",
+          validation:
+            "Renseignez tous les champs requis et vérifiez les années.",
+          dangerTitle: "Zone de danger",
+          dangerDescription:
+            "La suppression est définitive et efface toutes les données associées à ce workspace.",
+          deleteConfirmation:
+            "Saisissez « {{name}} » pour confirmer la suppression.",
+          deleteAction: "Supprimer le workspace",
+          cancelDelete: "Annuler",
+          deleteSuccess: "Le workspace a été supprimé.",
+          deleteError: "Impossible de supprimer le workspace.",
         },
         error: {
           title: "Vos espaces sont indisponibles",
@@ -542,6 +580,11 @@ export const resources = {
           addFinancier: "Add a funder",
           remove: "Remove",
           themesLabel: "Main themes",
+          customThemeLabel: "Other main theme",
+          customThemePlaceholder: "E.g. Health, education, governance",
+          addTheme: "Add",
+          removeTheme: "Remove the {{theme}} theme",
+          themeAlreadyAdded: "This theme has already been added.",
           themes: {
             agriculture: "Agriculture",
             water: "Water",
@@ -647,6 +690,35 @@ export const resources = {
           success: "Workspace created.",
           error:
             "Unable to create the workspace. Check the details and try again.",
+        },
+        settings: {
+          eyebrow: "Workspace settings",
+          title: "General information",
+          description: "Edit the identity, scope and cycle of this workspace.",
+          identityTitle: "Identity",
+          identityDescription:
+            "The name appears in navigation, exports and the audit log.",
+          scopeTitle: "Scope",
+          scopeDescription:
+            "This information makes up the evaluation's semantic fingerprint.",
+          cycleTitle: "Programme cycle",
+          cycleDescription:
+            "The timeline is used to tailor the evaluation approach.",
+          adminOnly: "Only administrators can edit or delete this workspace.",
+          save: "Save changes",
+          saving: "Saving...",
+          saveSuccess: "The workspace information has been updated.",
+          saveError: "Unable to save the changes.",
+          loadError: "Unable to load the workspace information.",
+          validation: "Complete all required fields and check the years.",
+          dangerTitle: "Danger zone",
+          dangerDescription:
+            "Deletion is permanent and removes all data associated with this workspace.",
+          deleteConfirmation: "Enter “{{name}}” to confirm deletion.",
+          deleteAction: "Delete workspace",
+          cancelDelete: "Cancel",
+          deleteSuccess: "The workspace has been deleted.",
+          deleteError: "Unable to delete the workspace.",
         },
         error: {
           title: "Your workspaces are unavailable",

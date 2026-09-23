@@ -58,6 +58,25 @@ export type CreateWorkspaceInput = {
   versions: ProgramVersionInput[]
 }
 
+export type WorkspaceDetails = {
+  id: string
+  name: string
+  objectType: ObjectType
+  organization: string | null
+  targetCountry: string
+  financiers: WorkspaceFinancierInput[]
+  themes: string[]
+  expectedLanguages: WorkspaceLanguage[]
+  stage: WorkspaceStage
+  startYear: number
+  endYear: number
+}
+
+export type UpdateWorkspaceInput = Omit<
+  WorkspaceDetails,
+  "id" | "organization" | "objectType"
+>
+
 export function isPersona(value: unknown): value is Persona {
   return personas.includes(value as Persona)
 }

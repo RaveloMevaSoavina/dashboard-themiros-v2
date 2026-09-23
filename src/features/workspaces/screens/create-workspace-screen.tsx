@@ -20,6 +20,10 @@ import { Link } from "react-router-dom"
 import { toast } from "sonner"
 
 import { useAuth } from "@/features/auth/model/auth-provider"
+import {
+  isPredefinedWorkspaceTheme,
+  WorkspaceThemesField,
+} from "@/features/workspaces/components/workspace-themes-field"
 import type {
   ObjectType,
   Workspace,
@@ -55,7 +59,6 @@ const stages: WorkspaceStage[] = [
   "post_closure",
   "cross_cutting",
 ]
-const themeOptions = ["agriculture", "water", "nature", "gender", "energy"]
 const moduleOptions: ObjectType[] = ["program", "project", "policy"]
 const moduleIcons = {
   program: Layers2,
@@ -631,38 +634,10 @@ export function CreateWorkspaceScreen() {
                         </Button>
                       </fieldset>
 
-                      <fieldset>
-                        <legend className="text-sm font-medium">
-                          {t("workspaces.creation.themesLabel")}
-                        </legend>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {themeOptions.map((theme) => {
-                            const selected = themes.includes(theme)
-                            return (
-                              <button
-                                aria-pressed={selected}
-                                className={cn(
-                                  "rounded-lg border px-3 py-2 text-[12px] transition-colors",
-                                  selected
-                                    ? "border-foreground bg-foreground text-background"
-                                    : "border-border hover:bg-muted"
-                                )}
-                                key={theme}
-                                onClick={() =>
-                                  setThemes((current) =>
-                                    selected
-                                      ? current.filter((item) => item !== theme)
-                                      : [...current, theme]
-                                  )
-                                }
-                                type="button"
-                              >
-                                {t(`workspaces.creation.themes.${theme}`)}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </fieldset>
+                      <WorkspaceThemesField
+                        onChange={setThemes}
+                        themes={themes}
+                      />
 
                       <fieldset>
                         <legend className="text-sm font-medium">
@@ -1155,7 +1130,9 @@ function GenerationReview({
           <div className="mt-6">
             <SummaryList
               items={themes.map((theme) =>
-                t(`workspaces.creation.themes.${theme}`)
+                isPredefinedWorkspaceTheme(theme)
+                  ? t(`workspaces.creation.themes.${theme}`)
+                  : theme
               )}
               label={t("workspaces.creation.themesLabel")}
             />

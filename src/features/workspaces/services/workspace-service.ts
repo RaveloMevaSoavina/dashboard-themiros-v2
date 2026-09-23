@@ -3,7 +3,12 @@ import type {
   FrameworkStatus,
   MemberRole,
   ObjectType,
+  UpdateWorkspaceInput,
   Workspace,
+  WorkspaceDetails,
+  WorkspaceFinancierInput,
+  WorkspaceLanguage,
+  WorkspaceStage,
 } from "@/features/workspaces/model/types"
 import { supabase } from "@/shared/lib/supabase"
 
@@ -31,6 +36,20 @@ type CreatedWorkspaceRow = {
 type ProfileWorkspaceContextRow = {
   organization_id: string | null
   role: string | null
+  organizations: { name: string } | null
+}
+
+type WorkspaceDetailsRow = {
+  id: string
+  name: string
+  kind: ObjectType
+  target_country: string | null
+  financiers: unknown
+  themes: string[] | null
+  expected_languages: WorkspaceLanguage[] | null
+  declared_stage: WorkspaceStage | null
+  start_year: number | null
+  end_year: number | null
   organizations: { name: string } | null
 }
 
@@ -207,6 +226,105 @@ export async function createWorkspace(
     documentCount: 0,
     lastRunAt: null,
     updatedAt: workspace.created_at,
+  }
+}
+
+function parseFinanciers(value: unknown): WorkspaceFinancierInput[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object" || !("name" in item)) {
+      return []
+    }
+
+    const financier = item as Record<string, unknown>
+    if (typeof financier.name !== "string") {
+      return []
+    }
+
+    return [
+      {
+        ...(typeof financier.code === "string" ? { code: financier.code } : {}),
+        name: financier.name,
+        principal: financier.principal === true,
+      },
+    ]
+  })
+}
+
+export async function getWorkspaceDetails(
+  workspaceId: string
+): Promise<WorkspaceDetails> {
+  const { data, error } = await supabase
+    .from("workspaces")
+    .select(
+      "id, name, kind, target_country, financiers, themes, expected_languages, declared_stage, start_year, end_year, organizations (name)"
+    )
+    .eq("id", workspaceId)
+    .single()
+
+  if (error) {
+    throw error
+  }
+
+  const workspace = data as unknown as WorkspaceDetailsRow
+
+  return {
+    id: workspace.id,
+    name: workspace.name,
+    objectType: workspace.kind,
+    organization: workspace.organizations?.name ?? null,
+    targetCountry: workspace.target_country ?? "",
+    financiers: parseFinanciers(workspace.financiers),
+    themes: workspace.themes ?? [],
+    expectedLanguages: workspace.expected_languages ?? [],
+    stage: workspace.declared_stage ?? "implementation",
+    startYear: workspace.start_year ?? new Date().getFullYear(),
+    endYear: workspace.end_year ?? new Date().getFullYear(),
+  }
+}
+
+export async function updateWorkspace(
+  workspaceId: string,
+  input: UpdateWorkspaceInput
+) {
+  const financiers = input.financiers.map((financier) => ({
+    ...(financier.code ? { code: financier.code } : {}),
+    name: financier.name.trim(),
+    principal: financier.principal,
+  }))
+  const { error } = await supabase
+    .from("workspaces")
+    .update({
+      name: input.name.trim(),
+      target_country: input.targetCountry,
+      expected_donor:
+        financiers.find((financier) => financier.principal)?.name ??
+        financiers.at(0)?.name ??
+        null,
+      financiers,
+      themes: input.themes,
+      expected_languages: input.expectedLanguages,
+      declared_stage: input.stage,
+      start_year: input.startYear,
+      end_year: input.endYear,
+    })
+    .eq("id", workspaceId)
+
+  if (error) {
+    throw error
+  }
+}
+
+export async function deleteWorkspace(workspaceId: string) {
+  const { error } = await supabase.rpc("delete_workspace", {
+    target_workspace_id: workspaceId,
+  })
+
+  if (error) {
+    throw error
   }
 }
 
