@@ -9,6 +9,12 @@ import { CorpusInventoryScreen } from "@/features/corpus/screens/corpus-inventor
 import { DocumentDetailScreen } from "@/features/corpus/screens/document-detail-screen"
 import { DocumentsReviewScreen } from "@/features/corpus/screens/documents-review-screen"
 import { ImportDocumentsScreen } from "@/features/corpus/screens/import-documents-screen"
+import { AlertsScreen } from "@/features/evaluations/screens/alerts-screen"
+import { AnalysisOverviewScreen } from "@/features/evaluations/screens/analysis-overview-screen"
+import { FrameworkCriteriaScreen } from "@/features/evaluations/screens/framework-criteria-screen"
+import { FrameworkPillarsScreen } from "@/features/evaluations/screens/framework-pillars-screen"
+import { LayerAScreen } from "@/features/evaluations/screens/layer-a-screen"
+import { LayerBScreen } from "@/features/evaluations/screens/layer-b-screen"
 import { navSections } from "@/features/dashboard/model/navigation"
 import { DashboardLayout } from "@/features/dashboard/screens/dashboard-layout"
 import { PlaceholderScreen } from "@/features/dashboard/screens/placeholder-screen"
@@ -32,6 +38,10 @@ const workspaceRoutes = navSections.flatMap((section) =>
         element:
           item.segment === "corpus" ? (
             <CorpusInventoryScreen />
+          ) : item.segment === "framework" ? (
+            <FrameworkPillarsScreen />
+          ) : item.segment === "analysis" ? (
+            <AnalysisOverviewScreen />
           ) : item.segment === "settings" ? (
             <WorkspaceSettingsScreen />
           ) : (
@@ -47,6 +57,18 @@ const workspaceRoutes = navSections.flatMap((section) =>
             <DocumentsReviewScreen />
           ) : item.segment === "corpus" && child.segment === "inventory" ? (
             <CorpusInventoryScreen />
+          ) : item.segment === "framework" && child.segment === "pillars" ? (
+            <FrameworkPillarsScreen />
+          ) : item.segment === "framework" && child.segment === "criteria" ? (
+            <FrameworkCriteriaScreen />
+          ) : item.segment === "analysis" && child.segment === "overview" ? (
+            <AnalysisOverviewScreen />
+          ) : item.segment === "analysis" && child.segment === "pillars" ? (
+            <LayerAScreen />
+          ) : item.segment === "analysis" && child.segment === "criteria" ? (
+            <LayerBScreen />
+          ) : item.segment === "analysis" && child.segment === "alerts" ? (
+            <AlertsScreen />
           ) : item.segment === "settings" && child.segment === "general" ? (
             <WorkspaceSettingsScreen />
           ) : (
@@ -58,6 +80,14 @@ const workspaceRoutes = navSections.flatMap((section) =>
             {
               path: "documents/:documentId",
               element: <DocumentDetailScreen />,
+            },
+          ]
+        : []),
+      ...(item.segment === "analysis"
+        ? [
+            {
+              path: "pillars/:pillarId",
+              element: <LayerAScreen />,
             },
           ]
         : []),
