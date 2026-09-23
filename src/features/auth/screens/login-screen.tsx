@@ -77,7 +77,6 @@ export function LoginScreen() {
               onChange={(event) => {
                 setEmail(event.target.value)
               }}
-              placeholder={t("auth.login.emailPlaceholder")}
               required
               type="email"
               value={email}
@@ -100,7 +99,6 @@ export function LoginScreen() {
                 onChange={(event) => {
                   setPassword(event.target.value)
                 }}
-                placeholder={t("auth.login.passwordPlaceholder")}
                 required
                 type={isPasswordVisible ? "text" : "password"}
                 value={password}
