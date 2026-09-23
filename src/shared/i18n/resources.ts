@@ -11,6 +11,7 @@ export const resources = {
   fr: {
     translation: {
       brand: { name: "Themiros" },
+      company: { name: "EvoranQ" },
       auth: {
         login: {
           description: "Connectez-vous pour accéder à votre tableau de bord.",
@@ -431,6 +432,7 @@ export const resources = {
   en: {
     translation: {
       brand: { name: "Themiros" },
+      company: { name: "EvoranQ" },
       auth: {
         login: {
           description: "Sign in to access your dashboard.",
