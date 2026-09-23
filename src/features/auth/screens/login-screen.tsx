@@ -157,7 +157,7 @@ export function LoginScreen() {
       </div>
 
       <p className="absolute bottom-6 text-[12px] text-muted-foreground">
-        Copyright &copy; ${new Date().getFullYear()} {t("company.name")}. {t("footer.copyright")}
+        Copyright &copy; {new Date().getFullYear()} {t("company.name")}. {t("footer.copyright")}
       </p>
     </main>
   )
