@@ -48,10 +48,12 @@ const currentYear = new Date().getFullYear()
 const languages: WorkspaceLanguage[] = ["fr", "en", "pt", "es"]
 const stages: WorkspaceStage[] = [
   "design",
-  "startup",
+  "pre_launch",
   "implementation",
+  "mid_term",
   "closing",
-  "closed",
+  "post_closure",
+  "cross_cutting",
 ]
 const themeOptions = ["agriculture", "water", "nature", "gender", "energy"]
 const moduleOptions: ObjectType[] = ["program", "project", "policy"]
@@ -213,7 +215,7 @@ export function CreateWorkspaceScreen() {
       (!start ||
         !end ||
         end < start ||
-        (stage === "closed" && end >= currentYear) ||
+        (stage === "post_closure" && end >= currentYear) ||
         versions.length === 0 ||
         invalidVersions)
     ) {
@@ -701,6 +703,7 @@ export function CreateWorkspaceScreen() {
                         label={t("workspaces.creation.stageLabel")}
                       >
                         <select
+                          aria-describedby="workspace-stage-description"
                           className={selectClassName}
                           id="workspace-stage"
                           onChange={(event) =>
@@ -714,6 +717,12 @@ export function CreateWorkspaceScreen() {
                             </option>
                           ))}
                         </select>
+                        <p
+                          className="mt-2 text-[12px] leading-5 text-muted-foreground"
+                          id="workspace-stage-description"
+                        >
+                          {t(`workspaces.creation.stageDescriptions.${stage}`)}
+                        </p>
                       </Field>
 
                       <div className="grid gap-4 sm:grid-cols-2">
@@ -956,10 +965,9 @@ function GenerationReview({
     generationStatus === "queued" ||
     generationStatus === "running"
   const targetCountryLabel =
-    new Intl.DisplayNames(
-      [i18n.resolvedLanguage ?? i18n.language],
-      { type: "region" }
-    ).of(targetCountry) ?? targetCountry
+    new Intl.DisplayNames([i18n.resolvedLanguage ?? i18n.language], {
+      type: "region",
+    }).of(targetCountry) ?? targetCountry
   const processIndex = isComplete
     ? 4
     : generationStatus === "running"

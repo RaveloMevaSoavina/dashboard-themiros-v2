@@ -226,13 +226,30 @@ export const resources = {
             pt: "Portugais",
             es: "Espagnol",
           },
-          stageLabel: "Stade déclaré",
+          stageLabel: "Phase du cycle",
           stages: {
             design: "Conception",
-            startup: "Démarrage",
+            pre_launch: "Avant lancement",
             implementation: "Mise en œuvre",
+            mid_term: "Mi-parcours",
             closing: "Clôture",
-            closed: "Clos",
+            post_closure: "Après clôture",
+            cross_cutting: "Transversal",
+          },
+          stageDescriptions: {
+            design:
+              "Évaluation ex-ante, étude de faisabilité (appraisal), étude d'impact ou analyse d'impact de la réglementation (AIR).",
+            pre_launch:
+              "Évaluation de l'évaluabilité ou étude de référence (baseline).",
+            implementation:
+              "Suivi, évaluation formative ou de processus, ou évaluation en temps réel.",
+            mid_term: "Revue ou évaluation à mi-parcours.",
+            closing:
+              "Évaluation finale ou rapport d'achèvement, par exemple l'ICR de la Banque mondiale.",
+            post_closure:
+              "Évaluation ex-post, évaluation d'impact ou évaluation de la durabilité.",
+            cross_cutting:
+              "Évaluation transversale couvrant plusieurs phases du cycle.",
           },
           startYearLabel: "Année de début",
           endYearLabel: "Année de fin",
@@ -539,13 +556,28 @@ export const resources = {
             pt: "Portuguese",
             es: "Spanish",
           },
-          stageLabel: "Declared stage",
+          stageLabel: "Cycle phase",
           stages: {
             design: "Design",
-            startup: "Start-up",
+            pre_launch: "Before launch",
             implementation: "Implementation",
+            mid_term: "Mid-term",
             closing: "Closing",
-            closed: "Closed",
+            post_closure: "After closing",
+            cross_cutting: "Cross-cutting",
+          },
+          stageDescriptions: {
+            design:
+              "Ex-ante evaluation, feasibility study (appraisal), impact study or regulatory impact assessment (RIA).",
+            pre_launch: "Evaluability assessment or baseline study.",
+            implementation:
+              "Monitoring, formative or process evaluation, or real-time evaluation.",
+            mid_term: "Mid-term review or evaluation.",
+            closing:
+              "Final evaluation or completion report, such as a World Bank ICR.",
+            post_closure: "Ex-post, impact or sustainability evaluation.",
+            cross_cutting:
+              "Cross-cutting evaluation spanning several phases of the cycle.",
           },
           startYearLabel: "Start year",
           endYearLabel: "End year",

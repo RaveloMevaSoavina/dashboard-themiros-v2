@@ -13,10 +13,12 @@ export type ObjectType = "policy" | "program" | "project"
 export type FrameworkStatus = "draft" | "validated" | "locked"
 export type WorkspaceStage =
   | "design"
-  | "startup"
+  | "pre_launch"
   | "implementation"
+  | "mid_term"
   | "closing"
-  | "closed"
+  | "post_closure"
+  | "cross_cutting"
 export type WorkspaceLanguage = "fr" | "en" | "pt" | "es"
 
 export type WorkspaceFinancierInput = {
