@@ -8,7 +8,6 @@ import { PublicOnlyRoute } from "@/features/auth/screens/public-only-route"
 import { navSections } from "@/features/dashboard/model/navigation"
 import { DashboardLayout } from "@/features/dashboard/screens/dashboard-layout"
 import { PlaceholderScreen } from "@/features/dashboard/screens/placeholder-screen"
-import { RecommendedApproachScreen } from "@/features/evaluation-frameworks/screens/recommended-approach-screen"
 import { CreateWorkspaceScreen } from "@/features/workspaces/screens/create-workspace-screen"
 import { WorkspaceAccessLayout } from "@/features/workspaces/screens/workspace-access-layout"
 import { WorkspaceProviderLayout } from "@/features/workspaces/screens/workspace-provider-layout"
@@ -24,14 +23,6 @@ const workspaceRoutes = navSections.flatMap((section) =>
     path: item.segment,
     children: [
       { index: true, element: <PlaceholderScreen labelKey={item.labelKey} /> },
-      ...(item.segment === "framework"
-        ? [
-            {
-              path: "approach",
-              element: <RecommendedApproachScreen />,
-            },
-          ]
-        : []),
       ...(item.children ?? []).map((child) => ({
         path: child.segment,
         element: <PlaceholderScreen labelKey={child.labelKey} />,

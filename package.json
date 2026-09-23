@@ -9,7 +9,6 @@
     "lint": "biome lint .",
     "format": "biome format --write .",
     "check": "biome check .",
-    "test:approach": "node --experimental-strip-types --test src/features/evaluation-frameworks/model/approach-engine.test.ts",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "worker:v2": "cd ../worker-v2 && .venv/bin/python main.py"

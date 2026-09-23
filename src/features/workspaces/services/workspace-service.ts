@@ -4,8 +4,6 @@ import type {
   MemberRole,
   ObjectType,
   Workspace,
-  WorkspaceLanguage,
-  WorkspaceStage,
 } from "@/features/workspaces/model/types"
 import { supabase } from "@/shared/lib/supabase"
 
@@ -36,24 +34,6 @@ type ProfileWorkspaceContextRow = {
   organizations: { name: string } | null
 }
 
-type WorkspaceApproachContextRow = {
-  id: string
-  name: string
-  kind: ObjectType
-  target_country: string
-  financiers: unknown
-  themes: string[]
-  expected_languages: WorkspaceLanguage[]
-  declared_stage: WorkspaceStage
-  start_year: number
-  end_year: number
-  program_versions: {
-    label: string
-    year: number
-    order_index: number
-  }[]
-}
-
 export type WorkspaceAccountContext = {
   organizationId: string | null
   organizationName: string | null
@@ -65,24 +45,6 @@ export type PillarGenerationJob = {
   workspace_id: string
   status: "queued" | "running" | "completed" | "failed" | "cancelled"
   error_message: string | null
-}
-
-export type WorkspaceApproachContext = {
-  id: string
-  name: string
-  objectType: ObjectType
-  targetCountry: string
-  financiers: {
-    code?: string
-    name: string
-    principal: boolean
-  }[]
-  themes: string[]
-  expectedLanguages: WorkspaceLanguage[]
-  stage: WorkspaceStage
-  startYear: number
-  endYear: number
-  versions: { label: string; year: number }[]
 }
 
 const workspaceSelect = `
@@ -152,65 +114,6 @@ export async function getWorkspaceAccountContext(
     organizationId: profile.organization_id,
     organizationName: profile.organizations?.name ?? null,
     role: profile.role,
-  }
-}
-
-export async function getWorkspaceApproachContext(
-  workspaceId: string
-): Promise<WorkspaceApproachContext> {
-  const { data, error } = await supabase
-    .from("workspaces")
-    .select(`
-      id,
-      name,
-      kind,
-      target_country,
-      financiers,
-      themes,
-      expected_languages,
-      declared_stage,
-      start_year,
-      end_year,
-      program_versions (label, year, order_index)
-    `)
-    .eq("id", workspaceId)
-    .single()
-
-  if (error) {
-    throw error
-  }
-
-  const workspace = data as unknown as WorkspaceApproachContextRow
-  const financiers = Array.isArray(workspace.financiers)
-    ? workspace.financiers.filter(
-        (
-          item
-        ): item is {
-          code?: string
-          name: string
-          principal: boolean
-        } =>
-          typeof item === "object" &&
-          item !== null &&
-          typeof (item as { name?: unknown }).name === "string" &&
-          typeof (item as { principal?: unknown }).principal === "boolean"
-      )
-    : []
-
-  return {
-    id: workspace.id,
-    name: workspace.name,
-    objectType: workspace.kind,
-    targetCountry: workspace.target_country,
-    financiers,
-    themes: workspace.themes,
-    expectedLanguages: workspace.expected_languages,
-    stage: workspace.declared_stage,
-    startYear: workspace.start_year,
-    endYear: workspace.end_year,
-    versions: [...workspace.program_versions]
-      .sort((first, second) => first.order_index - second.order_index)
-      .map(({ label, year }) => ({ label, year })),
   }
 }
 

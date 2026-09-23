@@ -260,20 +260,20 @@ export const resources = {
             period: "Période",
           },
           generation: {
-            eyebrow: "Préparation de l'approche",
-            title: "Tout est prêt pour créer l'espace",
+            eyebrow: "Préparation du cadre",
+            title: "Tout est prêt pour la génération",
             description:
-              "Vérifiez le récapitulatif. Après la création, le moteur calculera l'approche recommandée avant toute génération de piliers.",
-            completeTitle: "L'approche est prête",
+              "Vérifiez le récapitulatif, puis lancez la préparation du cadre. Le moteur construira des piliers adaptés au contexte déclaré.",
+            completeTitle: "Les piliers sont prêts",
             completeDescription:
-              "L'espace est prêt. Vous pouvez maintenant examiner l'approche recommandée.",
-            launch: "Créer et calculer l'approche",
-            running: "Création de l'espace...",
+              "Le cadre initial a été généré. Vous pouvez maintenant ouvrir l'espace pour vérifier et ajuster les piliers proposés.",
+            launch: "Lancer la génération",
+            running: "Génération en cours...",
             retry: "Réessayer",
             edit: "Modifier les informations",
             openWorkspace: "Ouvrir l'espace",
             error:
-              "La création n'a pas abouti. Vous pouvez réessayer sans perdre les informations saisies.",
+              "La génération n'a pas abouti. Vous pouvez la relancer sans perdre les informations saisies.",
             steps: {
               workspace: {
                 title: "Création de l'espace",
@@ -286,14 +286,14 @@ export const resources = {
                   "Pays, financeurs, thématiques, langues et cycle sont structurés.",
               },
               queue: {
-                title: "Calcul de l'approche",
+                title: "Préparation de la génération",
                 description:
-                  "Le contexte sera appliqué aux règles déterministes.",
+                  "Le contexte est transmis au moteur de génération.",
               },
               pillars: {
-                title: "Revue avant génération",
+                title: "Génération des piliers",
                 description:
-                  "Les critères et la méthode seront confirmés avant les piliers.",
+                  "Le moteur prépare 5 à 8 piliers adaptés à votre programme.",
               },
             },
           },
@@ -312,112 +312,6 @@ export const resources = {
             "Le chargement de vos espaces a échoué. Réessayez dans un instant.",
           retry: "Réessayer",
         },
-      },
-      approach: {
-        eyebrow: "Moteur d'évaluation",
-        title: "Approche recommandée",
-        description:
-          "Le moteur recalcule en direct l'approche de {{workspace}} à partir de l'empreinte déclarée et de vos réponses.",
-        loading: "Calcul de l'approche recommandée...",
-        error: "L'approche ne peut pas être calculée",
-        retry: "Réessayer",
-        recomputed: "Recalcul déterministe en direct",
-        deterministic: "Règle déterministe",
-        questionnaireTitle: "Questions de cadrage",
-        questionnaireDescription:
-          "Chaque réponse modifie immédiatement la recommandation et sa justification.",
-        fields: {
-          scale: "Échelle géographique",
-          actors: "Nombre d'acteurs",
-          budget: "Budget",
-          baseline: "Situation de référence",
-          comparisonGroup: "Groupe de comparaison",
-          monitoringData: "Données de suivi",
-          relation: "Relation à l'objet",
-          purpose: "Finalité principale",
-        },
-        options: {
-          local: "Locale",
-          national: "Nationale",
-          multi_country: "Multi-pays",
-          one: "Un acteur",
-          two_to_three: "Deux à trois",
-          four_plus: "Quatre ou plus",
-          under_5m: "Moins de 5 M",
-          between_5m_50m: "De 5 à 50 M",
-          over_50m: "Plus de 50 M",
-          unknown: "Non renseigné",
-          yes: "Oui",
-          no: "Non",
-          partial: "Partielles",
-          pilot: "Pilotage",
-          finance: "Financement",
-          mandated_evaluator: "Évaluateur mandaté",
-          partner: "Partenaire",
-          accountability: "Redevabilité",
-          learning_steering: "Apprentissage et pilotage",
-          funding_decision: "Décision de financement",
-        },
-        cards: {
-          framework: "Référentiel",
-          cycle: "Cycle",
-          instrument: "Instrument",
-          complexity: "Complexité",
-          nature: "Nature",
-          method: "Méthodes recommandées",
-        },
-        cycles: {
-          ex_ante: "Ex ante",
-          en_cours: "En cours",
-          mi_parcours: "À mi-parcours",
-          finale: "Finale",
-          ex_post: "Ex post",
-        },
-        complexity: {
-          simple: "Simple",
-          complique: "Compliquée",
-          complexe: "Complexe",
-        },
-        nature: {
-          auto_evaluation: "Auto-évaluation",
-          interne: "Évaluation interne",
-          externe_independante: "Évaluation externe indépendante",
-          conjointe: "Évaluation conjointe",
-        },
-        engineOnly: "Exécutable dans le moteur",
-        externalMethods: "{{count}} méthode(s) hors moteur",
-        warnings: "Incohérences à vérifier",
-        warningCodes: {
-          start_year_after_end_year: "L'année de début dépasse l'année de fin.",
-          closed_stage_with_non_past_end_year:
-            "Le programme est déclaré clos mais sa fin n'est pas passée.",
-          stage_cycle_conflict: "Le stade déclaré contredit le cycle calculé.",
-          latest_version_label_cycle_conflict:
-            "La dernière version semble finale, mais le cycle calculé est à mi-parcours.",
-        },
-        criteriaTitle: "Critères activés et pondération",
-        criteriaDescription:
-          "Le cycle fixe l'applicabilité ; le référentiel et la nature peuvent ajuster les poids.",
-        applicability: {
-          obligatoire: "Obligatoire",
-          optionnel: "Optionnel",
-          prospectif: "Prospectif",
-          non_applicable: "Non applicable",
-        },
-        sources: {
-          cycle: "cycle",
-          framework: "référentiel",
-          nature: "nature de l'évaluation",
-        },
-        whyTitle: "Pourquoi ce résultat ?",
-        confirm: "Confirmer l'approche",
-        confirming: "Confirmation...",
-        confirmationHelp:
-          "La confirmation verrouille cette version et lance automatiquement la génération des piliers.",
-        confirmationSuccess:
-          "Approche confirmée. La génération des piliers a démarré.",
-        confirmationError:
-          "La confirmation a échoué. Vérifiez les migrations et réessayez.",
       },
       placeholder: {
         description: "Cet écran arrive dans un prochain sprint.",
@@ -678,20 +572,20 @@ export const resources = {
             period: "Period",
           },
           generation: {
-            eyebrow: "Approach preparation",
-            title: "Everything is ready to create the workspace",
+            eyebrow: "Framework preparation",
+            title: "Everything is ready for generation",
             description:
-              "Review the summary. Once created, the engine will compute the recommended approach before any pillar generation.",
-            completeTitle: "The approach is ready",
+              "Review the summary, then start preparing the framework. The engine will build pillars tailored to the declared context.",
+            completeTitle: "The pillars are ready",
             completeDescription:
-              "The workspace is ready. You can now review the recommended approach.",
-            launch: "Create and compute approach",
-            running: "Creating workspace...",
+              "The initial framework has been generated. You can now open the workspace to review and adjust the proposed pillars.",
+            launch: "Start generation",
+            running: "Generating...",
             retry: "Try again",
             edit: "Edit information",
             openWorkspace: "Open workspace",
             error:
-              "Creation did not complete. You can retry without losing the entered information.",
+              "Generation did not complete. You can restart it without losing the entered information.",
             steps: {
               workspace: {
                 title: "Workspace creation",
@@ -703,14 +597,13 @@ export const resources = {
                   "Country, funders, themes, languages and cycle are structured.",
               },
               queue: {
-                title: "Approach computation",
-                description:
-                  "The context will be applied to deterministic rules.",
+                title: "Generation preparation",
+                description: "The context is passed to the generation engine.",
               },
               pillars: {
-                title: "Review before generation",
+                title: "Pillar generation",
                 description:
-                  "Criteria and methods will be confirmed before pillars.",
+                  "The engine prepares 5 to 8 pillars tailored to your programme.",
               },
             },
           },
@@ -729,113 +622,6 @@ export const resources = {
             "We could not load your workspaces. Please try again in a moment.",
           retry: "Retry",
         },
-      },
-      approach: {
-        eyebrow: "Evaluation engine",
-        title: "Recommended approach",
-        description:
-          "The engine recomputes the approach for {{workspace}} from its declared fingerprint and your answers.",
-        loading: "Computing the recommended approach...",
-        error: "The approach cannot be computed",
-        retry: "Retry",
-        recomputed: "Live deterministic recomputation",
-        deterministic: "Deterministic rule",
-        questionnaireTitle: "Scoping questions",
-        questionnaireDescription:
-          "Each answer immediately updates the recommendation and its rationale.",
-        fields: {
-          scale: "Geographic scale",
-          actors: "Number of actors",
-          budget: "Budget",
-          baseline: "Baseline",
-          comparisonGroup: "Comparison group",
-          monitoringData: "Monitoring data",
-          relation: "Relationship to the object",
-          purpose: "Primary purpose",
-        },
-        options: {
-          local: "Local",
-          national: "National",
-          multi_country: "Multi-country",
-          one: "One actor",
-          two_to_three: "Two to three",
-          four_plus: "Four or more",
-          under_5m: "Under 5M",
-          between_5m_50m: "5M to 50M",
-          over_50m: "Over 50M",
-          unknown: "Unknown",
-          yes: "Yes",
-          no: "No",
-          partial: "Partial",
-          pilot: "Programme management",
-          finance: "Funding",
-          mandated_evaluator: "Commissioned evaluator",
-          partner: "Partner",
-          accountability: "Accountability",
-          learning_steering: "Learning and steering",
-          funding_decision: "Funding decision",
-        },
-        cards: {
-          framework: "Framework",
-          cycle: "Cycle",
-          instrument: "Instrument",
-          complexity: "Complexity",
-          nature: "Nature",
-          method: "Recommended methods",
-        },
-        cycles: {
-          ex_ante: "Ex ante",
-          en_cours: "Ongoing",
-          mi_parcours: "Mid-term",
-          finale: "Final",
-          ex_post: "Ex post",
-        },
-        complexity: {
-          simple: "Simple",
-          complique: "Complicated",
-          complexe: "Complex",
-        },
-        nature: {
-          auto_evaluation: "Self-evaluation",
-          interne: "Internal evaluation",
-          externe_independante: "Independent external evaluation",
-          conjointe: "Joint evaluation",
-        },
-        engineOnly: "Executable in the engine",
-        externalMethods: "{{count}} off-engine method(s)",
-        warnings: "Inconsistencies to review",
-        warningCodes: {
-          start_year_after_end_year: "The start year is after the end year.",
-          closed_stage_with_non_past_end_year:
-            "The programme is declared closed but its end date is not in the past.",
-          stage_cycle_conflict:
-            "The declared stage conflicts with the computed cycle.",
-          latest_version_label_cycle_conflict:
-            "The latest version looks final, but the computed cycle is mid-term.",
-        },
-        criteriaTitle: "Active criteria and weighting",
-        criteriaDescription:
-          "The cycle controls applicability; the framework and evaluation nature may adjust weights.",
-        applicability: {
-          obligatoire: "Required",
-          optionnel: "Optional",
-          prospectif: "Prospective",
-          non_applicable: "Not applicable",
-        },
-        sources: {
-          cycle: "cycle",
-          framework: "framework",
-          nature: "evaluation nature",
-        },
-        whyTitle: "Why this result?",
-        confirm: "Confirm approach",
-        confirming: "Confirming...",
-        confirmationHelp:
-          "Confirmation locks this version and automatically starts pillar generation.",
-        confirmationSuccess:
-          "Approach confirmed. Pillar generation has started.",
-        confirmationError:
-          "Confirmation failed. Check the migrations and try again.",
       },
       placeholder: {
         description: "This screen is coming in an upcoming sprint.",
