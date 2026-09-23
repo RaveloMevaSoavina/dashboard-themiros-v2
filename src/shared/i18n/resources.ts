@@ -368,6 +368,144 @@ export const resources = {
           retry: "Réessayer",
         },
       },
+      corpus: {
+        eyebrow: "Corpus documentaire",
+        category: {
+          principal: "Document principal",
+          complementaire: "Document complémentaire",
+          autre: "Autre pièce",
+        },
+        status: {
+          conforme: "Conforme",
+          a_verifier: "À vérifier",
+          rejete: "Rejeté",
+          integre_decision_humaine: "Intégré sur décision humaine",
+          non_classe: "Non classé",
+        },
+        level: {
+          insufficient: "Insuffisant",
+          exploratoire: "Exploratoire",
+          standard: "Standard",
+          approfondie: "Approfondie",
+        },
+        table: {
+          name: "Nom",
+          category: "Catégorie",
+          language: "Langue",
+          country: "Pays",
+          version: "Version",
+          score: "Pertinence",
+          status: "Statut",
+          actions: "Actions",
+        },
+        actions: {
+          open: "Ouvrir la fiche",
+          integrate: "Ajouter quand même",
+          verify: "Marquer à vérifier",
+          reject: "Rejeter",
+        },
+        errors: {
+          load: "Impossible de charger le corpus documentaire.",
+          update: "La modification du document a échoué.",
+        },
+        import: {
+          title: "Import documentaire",
+          description:
+            "Ajoutez plusieurs fichiers avec des métadonnées communes. Leur contenu sera ensuite qualifié avant d'alimenter l'analyse.",
+          dropTitle: "Déposez vos documents ici",
+          dropDescription: "PDF, DOCX ou XLSX · sélection multiple autorisée",
+          invalidFormat: "Seuls les fichiers PDF, DOCX et XLSX sont acceptés.",
+          category: "Catégorie commune",
+          country: "Pays cible (pré-rempli)",
+          version: "Version de rattachement",
+          selectVersion: "Sélectionnez une version",
+          submit: "Charger les documents",
+          openReview: "Ouvrir la revue documentaire",
+          remove: "Retirer le fichier",
+          processingNote:
+            "Après le chargement, les documents restent « À vérifier » jusqu'à la fin du traitement d'extraction, de détection et de pertinence.",
+          success:
+            "Les documents ont été chargés et ajoutés à la file de traitement.",
+          failure:
+            "Un ou plusieurs documents n'ont pas pu être chargés. Vous pouvez les relancer.",
+          state: {
+            ready: "Prêt à charger",
+            uploading: "Chargement en cours",
+            complete: "Chargé · traitement en attente",
+            error: "Échec du chargement",
+          },
+        },
+        review: {
+          title: "Revue documentaire",
+          description:
+            "Contrôlez les résultats de qualification, corrigez les anomalies et décidez quels documents alimentent le corpus.",
+          add: "Ajouter des documents",
+          filter: "Filtrer par statut",
+          all: "Tous les statuts",
+          count_one: "{{count}} document affiché",
+          count_other: "{{count}} documents affichés",
+          emptyTitle: "Aucun document à afficher",
+          emptyDescription:
+            "Ajoutez des documents ou choisissez un autre filtre de statut.",
+          decisionSaved: "La décision documentaire a été enregistrée.",
+          selectAll: "Sélectionner tous les documents",
+          selectDocument: "Sélectionner {{name}}",
+          selected_one: "{{count}} document sélectionné",
+          selected_other: "{{count}} documents sélectionnés",
+          apply: "Appliquer au lot",
+          bulkSuccess:
+            "La catégorie a été appliquée aux documents sélectionnés.",
+        },
+        inventory: {
+          title: "Corpus et masse critique",
+          description:
+            "Visualisez les pièces qui nourrissent l'analyse et le niveau de fiabilité documentaire atteint.",
+          add: "Ajouter des documents",
+          mass: "Masse documentaire",
+          included_one: "{{count}} document admissible",
+          included_other: "{{count}} documents admissibles",
+          level: "Niveau atteint",
+          next_one:
+            "Ajoutez encore {{count}} document pour atteindre le niveau {{level}}.",
+          next_other:
+            "Ajoutez encore {{count}} documents pour atteindre le niveau {{level}}.",
+          blocked:
+            "Analyse impossible. Le corpus actuel contient {{count}} document(s), soit insuffisant pour produire des résultats fiables. EvoranQ requiert un minimum de {{threshold}} documents pour ce type d'analyse. Ajoutez des documents pour continuer.",
+          warning:
+            "Le corpus contient {{count}} documents. Les résultats sont indicatifs et ne doivent pas être utilisés comme base de décision formelle. Pour une analyse fiable, ajoutez {{remaining}} documents supplémentaires.",
+          documents: "Inventaire documentaire",
+          documentsDescription_one:
+            "{{count}} document chargé, tous statuts confondus.",
+          documentsDescription_other:
+            "{{count}} documents chargés, tous statuts confondus.",
+          empty:
+            "Le corpus est vide. Ajoutez vos premiers documents pour commencer.",
+        },
+        detail: {
+          eyebrow: "Fiche document",
+          back: "Retour à la revue",
+          openSource: "Ouvrir le fichier",
+          notFound: "Ce document est introuvable ou n'est plus accessible.",
+          metadata: "Métadonnées",
+          importedAt: "Chargé le",
+          coverage: "Couverture exploitable",
+          coveragePending:
+            "La couverture sera disponible après l'extraction du document.",
+          pages: "pages exploitables",
+          uses: "Utilisations dans les calculs",
+          noUses: "Ce document n'a encore été utilisé dans aucun calcul.",
+          history: "Historique des contrôles et décisions",
+          noHistory:
+            "Aucun événement n'est encore enregistré pour ce document.",
+        },
+        events: {
+          document_uploaded: "Document chargé",
+          metadata_corrected: "Métadonnées corrigées",
+          document_integrate: "Intégration décidée manuellement",
+          document_verify: "Vérification demandée",
+          document_reject: "Document rejeté",
+        },
+      },
       placeholder: {
         description: "Cet écran arrive dans un prochain sprint.",
       },
@@ -725,6 +863,140 @@ export const resources = {
           description:
             "We could not load your workspaces. Please try again in a moment.",
           retry: "Retry",
+        },
+      },
+      corpus: {
+        eyebrow: "Document corpus",
+        category: {
+          principal: "Main document",
+          complementaire: "Supporting document",
+          autre: "Other item",
+        },
+        status: {
+          conforme: "Compliant",
+          a_verifier: "Needs review",
+          rejete: "Rejected",
+          integre_decision_humaine: "Included by human decision",
+          non_classe: "Unclassified",
+        },
+        level: {
+          insufficient: "Insufficient",
+          exploratoire: "Exploratory",
+          standard: "Standard",
+          approfondie: "In-depth",
+        },
+        table: {
+          name: "Name",
+          category: "Category",
+          language: "Language",
+          country: "Country",
+          version: "Version",
+          score: "Relevance",
+          status: "Status",
+          actions: "Actions",
+        },
+        actions: {
+          open: "Open details",
+          integrate: "Include anyway",
+          verify: "Mark for review",
+          reject: "Reject",
+        },
+        errors: {
+          load: "Unable to load the document corpus.",
+          update: "The document could not be updated.",
+        },
+        import: {
+          title: "Document import",
+          description:
+            "Add several files with shared metadata. Their content will be qualified before it can feed the analysis.",
+          dropTitle: "Drop your documents here",
+          dropDescription: "PDF, DOCX or XLSX · multiple selection supported",
+          invalidFormat: "Only PDF, DOCX and XLSX files are accepted.",
+          category: "Shared category",
+          country: "Target country (pre-filled)",
+          version: "Programme version",
+          selectVersion: "Select a version",
+          submit: "Upload documents",
+          openReview: "Open document review",
+          remove: "Remove file",
+          processingNote:
+            "After upload, documents remain in “Needs review” until extraction, detection and relevance processing is complete.",
+          success:
+            "The documents were uploaded and added to the processing queue.",
+          failure:
+            "One or more documents could not be uploaded. You can retry them.",
+          state: {
+            ready: "Ready to upload",
+            uploading: "Uploading",
+            complete: "Uploaded · processing pending",
+            error: "Upload failed",
+          },
+        },
+        review: {
+          title: "Document review",
+          description:
+            "Review qualification results, fix anomalies and decide which documents feed the corpus.",
+          add: "Add documents",
+          filter: "Filter by status",
+          all: "All statuses",
+          count_one: "{{count}} document shown",
+          count_other: "{{count}} documents shown",
+          emptyTitle: "No documents to show",
+          emptyDescription: "Add documents or select another status filter.",
+          decisionSaved: "The document decision was saved.",
+          selectAll: "Select all documents",
+          selectDocument: "Select {{name}}",
+          selected_one: "{{count}} document selected",
+          selected_other: "{{count}} documents selected",
+          apply: "Apply to selection",
+          bulkSuccess: "The category was applied to the selected documents.",
+        },
+        inventory: {
+          title: "Corpus and critical mass",
+          description:
+            "See the documents feeding the analysis and the reliability level reached by the corpus.",
+          add: "Add documents",
+          mass: "Document mass",
+          included_one: "{{count}} eligible document",
+          included_other: "{{count}} eligible documents",
+          level: "Current level",
+          next_one: "Add {{count}} more document to reach the {{level}} level.",
+          next_other:
+            "Add {{count}} more documents to reach the {{level}} level.",
+          blocked:
+            "Analysis is impossible. The current corpus contains {{count}} document(s), which is insufficient to produce reliable results. EvoranQ requires at least {{threshold}} documents for this analysis. Add documents to continue.",
+          warning:
+            "The corpus contains {{count}} documents. Results are indicative and must not be used for formal decisions. Add {{remaining}} documents for a reliable analysis.",
+          documents: "Document inventory",
+          documentsDescription_one:
+            "{{count}} uploaded document across all statuses.",
+          documentsDescription_other:
+            "{{count}} uploaded documents across all statuses.",
+          empty: "The corpus is empty. Add your first documents to begin.",
+        },
+        detail: {
+          eyebrow: "Document details",
+          back: "Back to review",
+          openSource: "Open file",
+          notFound:
+            "This document could not be found or is no longer accessible.",
+          metadata: "Metadata",
+          importedAt: "Uploaded on",
+          coverage: "Usable coverage",
+          coveragePending:
+            "Coverage will be available after document extraction.",
+          pages: "usable pages",
+          uses: "Uses in calculations",
+          noUses: "This document has not been used in any calculation yet.",
+          history: "Review and decision history",
+          noHistory: "No events have been recorded for this document yet.",
+        },
+        events: {
+          document_uploaded: "Document uploaded",
+          metadata_corrected: "Metadata corrected",
+          document_integrate: "Included by human decision",
+          document_verify: "Review requested",
+          document_reject: "Document rejected",
         },
       },
       placeholder: {
