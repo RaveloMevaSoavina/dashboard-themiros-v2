@@ -6,14 +6,14 @@ import { useParams } from "react-router-dom"
 import { toast } from "sonner"
 
 import { CorpusPageHeader } from "@/features/corpus/components/corpus-page-header"
+import type { EvaluationCycle } from "@/features/evaluation-frameworks/model/types"
+import { listReferencePillars } from "@/features/evaluation-frameworks/services/reference-service"
 import { PillarCard } from "@/features/evaluations/components/pillar-card"
 import type { EvaluationPillar } from "@/features/evaluations/model/types"
 import {
   getWorkspacePillars,
   saveFrameworkPillars,
 } from "@/features/evaluations/services/evaluation-service"
-import type { EvaluationCycle } from "@/features/evaluation-frameworks/model/types"
-import { listReferencePillars } from "@/features/evaluation-frameworks/services/reference-service"
 import type { WorkspaceStage } from "@/features/workspaces/model/types"
 import { getWorkspaceDetails } from "@/features/workspaces/services/workspace-service"
 import { Button } from "@/shared/ui/base/button"
@@ -149,7 +149,7 @@ export function FrameworkPillarsScreen() {
               </Button>
             </div>
           </div>
-          <div className="mt-5 space-y-4">
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {pillars.map((pillar) => (
               <PillarCard
                 canRemove={pillars.length > 4}

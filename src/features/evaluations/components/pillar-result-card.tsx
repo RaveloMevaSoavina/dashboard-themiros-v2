@@ -1,11 +1,10 @@
 import { ArrowRight, FileCheck2, ShieldCheck } from "lucide-react"
 import { useTranslation } from "react-i18next"
-
+import { ProgressMeter } from "@/features/evaluations/components/progress-meter"
 import type {
   LayerAScore,
   LayerBNote,
 } from "@/features/evaluations/model/types"
-import { ProgressMeter } from "@/features/evaluations/components/progress-meter"
 import { Badge } from "@/shared/ui/base/badge"
 
 export function PillarResultCard({
@@ -65,7 +64,7 @@ export function PillarResultCard({
               onClick={() => onCriterion(criterion.criterionId)}
               type="button"
             >
-              <Badge variant="outline">
+              <Badge variant="default">
                 {criterion.criterionName} ·{" "}
                 {criterion.note === null
                   ? t("evaluation.nonConcluded")
