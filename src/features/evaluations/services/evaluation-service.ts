@@ -1,5 +1,7 @@
 import type {
   AnalysisRun,
+  EvaluationCriterion,
+  EvaluationPillar,
   EvaluationResults,
   Evidence,
   IntermediateVariable,
@@ -7,8 +9,6 @@ import type {
   LayerBNote,
   LayerCAlert,
   SubAnswer,
-  EvaluationCriterion,
-  EvaluationPillar,
 } from "@/features/evaluations/model/types"
 import { supabase } from "@/shared/lib/supabase"
 
@@ -246,6 +246,76 @@ export async function saveFrameworkPillars(
   )
   const updateError = updateResults.find((result) => result.error)?.error
   if (updateError) throw updateError
+
+  const newPillars = pillars.filter(
+    (pillar) => !originalIds.includes(pillar.id)
+  )
+  if (newPillars.length > 0) {
+    const { error: insertError } = await supabase.from("pillars").upsert(
+      newPillars.map((pillar) => ({
+        id: pillar.id,
+        framework_id: framework.id,
+        ref_pillar_id: null,
+        name: pillar.name.trim(),
+        description: pillar.description.trim(),
+        weight: pillar.weight,
+        order_index: pillars.findIndex((item) => item.id === pillar.id) + 1,
+        origin: "new" as const,
+      })),
+      { onConflict: "id" }
+    )
+    if (insertError) throw insertError
+
+    const variableRows = newPillars.flatMap((pillar) => {
+      const variableWeight = Number(
+        (100 / Math.max(1, pillar.variables.length)).toFixed(2)
+      )
+      return pillar.variables.map((variable, index) => ({
+        pillar_id: pillar.id,
+        code: variable.code,
+        label: variable.label.trim(),
+        description: variable.description.trim() || null,
+        weight: variableWeight,
+        order_index: index + 1,
+      }))
+    })
+    if (variableRows.length > 0) {
+      const { error: variablesError } = await supabase
+        .from("pillar_variables")
+        .upsert(variableRows, { onConflict: "pillar_id,code" })
+      if (variablesError) throw variablesError
+    }
+
+    const criterionCodes = [
+      ...new Set(newPillars.flatMap((pillar) => pillar.criteria)),
+    ]
+    if (criterionCodes.length > 0) {
+      const { data: criteria, error: criteriaError } = await supabase
+        .from("criteria")
+        .select("id, code")
+        .eq("framework_id", framework.id)
+        .in("code", criterionCodes)
+      if (criteriaError) throw criteriaError
+
+      const criterionIdByCode = new Map(
+        (criteria ?? []).map((criterion) => [criterion.code, criterion.id])
+      )
+      const links = newPillars.flatMap((pillar) =>
+        pillar.criteria.flatMap((code) => {
+          const criterionId = criterionIdByCode.get(code)
+          return criterionId
+            ? [{ pillar_id: pillar.id, criterion_id: criterionId }]
+            : []
+        })
+      )
+      if (links.length > 0) {
+        const { error: linksError } = await supabase
+          .from("pillar_criteria")
+          .upsert(links, { onConflict: "pillar_id,criterion_id" })
+        if (linksError) throw linksError
+      }
+    }
+  }
 
   const removedIds = originalIds.filter(
     (id) => !pillars.some((pillar) => pillar.id === id)

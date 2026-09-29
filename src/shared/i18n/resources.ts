@@ -416,6 +416,21 @@ export const resources = {
         seeWhy: "Voir pourquoi",
         recommendationRationale: "Justification de la recommandation",
         ruleApplied: "Règle appliquée : {{rule}}",
+        ruleExplanation: "Règle métier",
+        ruleDescriptions: {
+          framework:
+            "Le financeur principal sélectionne le référentiel actif le plus récent qui lui correspond. Si aucun référentiel n'est reconnu, le référentiel Themiros est utilisé.",
+          cycle:
+            "La phase déclarée détermine d'abord le cycle d'évaluation. Pour une évaluation transversale, la progression entre les années de début et de fin départage en cours, mi-parcours et finale.",
+          instrument:
+            "Le type d'objet, l'échelle géographique, le nombre d'acteurs et le nombre de thématiques déterminent le module et le sous-type d'instrument.",
+          complexity:
+            "Le score additionne cinq facteurs : échelle, acteurs, thématiques, type d'objet et budget. De 0 à 3 l'approche est simple, de 4 à 6 compliquée, et de 7 à 10 complexe.",
+          nature:
+            "La relation de l'utilisateur à l'objet, son rôle de lecture et le nombre de financeurs déterminent si l'évaluation est une auto-évaluation, interne, externe indépendante ou conjointe.",
+          method:
+            "La classe de complexité, le cycle, la disponibilité d'une situation de référence, d'un groupe de comparaison et de données de suivi déterminent les méthodes exécutées ou recommandées hors moteur.",
+        },
         inputsUsed: "Éléments pris en compte",
         contextFilter: "Questions de cadrage",
         questionnaireStep: "Étape 2",
@@ -783,6 +798,20 @@ export const resources = {
           remove: "Supprimer le pilier",
           totalWeight: "Somme des pondérations",
           add: "Ajouter un pilier",
+          addTitle: "Ajouter un pilier manuellement",
+          addDescription:
+            "Définissez le contenu du pilier avant de l'intégrer au cadre d'évaluation.",
+          pillarDescription: "Description",
+          weightPercent: "Pondération (%)",
+          weightHint:
+            "Après l'ajout, ajustez les pondérations pour obtenir un total de 100 %.",
+          criteria: "Critères associés",
+          criteriaHint: "Sélectionnez au moins un critère.",
+          variablesPlaceholder:
+            "Une variable par ligne\nEx. Accès effectif aux services",
+          variablesHint: "Ajoutez au moins une variable, une par ligne.",
+          cancel: "Annuler",
+          addAction: "Ajouter au cadre",
           validate: "Valider le cadre",
           validated: "Le cadre d'évaluation a été validé.",
           validationError: "Impossible de valider le cadre.",
@@ -1314,6 +1343,21 @@ export const resources = {
         seeWhy: "See why",
         recommendationRationale: "Recommendation rationale",
         ruleApplied: "Rule applied: {{rule}}",
+        ruleExplanation: "Business rule",
+        ruleDescriptions: {
+          framework:
+            "The main funder selects the latest active framework that matches it. If no framework is recognized, the Themiros framework is used.",
+          cycle:
+            "The declared phase determines the evaluation cycle first. For a cross-cutting evaluation, progress between the start and end years determines ongoing, mid-term or final.",
+          instrument:
+            "The object type, geographic scale, number of actors and number of themes determine the instrument module and subtype.",
+          complexity:
+            "The score adds five factors: scale, actors, themes, object type and budget. Scores 0–3 are simple, 4–6 complicated and 7–10 complex.",
+          nature:
+            "The user's relationship to the object, reading role and number of funders determine whether the evaluation is self-led, internal, independent external or joint.",
+          method:
+            "The complexity class, cycle, and availability of a baseline, comparison group and monitoring data determine the methods run by the engine or recommended outside it.",
+        },
         inputsUsed: "Inputs used",
         contextFilter: "Scoping questions",
         questionnaireStep: "Step 2",
@@ -1675,6 +1719,20 @@ export const resources = {
           remove: "Remove pillar",
           totalWeight: "Total weight",
           add: "Add pillar",
+          addTitle: "Add a pillar manually",
+          addDescription:
+            "Define the pillar content before adding it to the evaluation framework.",
+          pillarDescription: "Description",
+          weightPercent: "Weight (%)",
+          weightHint:
+            "After adding it, adjust the weights to reach a total of 100%.",
+          criteria: "Related criteria",
+          criteriaHint: "Select at least one criterion.",
+          variablesPlaceholder:
+            "One variable per line\nE.g. Effective access to services",
+          variablesHint: "Add at least one variable, one per line.",
+          cancel: "Cancel",
+          addAction: "Add to framework",
           validate: "Validate framework",
           validated: "The evaluation framework was validated.",
           validationError: "Unable to validate the framework.",

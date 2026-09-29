@@ -130,6 +130,7 @@ export function RecommendedApproachScreen() {
   const [isWhyOpen, setIsWhyOpen] = useState(false)
   const [isContextOpen, setIsContextOpen] = useState(false)
   const [showExcludedCriteria, setShowExcludedCriteria] = useState(false)
+  const [showRuleDetails, setShowRuleDetails] = useState(false)
   const locale = (
     ["fr", "en", "pt", "es"].includes(i18n.resolvedLanguage ?? "fr")
       ? i18n.resolvedLanguage
@@ -533,6 +534,7 @@ export function RecommendedApproachScreen() {
               onClick={() => {
                 setIsContextOpen(false)
                 setSelectedJustification(card.key)
+                setShowRuleDetails(false)
                 setIsWhyOpen(true)
               }}
               type="button"
@@ -578,9 +580,31 @@ export function RecommendedApproachScreen() {
               <p className="mt-3 text-sm leading-6">
                 {selectedCard?.rationale}
               </p>
-              <p className="mt-4 inline-flex rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground">
+              <button
+                aria-expanded={showRuleDetails}
+                className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+                onClick={() => setShowRuleDetails((current) => !current)}
+                type="button"
+              >
                 {t("approach.ruleApplied", { rule: justification?.rule })}
-              </p>
+                <ChevronDown
+                  className={cn(
+                    "size-3 transition-transform",
+                    showRuleDetails && "rotate-180"
+                  )}
+                />
+              </button>
+
+              {showRuleDetails ? (
+                <div className="mt-4 rounded-lg border border-amber-400/60 bg-amber-300/20 p-4 text-amber-950 shadow-[0_0_24px_rgba(251,191,36,0.16)] dark:text-amber-100">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em]">
+                    {t("approach.ruleExplanation")}
+                  </p>
+                  <p className="mt-2 text-xs leading-5">
+                    {t(`approach.ruleDescriptions.${selectedJustification}`)}
+                  </p>
+                </div>
+              ) : null}
             </div>
 
             <div className="py-6">
