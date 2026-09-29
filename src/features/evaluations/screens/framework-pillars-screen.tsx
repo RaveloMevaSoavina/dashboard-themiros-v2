@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { AlertCircle, LoaderCircle, Plus, RotateCcw } from "lucide-react"
+import { AlertCircle, LoaderCircle, Plus, RotateCcw, Scale } from "lucide-react"
 import { type FormEvent, useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useParams } from "react-router-dom"
@@ -146,6 +146,33 @@ export function FrameworkPillarsScreen({
     setNewCriteria([])
     setIsAddOpen(false)
   }
+
+  function balanceWeights() {
+    if (pillars.length === 0) return
+    setPillars((current) => {
+      const currentTotal = current.reduce(
+        (sum, pillar) => sum + pillar.weight,
+        0
+      )
+      const exactCents = current.map((pillar) =>
+        currentTotal > 0
+          ? (pillar.weight / currentTotal) * 10_000
+          : 10_000 / current.length
+      )
+      const cents = exactCents.map(Math.floor)
+      const remainder = 10_000 - cents.reduce((sum, value) => sum + value, 0)
+      const priority = exactCents
+        .map((value, index) => ({ fraction: value - cents[index], index }))
+        .sort((a, b) => b.fraction - a.fraction)
+      for (let index = 0; index < remainder; index += 1) {
+        cents[priority[index].index] += 1
+      }
+      return current.map((pillar, index) => ({
+        ...pillar,
+        weight: cents[index] / 100,
+      }))
+    })
+  }
   const validation = useMutation({
     mutationFn: () =>
       saveFrameworkPillars(
@@ -208,6 +235,13 @@ export function FrameworkPillarsScreen({
               </p>
             </div>
             <div className="flex gap-2">
+              <Button
+                disabled={pillars.length === 0 || hasValidTotal}
+                onClick={balanceWeights}
+                variant="outline"
+              >
+                <Scale /> {t("evaluation.framework.balanceWeights")}
+              </Button>
               <Button
                 disabled={
                   (generated.data?.length ?? 0) === 0 || pillars.length >= 8

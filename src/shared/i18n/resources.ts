@@ -797,6 +797,7 @@ export const resources = {
           increaseWeight: "Augmenter la pondération",
           remove: "Supprimer le pilier",
           totalWeight: "Somme des pondérations",
+          balanceWeights: "Équilibrer à 100 %",
           add: "Ajouter un pilier",
           addTitle: "Ajouter un pilier manuellement",
           addDescription:
@@ -1718,6 +1719,7 @@ export const resources = {
           increaseWeight: "Increase weight",
           remove: "Remove pillar",
           totalWeight: "Total weight",
+          balanceWeights: "Balance to 100%",
           add: "Add pillar",
           addTitle: "Add a pillar manually",
           addDescription:

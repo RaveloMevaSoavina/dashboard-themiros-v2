@@ -116,7 +116,7 @@ export function PillarCard({
                     {t("evaluation.framework.weight")}
                   </span>
                   <input
-                    className="h-7 w-10 bg-transparent text-center text-[13px] font-semibold tabular-nums outline-none disabled:opacity-70"
+                    className="h-7 w-14 bg-transparent px-1 text-center text-[13px] font-semibold tabular-nums outline-none disabled:opacity-70"
                     disabled={!editable}
                     max={100}
                     min={0}
