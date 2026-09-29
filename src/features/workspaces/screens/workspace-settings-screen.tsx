@@ -1,16 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import {
-  CircleAlert,
-  CirclePlus,
-  LoaderCircle,
-  Save,
-  Trash2,
-} from "lucide-react"
+import { CircleAlert, LoaderCircle, Save, Trash2 } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router-dom"
 import { toast } from "sonner"
 
+import {
+  type EditableWorkspaceFinancier,
+  WorkspaceFinanciersField,
+} from "@/features/workspaces/components/workspace-financiers-field"
 import { WorkspaceThemesField } from "@/features/workspaces/components/workspace-themes-field"
 import type {
   Workspace,
@@ -46,13 +44,6 @@ const stages: WorkspaceStage[] = [
 ]
 const selectClassName =
   "h-10 w-full rounded-lg border border-input bg-background px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-
-type EditableFinancier = {
-  id: string
-  code?: string
-  name: string
-  principal: boolean
-}
 
 export function WorkspaceSettingsScreen() {
   const { t } = useTranslation()
@@ -111,11 +102,12 @@ function WorkspaceSettingsForm({
   const queryClient = useQueryClient()
   const [name, setName] = useState(details.name)
   const [targetCountry, setTargetCountry] = useState(details.targetCountry)
-  const [financiers, setFinanciers] = useState<EditableFinancier[]>(() =>
-    (details.financiers.length > 0
-      ? details.financiers
-      : [{ name: "", principal: true }]
-    ).map((financier) => ({ ...financier, id: crypto.randomUUID() }))
+  const [financiers, setFinanciers] = useState<EditableWorkspaceFinancier[]>(
+    () =>
+      (details.financiers.length > 0
+        ? details.financiers
+        : [{ name: "", principal: true }]
+      ).map((financier) => ({ ...financier, id: crypto.randomUUID() }))
   )
   const [themes, setThemes] = useState(details.themes)
   const [expectedLanguages, setExpectedLanguages] = useState(
@@ -210,16 +202,6 @@ function WorkspaceSettingsForm({
     if (!error) save.mutate()
   }
 
-  function removeFinancier(id: string) {
-    setFinanciers((current) => {
-      const remaining = current.filter((financier) => financier.id !== id)
-      if (remaining.length > 0 && !remaining.some((item) => item.principal)) {
-        remaining[0] = { ...remaining[0], principal: true }
-      }
-      return remaining
-    })
-  }
-
   return (
     <div className="mx-auto w-full max-w-4xl">
       <div>
@@ -290,65 +272,10 @@ function WorkspaceSettingsForm({
             description={t("workspaces.settings.scopeDescription")}
             title={t("workspaces.settings.scopeTitle")}
           >
-            <Field label={t("workspaces.creation.financiersLabel")}>
-              <div className="space-y-2">
-                {financiers.map((financier) => (
-                  <div className="flex items-center gap-2" key={financier.id}>
-                    <input
-                      aria-label={t("workspaces.creation.principal")}
-                      checked={financier.principal}
-                      className="size-4 accent-foreground"
-                      name="principal-financier"
-                      onChange={() =>
-                        setFinanciers((current) =>
-                          current.map((item) => ({
-                            ...item,
-                            principal: item.id === financier.id,
-                          }))
-                        )
-                      }
-                      type="radio"
-                    />
-                    <Input
-                      onChange={(event) =>
-                        setFinanciers((current) =>
-                          current.map((item) =>
-                            item.id === financier.id
-                              ? { ...item, name: event.target.value }
-                              : item
-                          )
-                        )
-                      }
-                      value={financier.name}
-                    />
-                    {financiers.length > 1 ? (
-                      <Button
-                        aria-label={t("workspaces.creation.remove")}
-                        onClick={() => removeFinancier(financier.id)}
-                        size="icon"
-                        type="button"
-                        variant="ghost"
-                      >
-                        <Trash2 />
-                      </Button>
-                    ) : null}
-                  </div>
-                ))}
-                <Button
-                  onClick={() =>
-                    setFinanciers((current) => [
-                      ...current,
-                      { id: crypto.randomUUID(), name: "", principal: false },
-                    ])
-                  }
-                  type="button"
-                  variant="outline"
-                >
-                  <CirclePlus />
-                  {t("workspaces.creation.addFinancier")}
-                </Button>
-              </div>
-            </Field>
+            <WorkspaceFinanciersField
+              financiers={financiers}
+              onChange={setFinanciers}
+            />
 
             <WorkspaceThemesField onChange={setThemes} themes={themes} />
             <ChoiceGroup

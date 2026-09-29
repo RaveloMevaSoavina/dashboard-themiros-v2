@@ -3,6 +3,8 @@ import {
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
+  ChevronDown,
+  ListFilter,
   LoaderCircle,
   RefreshCw,
   Scale,
@@ -33,6 +35,13 @@ import { useWorkspaces } from "@/features/workspaces/model/workspace-provider"
 import { getWorkspaceApproachContext } from "@/features/workspaces/services/workspace-service"
 import { cn } from "@/shared/lib/utils"
 import { Button } from "@/shared/ui/base/button"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/shared/ui/base/sheet"
 
 const currentYear = new Date().getFullYear()
 const selectClassName =
@@ -113,8 +122,14 @@ export function RecommendedApproachScreen() {
     monitoringData: "partial",
     ...defaults,
   })
+  const [adjustedFields, setAdjustedFields] = useState<
+    Set<keyof ApproachQuestionnaire>
+  >(new Set())
   const [selectedJustification, setSelectedJustification] =
     useState("framework")
+  const [isWhyOpen, setIsWhyOpen] = useState(false)
+  const [isContextOpen, setIsContextOpen] = useState(false)
+  const [showExcludedCriteria, setShowExcludedCriteria] = useState(false)
   const locale = (
     ["fr", "en", "pt", "es"].includes(i18n.resolvedLanguage ?? "fr")
       ? i18n.resolvedLanguage
@@ -252,54 +267,195 @@ export function RecommendedApproachScreen() {
   const referenceCriteria = new Map(
     (criteriaQuery.data ?? []).map((criterion) => [criterion.code, criterion])
   )
+  const activeCriteria = approach.criteria
+    .filter((criterion) => criterion.applicability !== "non_applicable")
+    .sort((first, second) => second.weight - first.weight)
+  const excludedCriteria = approach.criteria.filter(
+    (criterion) => criterion.applicability === "non_applicable"
+  )
+  const visibleCriteria = showExcludedCriteria
+    ? [...activeCriteria, ...excludedCriteria]
+    : activeCriteria
+  const totalCriteriaWeight = approach.criteria.reduce(
+    (total, criterion) => total + criterion.weight,
+    0
+  )
   const cards = [
     {
       key: "framework",
       label: t("approach.cards.framework"),
       value: approach.framework.label,
       detail: approach.framework.version,
+      rationale: t("approach.rationales.framework", {
+        financier: fingerprint?.financierCode ?? "OTHER",
+      }),
     },
     {
       key: "cycle",
       label: t("approach.cards.cycle"),
       value: t(`approach.cycles.${approach.cycle}`),
       detail: `${Math.round(approach.cycleProgression * 100)} %`,
+      rationale: t("approach.rationales.cycle", {
+        stage: t(`workspaces.creation.stages.${fingerprint?.stage}`),
+        startYear: fingerprint?.startYear,
+        endYear: fingerprint?.endYear,
+      }),
     },
     {
       key: "instrument",
       label: t("approach.cards.instrument"),
-      value: humanize(approach.instrumentSubtype),
+      value: t(`approach.instruments.${approach.instrumentSubtype}`),
       detail: approach.instrumentModule,
+      rationale: t("approach.rationales.instrument", {
+        scale: t(`approach.options.${questionnaire.scale}`),
+        actors: t(`approach.options.${questionnaire.actors}`),
+        count: fingerprint?.themes.length ?? 0,
+      }),
     },
     {
       key: "complexity",
       label: t("approach.cards.complexity"),
       value: t(`approach.complexity.${approach.complexityClass}`),
       detail: `${approach.complexityScore}/10`,
+      rationale: t("approach.rationales.complexity", {
+        score: approach.complexityScore,
+      }),
     },
     {
       key: "nature",
       label: t("approach.cards.nature"),
       value: t(`approach.nature.${approach.evaluationNature}`),
       detail: t("approach.deterministic"),
+      rationale: t("approach.rationales.nature", {
+        relation: t(`approach.options.${questionnaire.relation}`),
+      }),
     },
     {
       key: "method",
       label: t("approach.cards.method"),
-      value: approach.recommendedMethods.engine.map(humanize).join(", "),
+      value: approach.recommendedMethods.engine
+        .map((method) =>
+          t(`approach.methods.${method}`, { defaultValue: humanize(method) })
+        )
+        .join(", "),
       detail:
         approach.recommendedMethods.off_engine.length > 0
           ? t("approach.externalMethods", {
               count: approach.recommendedMethods.off_engine.length,
             })
           : t("approach.engineOnly"),
+      rationale: t("approach.rationales.method", {
+        complexity: t(
+          `approach.complexity.${approach.complexityClass}`
+        ).toLocaleLowerCase(),
+        cycle: t(`approach.cycles.${approach.cycle}`).toLocaleLowerCase(),
+      }),
     },
   ]
   const justification = approach.justifications[selectedJustification]
+  const selectedCard = cards.find((card) => card.key === selectedJustification)
+
+  function formatInputValue(key: string, value: unknown) {
+    if (typeof value === "number") {
+      if (key === "progression") {
+        return `${Math.round(value * 100)} %`
+      }
+
+      if (["scale", "actors", "themes", "objectType", "budget"].includes(key)) {
+        return t("approach.points", { count: value })
+      }
+
+      return String(value)
+    }
+
+    if (typeof value !== "string") {
+      return String(value)
+    }
+
+    if (
+      [
+        "local",
+        "national",
+        "multi_country",
+        "one",
+        "two_to_three",
+        "four_plus",
+        "under_5m",
+        "between_5m_50m",
+        "over_50m",
+        "unknown",
+        "yes",
+        "no",
+        "partial",
+        "pilot",
+        "finance",
+        "mandated_evaluator",
+        "partner",
+        "accountability",
+        "learning_steering",
+        "funding_decision",
+      ].includes(value)
+    ) {
+      return t(`approach.options.${value}`)
+    }
+
+    if (cycleValues.includes(value as EvaluationCycle)) {
+      return t(`approach.cycles.${value}`)
+    }
+
+    if (["simple", "complique", "complexe"].includes(value)) {
+      return t(`approach.complexity.${value}`)
+    }
+
+    if (
+      [
+        "design",
+        "pre_launch",
+        "implementation",
+        "mid_term",
+        "closing",
+        "post_closure",
+        "cross_cutting",
+      ].includes(value)
+    ) {
+      return t(`workspaces.creation.stages.${value}`)
+    }
+
+    if (["program", "project", "policy"].includes(value)) {
+      return t(`workspaces.objectType.${value}`)
+    }
+
+    if (["decideur", "pmu", "analyste"].includes(value)) {
+      return t(`personas.${value}.name`)
+    }
+
+    return humanize(value)
+  }
+
+  function wasCardRecomputed(key: string) {
+    const dependencies: Record<string, (keyof ApproachQuestionnaire)[]> = {
+      framework: [],
+      cycle: [],
+      instrument: ["scale", "actors"],
+      complexity: ["scale", "actors", "budget"],
+      nature: ["relation"],
+      method: [
+        "scale",
+        "actors",
+        "budget",
+        "baseline",
+        "comparisonGroup",
+        "monitoringData",
+        "purpose",
+      ],
+    }
+
+    return (dependencies[key] ?? []).some((field) => adjustedFields.has(field))
+  }
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-8">
-      <header className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+      <header className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             {t("approach.eyebrow")}
@@ -307,51 +463,17 @@ export function RecommendedApproachScreen() {
           <h1 className="mt-3 text-3xl font-semibold tracking-tight">
             {t("approach.title")}
           </h1>
-          <p className="mt-3 max-w-2xl text-[13px] leading-6 text-muted-foreground">
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
             {t("approach.description", {
               workspace: workspaceQuery.data?.name,
             })}
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs">
+        <div className="flex shrink-0 items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs">
           <CheckCircle2 className="size-4" />
           {t("approach.recomputed")}
         </div>
       </header>
-
-      <section className="rounded-xl border border-border p-5 sm:p-6">
-        <h2 className="text-sm font-semibold">
-          {t("approach.questionnaireTitle")}
-        </h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {t("approach.questionnaireDescription")}
-        </p>
-        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {questionnaireFields.map(([field, options]) => (
-            <label className="space-y-2" key={field}>
-              <span className="text-xs font-medium">
-                {t(`approach.fields.${field}`)}
-              </span>
-              <select
-                className={selectClassName}
-                onChange={(event) =>
-                  setQuestionnaire((current) => ({
-                    ...current,
-                    [field]: event.target.value,
-                  }))
-                }
-                value={questionnaire[field]}
-              >
-                {options.map((option) => (
-                  <option key={option} value={option}>
-                    {t(`approach.options.${option}`)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ))}
-        </div>
-      </section>
 
       {approach.warnings.length > 0 ? (
         <section className="rounded-xl border border-border bg-muted/30 p-4">
@@ -369,85 +491,308 @@ export function RecommendedApproachScreen() {
         </section>
       ) : null}
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map((card) => (
-          <button
-            className={cn(
-              "rounded-xl border p-5 text-left transition-colors hover:bg-muted/40",
-              selectedJustification === card.key
-                ? "border-foreground bg-muted/30"
-                : "border-border"
-            )}
-            key={card.key}
-            onClick={() => setSelectedJustification(card.key)}
-            type="button"
+      <section>
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+          <div>
+            <h2 className="mt-2 text-lg font-semibold">
+              {t("approach.recommendationsTitle")}
+            </h2>
+            <p className="mt-2 max-w-3xl text-xs leading-5 text-muted-foreground">
+              {t("approach.recommendationsDescription")}
+            </p>
+          </div>
+          <Button
+            className="shrink-0"
+            onClick={() => {
+              setIsWhyOpen(false)
+              setIsContextOpen(true)
+            }}
+            variant="outline"
           >
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              {card.label}
-            </span>
-            <span className="mt-3 block text-sm font-semibold capitalize">
-              {card.value}
-            </span>
-            <span className="mt-2 block text-xs text-muted-foreground">
-              {card.detail}
-            </span>
-          </button>
-        ))}
+            <ListFilter />
+            {t("approach.contextFilter")}
+            {adjustedFields.size > 0 ? (
+              <span className="rounded-full bg-foreground px-1.5 py-0.5 text-[10px] leading-none text-background">
+                {adjustedFields.size}
+              </span>
+            ) : null}
+          </Button>
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {cards.map((card) => (
+            <button
+              aria-pressed={isWhyOpen && selectedJustification === card.key}
+              className={cn(
+                "group flex min-h-48 flex-col rounded-xl border p-5 text-left transition-colors hover:bg-muted/40",
+                isWhyOpen && selectedJustification === card.key
+                  ? "border-foreground bg-muted/30"
+                  : "border-border"
+              )}
+              key={card.key}
+              onClick={() => {
+                setIsContextOpen(false)
+                setSelectedJustification(card.key)
+                setIsWhyOpen(true)
+              }}
+              type="button"
+            >
+              <span className="flex items-center justify-between gap-3">
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {card.label}
+                </span>
+                <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  {wasCardRecomputed(card.key)
+                    ? t("approach.recalculated")
+                    : t("approach.recommended")}
+                </span>
+              </span>
+              <span className="mt-4 block text-base font-semibold first-letter:uppercase">
+                {card.value}
+              </span>
+              <span className="mt-1 block text-[11px] text-muted-foreground">
+                {card.detail}
+              </span>
+              <span className="mt-auto block border-t border-border pt-4 text-xs leading-5 text-muted-foreground">
+                {card.rationale}
+              </span>
+              <span className="mt-3 text-[11px] font-medium underline-offset-4 group-hover:underline">
+                {t("approach.seeWhy")}
+              </span>
+            </button>
+          ))}
+        </div>
       </section>
 
-      <section className="grid gap-5 lg:grid-cols-[1.4fr_0.6fr]">
-        <div className="rounded-xl border border-border p-5 sm:p-6">
-          <div className="flex items-center gap-2">
-            <Scale className="size-4" />
-            <h2 className="text-sm font-semibold">
-              {t("approach.criteriaTitle")}
-            </h2>
+      <Sheet onOpenChange={setIsWhyOpen} open={isWhyOpen}>
+        <SheetContent className="w-full sm:max-w-lg!">
+          <SheetHeader className="border-b border-border pr-12">
+            <SheetTitle>{t("approach.whyTitle")}</SheetTitle>
+            <SheetDescription>{selectedCard?.label}</SheetDescription>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto px-5 pb-8 sm:px-6">
+            <div className="border-b border-border py-6">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {t("approach.recommendationRationale")}
+              </p>
+              <p className="mt-3 text-sm leading-6">
+                {selectedCard?.rationale}
+              </p>
+              <p className="mt-4 inline-flex rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground">
+                {t("approach.ruleApplied", { rule: justification?.rule })}
+              </p>
+            </div>
+
+            <div className="py-6">
+              <p className="text-xs font-semibold">
+                {t("approach.inputsUsed")}
+              </p>
+              <dl className="mt-4 divide-y divide-border">
+                {Object.entries(justification?.inputs ?? {}).map(
+                  ([key, value]) => (
+                    <div
+                      className="flex justify-between gap-6 py-3 text-xs"
+                      key={key}
+                    >
+                      <dt className="text-muted-foreground">
+                        {t(`approach.inputLabels.${key}`, {
+                          defaultValue: humanize(key),
+                        })}
+                      </dt>
+                      <dd className="text-right font-medium">
+                        {formatInputValue(key, value)}
+                      </dd>
+                    </div>
+                  )
+                )}
+              </dl>
+            </div>
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            {t("approach.criteriaDescription")}
-          </p>
-          <div className="mt-5 divide-y divide-border">
-            {approach.criteria.map((criterion) => (
-              <div
-                className="grid grid-cols-[1fr_auto_auto] items-center gap-4 py-3 text-xs"
-                key={criterion.code}
-              >
-                <div>
-                  <p className="font-medium">
-                    {referenceCriteria.get(criterion.code)?.label ??
-                      humanize(criterion.code)}
-                  </p>
-                  <p className="mt-1 text-muted-foreground">
-                    {t(`approach.applicability.${criterion.applicability}`)} ·{" "}
-                    {t(`approach.sources.${criterion.source}`)}
-                  </p>
-                </div>
-                <div className="h-1.5 w-20 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-foreground"
-                    style={{ width: `${criterion.weight}%` }}
-                  />
-                </div>
-                <span className="w-14 text-right font-semibold">
-                  {criterion.weight.toFixed(1)} %
-                </span>
-              </div>
-            ))}
+        </SheetContent>
+      </Sheet>
+
+      <Sheet onOpenChange={setIsContextOpen} open={isContextOpen}>
+        <SheetContent className="w-full sm:max-w-md!">
+          <SheetHeader className="border-b border-border pr-12">
+            <SheetTitle className="flex items-center gap-2">
+              <ListFilter className="size-4" />
+              {t("approach.questionnaireTitle")}
+            </SheetTitle>
+            <SheetDescription>
+              {t("approach.questionnaireDescription")}
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-y-auto px-5 pb-6 sm:px-6">
+            <div className="flex items-center gap-2 border-b border-border py-4 text-[11px] text-muted-foreground">
+              <CheckCircle2 className="size-3.5" />
+              {t("approach.liveUpdate")}
+            </div>
+
+            <div className="grid gap-5 py-5">
+              {questionnaireFields.map(([field, options]) => (
+                <label className="space-y-2" key={field}>
+                  <span className="flex items-center justify-between gap-2 text-xs font-medium">
+                    {t(`approach.fields.${field}`)}
+                    <span className="text-[10px] font-normal text-muted-foreground">
+                      {adjustedFields.has(field)
+                        ? t("approach.adjusted")
+                        : t("approach.proposed")}
+                    </span>
+                  </span>
+                  <select
+                    className={selectClassName}
+                    onChange={(event) => {
+                      setQuestionnaire((current) => ({
+                        ...current,
+                        [field]: event.target.value,
+                      }))
+                      setAdjustedFields((current) => {
+                        const next = new Set(current)
+                        next.add(field)
+                        return next
+                      })
+                    }}
+                    value={questionnaire[field]}
+                  >
+                    {options.map((option) => (
+                      <option key={option} value={option}>
+                        {t(`approach.options.${option}`)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="border-t border-border p-4">
+            <Button className="w-full" onClick={() => setIsContextOpen(false)}>
+              {t("approach.viewRecommendations")}
+              <ArrowRight />
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <section className="rounded-xl border border-border p-5 sm:p-6">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+          <div className="flex gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border">
+              <Scale className="size-4" />
+            </span>
+            <div>
+              <h2 className="text-sm font-semibold">
+                {t("approach.criteriaTitle")}
+              </h2>
+              <p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">
+                {t("approach.criteriaDescription")}
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 flex-wrap gap-2 text-[11px]">
+            <span className="rounded-full border border-border px-2.5 py-1">
+              {t("approach.activeCriteria", { count: activeCriteria.length })}
+            </span>
+            <span className="rounded-full border border-border px-2.5 py-1 text-muted-foreground">
+              {t("approach.totalWeight", {
+                weight: totalCriteriaWeight.toFixed(0),
+              })}
+            </span>
           </div>
         </div>
 
-        <aside className="rounded-xl border border-border p-5 sm:p-6">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("approach.whyTitle")}
-          </p>
-          <p className="mt-3 text-sm font-semibold">{justification?.rule}</p>
-          <pre className="mt-4 overflow-auto whitespace-pre-wrap rounded-lg bg-muted/50 p-3 text-[11px] leading-5">
-            {JSON.stringify(justification?.inputs ?? {}, null, 2)}
-          </pre>
-        </aside>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {visibleCriteria.map((criterion) => {
+            const isNotApplicable = criterion.applicability === "non_applicable"
+
+            return (
+              <article
+                className={cn(
+                  "flex min-h-44 flex-col rounded-lg border border-border p-4",
+                  isNotApplicable && "bg-muted/20 text-muted-foreground"
+                )}
+                key={criterion.code}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-sm font-semibold">
+                    {referenceCriteria.get(criterion.code)?.label ??
+                      humanize(criterion.code)}
+                  </h3>
+                  <span
+                    className={cn(
+                      "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium",
+                      criterion.applicability === "obligatoire" &&
+                        "border-foreground bg-foreground text-background",
+                      criterion.applicability === "prospectif" &&
+                        "border-dashed"
+                    )}
+                  >
+                    {t(`approach.applicability.${criterion.applicability}`)}
+                  </span>
+                </div>
+
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  {t("approach.criterionSource", {
+                    source: t(`approach.sources.${criterion.source}`),
+                  })}
+                </p>
+
+                <div className="mt-auto pt-6">
+                  <div className="flex items-end justify-between gap-3">
+                    <span className="text-[11px] text-muted-foreground">
+                      {t("approach.weightLabel")}
+                    </span>
+                    <span className="text-lg font-semibold tracking-tight">
+                      {criterion.weight.toFixed(1)} %
+                    </span>
+                  </div>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className={cn(
+                        "h-full rounded-full bg-foreground",
+                        isNotApplicable && "bg-muted-foreground/30"
+                      )}
+                      style={{ width: `${criterion.weight}%` }}
+                    />
+                  </div>
+                </div>
+              </article>
+            )
+          })}
+        </div>
+
+        {excludedCriteria.length > 0 ? (
+          <div className="mt-4 border-t border-border pt-4">
+            <Button
+              aria-expanded={showExcludedCriteria}
+              className="w-full justify-between sm:w-auto"
+              onClick={() => setShowExcludedCriteria((current) => !current)}
+              variant="ghost"
+            >
+              {showExcludedCriteria
+                ? t("approach.hideExcludedCriteria")
+                : t("approach.showExcludedCriteria", {
+                    count: excludedCriteria.length,
+                  })}
+              <ChevronDown
+                className={cn(
+                  "transition-transform",
+                  showExcludedCriteria && "rotate-180"
+                )}
+              />
+            </Button>
+          </div>
+        ) : null}
       </section>
 
-      <footer className="flex flex-col items-end gap-2 border-t border-border pt-6">
+      <footer className="flex flex-col justify-between gap-5 border-t border-border pt-6 sm:flex-row sm:items-center">
+        <div>
+          <p className="text-sm font-semibold">{t("approach.readyTitle")}</p>
+          <p className="mt-1 max-w-xl text-xs leading-5 text-muted-foreground">
+            {t("approach.confirmationHelp")}
+          </p>
+        </div>
         <Button
           disabled={confirmation.isPending}
           onClick={() => confirmation.mutate()}
@@ -461,9 +806,6 @@ export function RecommendedApproachScreen() {
             : t("approach.confirm")}
           <ArrowRight />
         </Button>
-        <p className="text-xs text-muted-foreground">
-          {t("approach.confirmationHelp")}
-        </p>
       </footer>
     </div>
   )

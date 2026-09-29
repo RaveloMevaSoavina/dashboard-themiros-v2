@@ -11,7 +11,6 @@ import {
   LoaderCircle,
   LogOut,
   Pencil,
-  Sparkles,
   Trash2,
 } from "lucide-react"
 import { useMemo, useState } from "react"
@@ -24,6 +23,10 @@ import {
   isPredefinedWorkspaceTheme,
   WorkspaceThemesField,
 } from "@/features/workspaces/components/workspace-themes-field"
+import {
+  type EditableWorkspaceFinancier,
+  WorkspaceFinanciersField,
+} from "@/features/workspaces/components/workspace-financiers-field"
 import type {
   ObjectType,
   Workspace,
@@ -64,12 +67,6 @@ const moduleIcons = {
   policy: Landmark,
 } satisfies Record<ObjectType, typeof Layers2>
 
-type EditableFinancier = {
-  id: string
-  name: string
-  principal: boolean
-}
-
 type EditableVersion = {
   id: string
   label: string
@@ -90,7 +87,7 @@ export function CreateWorkspaceScreen() {
   const [validationError, setValidationError] = useState<string | null>(null)
   const [name, setName] = useState("")
   const [targetCountry, setTargetCountry] = useState("")
-  const [financiers, setFinanciers] = useState<EditableFinancier[]>([
+  const [financiers, setFinanciers] = useState<EditableWorkspaceFinancier[]>([
     { id: "financier-1", name: "", principal: true },
   ])
   const [themes, setThemes] = useState<string[]>([])
@@ -130,10 +127,13 @@ export function CreateWorkspaceScreen() {
           name,
           objectType: "program",
           targetCountry,
-          financiers: financiers.map(({ name: financierName, principal }) => ({
-            name: financierName,
-            principal,
-          })),
+          financiers: financiers.map(
+            ({ code, name: financierName, principal }) => ({
+              code,
+              name: financierName,
+              principal,
+            })
+          ),
           themes,
           expectedLanguages,
           stage,
@@ -229,35 +229,6 @@ export function CreateWorkspaceScreen() {
 
   function launchGeneration() {
     creation.mutate()
-  }
-
-  function updateFinancier(id: string, value: string) {
-    setFinanciers((current) =>
-      current.map((financier) =>
-        financier.id === id ? { ...financier, name: value } : financier
-      )
-    )
-  }
-
-  function setPrincipalFinancier(id: string) {
-    setFinanciers((current) =>
-      current.map((financier) => ({
-        ...financier,
-        principal: financier.id === id,
-      }))
-    )
-  }
-
-  function removeFinancier(id: string) {
-    setFinanciers((current) => {
-      const remaining = current.filter((financier) => financier.id !== id)
-
-      if (remaining.length > 0 && !remaining.some((item) => item.principal)) {
-        remaining[0] = { ...remaining[0], principal: true }
-      }
-
-      return remaining
-    })
   }
 
   function updateVersion(id: string, field: "label" | "year", value: string) {
@@ -523,75 +494,10 @@ export function CreateWorkspaceScreen() {
                         </select>
                       </Field>
 
-                      <fieldset>
-                        <legend className="text-sm font-medium">
-                          {t("workspaces.creation.financiersLabel")}
-                        </legend>
-                        <p className="mt-1.5 text-[12px] text-muted-foreground">
-                          {t("workspaces.creation.financiersHelp")}
-                        </p>
-                        <div className="mt-3 space-y-3">
-                          {financiers.map((financier) => (
-                            <div
-                              className="flex items-center gap-2"
-                              key={financier.id}
-                            >
-                              <input
-                                aria-label={t("workspaces.creation.principal")}
-                                checked={financier.principal}
-                                className="size-4 accent-foreground"
-                                name="principal-financier"
-                                onChange={() =>
-                                  setPrincipalFinancier(financier.id)
-                                }
-                                type="radio"
-                              />
-                              <Input
-                                className="h-10"
-                                onChange={(event) =>
-                                  updateFinancier(
-                                    financier.id,
-                                    event.target.value
-                                  )
-                                }
-                                placeholder={t(
-                                  "workspaces.creation.financierPlaceholder"
-                                )}
-                                value={financier.name}
-                              />
-                              {financiers.length > 1 ? (
-                                <Button
-                                  aria-label={t("workspaces.creation.remove")}
-                                  onClick={() => removeFinancier(financier.id)}
-                                  size="icon-lg"
-                                  type="button"
-                                  variant="ghost"
-                                >
-                                  <Trash2 />
-                                </Button>
-                              ) : null}
-                            </div>
-                          ))}
-                        </div>
-                        <Button
-                          className="mt-3"
-                          onClick={() =>
-                            setFinanciers((current) => [
-                              ...current,
-                              {
-                                id: crypto.randomUUID(),
-                                name: "",
-                                principal: false,
-                              },
-                            ])
-                          }
-                          type="button"
-                          variant="outline"
-                        >
-                          <CirclePlus />
-                          {t("workspaces.creation.addFinancier")}
-                        </Button>
-                      </fieldset>
+                      <WorkspaceFinanciersField
+                        financiers={financiers}
+                        onChange={setFinanciers}
+                      />
 
                       <WorkspaceThemesField
                         onChange={setThemes}
@@ -856,7 +762,7 @@ type GenerationReviewProps = {
   createdWorkspace: Workspace | null
   endYear: string
   expectedLanguages: WorkspaceLanguage[]
-  financiers: EditableFinancier[]
+  financiers: EditableWorkspaceFinancier[]
   generationError: boolean
   generationStatus: GenerationStatus
   isCreating: boolean
@@ -902,25 +808,14 @@ function GenerationReview({
     new Intl.DisplayNames([i18n.resolvedLanguage ?? i18n.language], {
       type: "region",
     }).of(targetCountry) ?? targetCountry
-  const processIndex = isComplete
-    ? 4
-    : generationStatus === "running"
-      ? 3
-      : createdWorkspace
-        ? 2
-        : isCreating
-          ? 0
-          : generationError
-            ? 0
-            : -1
-  const processSteps = ["workspace", "fingerprint", "queue", "pillars"]
+  const processSteps = ["identity", "scope", "timeline", "workspace"]
   const principalFinancier = financiers.find((item) => item.principal)
 
   return (
     <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] xl:gap-10">
       <section className="animate-in order-2 fade-in slide-in-from-right-6 duration-500">
         <div className="flex size-11 items-center justify-center rounded-xl border border-border">
-          <Sparkles className="size-5" />
+          <Layers2 className="size-5" />
         </div>
         <p className="mt-7 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
           {t("workspaces.creation.generation.eyebrow")}
@@ -939,9 +834,9 @@ function GenerationReview({
         <div className="mt-8 max-w-lg rounded-xl border border-border p-5">
           <ol className="space-y-5">
             {processSteps.map((processStep, index) => {
-              const isStepComplete = index < processIndex
-              const isStepActive = index === processIndex && !generationError
-              const isStepError = index === processIndex && generationError
+              const isStepComplete = isComplete || index < 3
+              const isStepActive = index === 3 && isRunning && !generationError
+              const isStepError = index === 3 && generationError
 
               return (
                 <li className="flex items-start gap-3" key={processStep}>
@@ -952,7 +847,9 @@ function GenerationReview({
                         "border-foreground bg-foreground text-background",
                       isStepActive && "border-foreground",
                       isStepError && "border-foreground",
-                      index > processIndex &&
+                      !isStepComplete &&
+                        !isStepActive &&
+                        !isStepError &&
                         "border-border text-muted-foreground"
                     )}
                   >
@@ -1012,7 +909,7 @@ function GenerationReview({
               {isRunning ? (
                 <LoaderCircle className="animate-spin" />
               ) : (
-                <Sparkles />
+                <ArrowRight />
               )}
               {generationError
                 ? t("workspaces.creation.generation.retry")

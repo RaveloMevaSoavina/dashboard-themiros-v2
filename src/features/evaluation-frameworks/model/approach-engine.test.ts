@@ -23,7 +23,16 @@ const frameworks: ReferenceFramework[] = [
     label: "FIDA (IOE)",
     source: "IOE",
     year: 2026,
-    activated_criteria: {},
+    activated_criteria: {
+      pertinence: { weight: 10 },
+      coherence: { weight: 15 },
+      efficacite: { weight: 15 },
+      efficience: { weight: 10 },
+      impact: { weight: 15 },
+      durabilite: { weight: 15 },
+      equite: { weight: 15 },
+      gestion_adaptative: { weight: 15 },
+    },
     specific_angles: [],
   },
   {
@@ -113,6 +122,22 @@ test("computes the documented FIDA mid-term recipe deterministically", () => {
   assert.equal(
     first.criteria.reduce((sum, criterion) => sum + criterion.weight, 0),
     100
+  )
+  assert.equal(
+    first.criteria.find((criterion) => criterion.code === "pertinence")
+      ?.source,
+    "framework"
+  )
+  assert.equal(
+    first.criteria.find((criterion) => criterion.code === "efficacite")
+      ?.source,
+    "nature"
+  )
+  assert.ok(
+    (first.criteria.find((criterion) => criterion.code === "efficacite")
+      ?.weight ?? 0) >
+      (first.criteria.find((criterion) => criterion.code === "efficience")
+        ?.weight ?? 0)
   )
 })
 

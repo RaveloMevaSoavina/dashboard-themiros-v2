@@ -470,10 +470,10 @@ export function computeCriteria(
       code: criterion.code,
       applicability,
       baseWeight,
-      source: frameworkOverride
-        ? ("framework" as const)
-        : accented
-          ? ("nature" as const)
+      source: accented
+        ? ("nature" as const)
+        : frameworkOverride
+          ? ("framework" as const)
           : ("cycle" as const),
     }
   })
