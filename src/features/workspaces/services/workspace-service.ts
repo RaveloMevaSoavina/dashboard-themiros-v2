@@ -53,6 +53,24 @@ type WorkspaceDetailsRow = {
   organizations: { name: string } | null
 }
 
+type WorkspaceApproachContextRow = {
+  id: string
+  name: string
+  kind: ObjectType
+  target_country: string
+  financiers: unknown
+  themes: string[]
+  expected_languages: WorkspaceLanguage[]
+  declared_stage: WorkspaceStage
+  start_year: number
+  end_year: number
+  program_versions: {
+    label: string
+    year: number
+    order_index: number
+  }[]
+}
+
 export type WorkspaceAccountContext = {
   organizationId: string | null
   organizationName: string | null
@@ -62,8 +80,24 @@ export type WorkspaceAccountContext = {
 export type PillarGenerationJob = {
   id: string
   workspace_id: string
+  approach_id: string | null
+  framework_id: string | null
   status: "queued" | "running" | "completed" | "failed" | "cancelled"
   error_message: string | null
+}
+
+export type WorkspaceApproachContext = {
+  id: string
+  name: string
+  objectType: ObjectType
+  targetCountry: string
+  financiers: WorkspaceFinancierInput[]
+  themes: string[]
+  expectedLanguages: WorkspaceLanguage[]
+  stage: WorkspaceStage
+  startYear: number
+  endYear: number
+  versions: { label: string; year: number }[]
 }
 
 const workspaceSelect = `
@@ -133,6 +167,50 @@ export async function getWorkspaceAccountContext(
     organizationId: profile.organization_id,
     organizationName: profile.organizations?.name ?? null,
     role: profile.role,
+  }
+}
+
+export async function getWorkspaceApproachContext(
+  workspaceId: string
+): Promise<WorkspaceApproachContext> {
+  const { data, error } = await supabase
+    .from("workspaces")
+    .select(`
+      id,
+      name,
+      kind,
+      target_country,
+      financiers,
+      themes,
+      expected_languages,
+      declared_stage,
+      start_year,
+      end_year,
+      program_versions (label, year, order_index)
+    `)
+    .eq("id", workspaceId)
+    .single()
+
+  if (error) {
+    throw error
+  }
+
+  const workspace = data as unknown as WorkspaceApproachContextRow
+
+  return {
+    id: workspace.id,
+    name: workspace.name,
+    objectType: workspace.kind,
+    targetCountry: workspace.target_country,
+    financiers: parseFinanciers(workspace.financiers),
+    themes: workspace.themes,
+    expectedLanguages: workspace.expected_languages,
+    stage: workspace.declared_stage,
+    startYear: workspace.start_year,
+    endYear: workspace.end_year,
+    versions: [...workspace.program_versions]
+      .sort((first, second) => first.order_index - second.order_index)
+      .map(({ label, year }) => ({ label, year })),
   }
 }
 
@@ -347,7 +425,9 @@ export async function getPillarGenerationJob(
 ): Promise<PillarGenerationJob> {
   const { data, error } = await supabase
     .from("pillar_generation_jobs")
-    .select("id, workspace_id, status, error_message")
+    .select(
+      "id, workspace_id, approach_id, framework_id, status, error_message"
+    )
     .eq("id", jobId)
     .single()
 
@@ -356,4 +436,24 @@ export async function getPillarGenerationJob(
   }
 
   return data as PillarGenerationJob
+}
+
+export async function getLatestPillarGenerationJob(
+  workspaceId: string
+): Promise<PillarGenerationJob | null> {
+  const { data, error } = await supabase
+    .from("pillar_generation_jobs")
+    .select(
+      "id, workspace_id, approach_id, framework_id, status, error_message"
+    )
+    .eq("workspace_id", workspaceId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  return data as PillarGenerationJob | null
 }

@@ -9,15 +9,19 @@ import { CorpusInventoryScreen } from "@/features/corpus/screens/corpus-inventor
 import { DocumentDetailScreen } from "@/features/corpus/screens/document-detail-screen"
 import { DocumentsReviewScreen } from "@/features/corpus/screens/documents-review-screen"
 import { ImportDocumentsScreen } from "@/features/corpus/screens/import-documents-screen"
+import { navSections } from "@/features/dashboard/model/navigation"
+import { DashboardLayout } from "@/features/dashboard/screens/dashboard-layout"
+import { PlaceholderScreen } from "@/features/dashboard/screens/placeholder-screen"
+import { ApproachFlowLayout } from "@/features/evaluation-frameworks/screens/approach-flow-layout"
+import { ApproachGenerationScreen } from "@/features/evaluation-frameworks/screens/approach-generation-screen"
+import { ApproachPillarsScreen } from "@/features/evaluation-frameworks/screens/approach-pillars-screen"
+import { RecommendedApproachScreen } from "@/features/evaluation-frameworks/screens/recommended-approach-screen"
 import { AlertsScreen } from "@/features/evaluations/screens/alerts-screen"
 import { AnalysisOverviewScreen } from "@/features/evaluations/screens/analysis-overview-screen"
 import { FrameworkCriteriaScreen } from "@/features/evaluations/screens/framework-criteria-screen"
 import { FrameworkPillarsScreen } from "@/features/evaluations/screens/framework-pillars-screen"
 import { LayerAScreen } from "@/features/evaluations/screens/layer-a-screen"
 import { LayerBScreen } from "@/features/evaluations/screens/layer-b-screen"
-import { navSections } from "@/features/dashboard/model/navigation"
-import { DashboardLayout } from "@/features/dashboard/screens/dashboard-layout"
-import { PlaceholderScreen } from "@/features/dashboard/screens/placeholder-screen"
 import { CreateWorkspaceScreen } from "@/features/workspaces/screens/create-workspace-screen"
 import { WorkspaceAccessLayout } from "@/features/workspaces/screens/workspace-access-layout"
 import { WorkspaceProviderLayout } from "@/features/workspaces/screens/workspace-provider-layout"
@@ -124,6 +128,23 @@ export const appRouter = createBrowserRouter([
                   {
                     path: "/workspaces/new",
                     element: <CreateWorkspaceScreen />,
+                  },
+                  {
+                    element: <ApproachFlowLayout />,
+                    children: [
+                      {
+                        path: "/workspaces/:workspaceId/approach",
+                        element: <RecommendedApproachScreen />,
+                      },
+                      {
+                        path: "/workspaces/:workspaceId/approach/generation",
+                        element: <ApproachGenerationScreen />,
+                      },
+                      {
+                        path: "/workspaces/:workspaceId/approach/pillars",
+                        element: <ApproachPillarsScreen />,
+                      },
+                    ],
                   },
                   {
                     element: <DashboardLayout />,

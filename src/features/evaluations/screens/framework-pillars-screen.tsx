@@ -27,7 +27,15 @@ function toCycle(stage: WorkspaceStage): EvaluationCycle {
   return "en_cours"
 }
 
-export function FrameworkPillarsScreen() {
+type FrameworkPillarsScreenProps = {
+  onValidated?: () => void
+}
+
+const WEIGHT_TOLERANCE = 0.01
+
+export function FrameworkPillarsScreen({
+  onValidated,
+}: FrameworkPillarsScreenProps = {}) {
   const { i18n, t } = useTranslation()
   const { workspaceId = "" } = useParams<{ workspaceId: string }>()
   const queryClient = useQueryClient()
@@ -67,6 +75,8 @@ export function FrameworkPillarsScreen() {
   const [pillars, setPillars] = useState<EvaluationPillar[]>([])
   useEffect(() => setPillars(sourcePillars), [sourcePillars])
   const total = pillars.reduce((sum, pillar) => sum + pillar.weight, 0)
+  const displayedTotal = Math.round((total + Number.EPSILON) * 100) / 100
+  const hasValidTotal = Math.abs(total - 100) <= WEIGHT_TOLERANCE
   const loading =
     details.isPending || generated.isPending || references.isPending
   const failed = details.isError || generated.isError || references.isError
@@ -85,6 +95,7 @@ export function FrameworkPillarsScreen() {
         queryClient.invalidateQueries({ queryKey: ["workspaces", "list"] }),
       ])
       toast.success(t("evaluation.framework.validated"))
+      onValidated?.()
     },
     onError: () => toast.error(t("evaluation.framework.validationError")),
   })
@@ -127,7 +138,7 @@ export function FrameworkPillarsScreen() {
                 {t("evaluation.framework.totalWeight")}
               </p>
               <p className="mt-1 text-lg font-semibold tabular-nums">
-                {total}%
+                {displayedTotal}%
               </p>
             </div>
             <div className="flex gap-2">
@@ -136,7 +147,7 @@ export function FrameworkPillarsScreen() {
               </Button>
               <Button
                 disabled={
-                  total !== 100 ||
+                  !hasValidTotal ||
                   (generated.data?.length ?? 0) === 0 ||
                   validation.isPending
                 }
