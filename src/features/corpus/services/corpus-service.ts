@@ -4,6 +4,7 @@ import type {
   DocumentCategory,
   DocumentEvent,
   DocumentStatus,
+  IngestionState,
   ProgramVersion,
 } from "@/features/corpus/model/types"
 import { supabase } from "@/shared/lib/supabase"
@@ -21,6 +22,13 @@ type DocumentRow = {
   relevance_score: number | null
   status: DocumentStatus
   status_reason: string | null
+  status_reason_code: string | null
+  status_reason_params: Record<string, unknown> | null
+  processing_state: IngestionState
+  language_to_confirm: boolean
+  language_expected: boolean | null
+  ingestion_error_code: string | null
+  indexed_at: string | null
   exploitable_pages: number | null
   total_pages: number | null
   integrated_by_human: boolean
@@ -33,10 +41,42 @@ type DocumentRow = {
 const documentSelect = `
   id, workspace_id, original_filename, storage_path, file_size_bytes,
   mime_type, category, detected_language, detected_country, relevance_score,
-  status, status_reason, exploitable_pages, total_pages,
+  status, status_reason, status_reason_code, status_reason_params,
+  processing_state, language_to_confirm, language_expected,
+  ingestion_error_code, indexed_at, exploitable_pages, total_pages,
   integrated_by_human, created_at,
   document_versions (program_versions (id, label, year))
 `
+
+/** Les formats acceptés par le bucket `documents` (spec §4.1). */
+const mimeTypes: Record<string, string> = {
+  pdf: "application/pdf",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+}
+
+/** Erreur métier levée par une fonction Supabase (`INGESTION_LOCKED`...). */
+export class IngestionRequestError extends Error {
+  readonly code: string
+  readonly detail: string | null
+
+  constructor(code: string, detail: string | null = null) {
+    super(code)
+    this.name = "IngestionRequestError"
+    this.code = code
+    this.detail = detail
+  }
+}
+
+function toRequestError(error: {
+  message?: string
+  details?: string | null
+}): Error {
+  const code = error.message ?? ""
+  return /^[A-Z_]+$/.test(code)
+    ? new IngestionRequestError(code, error.details ?? null)
+    : new Error(code || "Supabase request failed")
+}
 
 function toDocument(row: DocumentRow): CorpusDocument {
   return {
@@ -52,6 +92,13 @@ function toDocument(row: DocumentRow): CorpusDocument {
     relevanceScore: row.relevance_score,
     status: row.status,
     statusReason: row.status_reason,
+    statusReasonCode: row.status_reason_code,
+    statusReasonParams: row.status_reason_params ?? {},
+    processingState: row.processing_state,
+    languageToConfirm: row.language_to_confirm,
+    languageExpected: row.language_expected,
+    ingestionErrorCode: row.ingestion_error_code,
+    indexedAt: row.indexed_at,
     exploitablePages: row.exploitable_pages,
     totalPages: row.total_pages,
     integratedByHuman: row.integrated_by_human,
@@ -112,155 +159,168 @@ export async function listCorpusThresholds(): Promise<CorpusThreshold[]> {
   }))
 }
 
-async function sha256(file: File) {
+export async function hashFile(file: File) {
   const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer())
   return Array.from(new Uint8Array(digest), (byte) =>
     byte.toString(16).padStart(2, "0")
   ).join("")
 }
 
+export type ExistingDocument = { id: string; filename: string }
+
+/** Spec ingestion §3.3 : un même `file_hash` dans l'espace est un doublon. */
+export async function findDocumentsByHash(
+  workspaceId: string,
+  hashes: string[]
+): Promise<Map<string, ExistingDocument>> {
+  if (hashes.length === 0) return new Map()
+  const { data, error } = await supabase
+    .from("documents")
+    .select("id, original_filename, file_hash")
+    .eq("workspace_id", workspaceId)
+    .in("file_hash", hashes)
+    .is("deleted_at", null)
+
+  if (error) throw error
+  return new Map(
+    (data ?? []).map((row) => [
+      row.file_hash,
+      { id: row.id, filename: row.original_filename },
+    ])
+  )
+}
+
+export async function recordDuplicateDetected(
+  existing: ExistingDocument,
+  input: { filename: string; hash: string }
+) {
+  const { error } = await supabase.rpc("record_duplicate_detected", {
+    p_existing_document_id: existing.id,
+    p_filename: input.filename,
+    p_hash: input.hash,
+  })
+  if (error) throw toRequestError(error)
+}
+
+/**
+ * Dépose le fichier dans le stockage puis l'enregistre : la fonction
+ * `register_document` contrôle verrou, format, taille et doublon, journalise
+ * le chargement et met le document dans la file de traitement.
+ */
 export async function uploadDocument(input: {
   workspaceId: string
   file: File
+  hash?: string
   category: DocumentCategory
-  country: string
   versionId?: string
-}) {
-  const hash = await sha256(input.file)
+  allowDuplicate?: boolean
+}): Promise<{ documentId: string; jobId: string }> {
+  const hash = input.hash ?? (await hashFile(input.file))
   const documentId = crypto.randomUUID()
+  const extension = input.file.name.split(".").pop()?.toLowerCase() ?? ""
+  const contentType = mimeTypes[extension] ?? input.file.type
   const safeName = input.file.name.replace(/[^a-zA-Z0-9._-]+/g, "-")
   const storagePath = `${input.workspaceId}/${documentId}/${safeName}`
   const { error: uploadError } = await supabase.storage
     .from("documents")
-    .upload(storagePath, input.file, { contentType: input.file.type })
+    .upload(storagePath, input.file, { contentType })
 
   if (uploadError) throw uploadError
 
-  const { data, error } = await supabase
-    .from("documents")
-    .insert({
-      id: documentId,
-      workspace_id: input.workspaceId,
-      original_filename: input.file.name,
-      storage_path: storagePath,
-      file_hash: hash,
-      file_size_bytes: input.file.size,
-      mime_type: input.file.type || "application/octet-stream",
-      category: input.category,
-      detected_country: input.country || null,
-      status: "a_verifier",
-      status_reason: "Traitement documentaire en attente",
-    })
-    .select(documentSelect)
-    .single()
+  const { data, error } = await supabase.rpc("register_document", {
+    p_document_id: documentId,
+    p_workspace_id: input.workspaceId,
+    p_storage_path: storagePath,
+    p_original_filename: input.file.name,
+    p_file_hash: hash,
+    p_file_size_bytes: input.file.size,
+    p_mime_type: contentType,
+    p_category: input.category,
+    p_program_version_id: input.versionId ?? null,
+    p_allow_duplicate: input.allowDuplicate ?? false,
+  })
 
   if (error) {
     await supabase.storage.from("documents").remove([storagePath])
-    throw error
+    throw toRequestError(error)
   }
 
-  if (input.versionId) {
-    const { error: versionError } = await supabase
-      .from("document_versions")
-      .insert({ document_id: documentId, program_version_id: input.versionId })
-    if (versionError) {
-      await supabase.from("documents").delete().eq("id", documentId)
-      await supabase.storage.from("documents").remove([storagePath])
-      throw versionError
-    }
-  }
-
-  await addDocumentEvent(documentId, "document_uploaded", input.file.name, {
-    category: input.category,
-    size: input.file.size,
-  })
-
-  return toDocument(data as unknown as DocumentRow)
-}
-
-async function addDocumentEvent(
-  documentId: string,
-  eventType: string,
-  message: string,
-  metadata: Record<string, unknown> = {}
-) {
-  const { data } = await supabase.auth.getUser()
-  const { error } = await supabase.from("document_events").insert({
-    document_id: documentId,
-    event_type: eventType,
-    message,
-    actor_id: data.user?.id ?? null,
-    metadata,
-  })
-  if (error) throw error
+  const result = data as { document_id: string; job_id: string }
+  return { documentId: result.document_id, jobId: result.job_id }
 }
 
 export async function updateDocumentCategory(
   documentId: string,
   category: DocumentCategory
 ) {
-  const { error } = await supabase
-    .from("documents")
-    .update({ category })
-    .eq("id", documentId)
-  if (error) throw error
-  await addDocumentEvent(documentId, "metadata_corrected", category)
+  await correctDocumentMetadata(documentId, { category })
 }
 
+/** UC15 : la correction est journalisée et relance le contrôle si besoin. */
+export async function correctDocumentMetadata(
+  documentId: string,
+  values: {
+    category?: DocumentCategory
+    language?: string
+    country?: string
+    versionId?: string | null
+  }
+) {
+  const { error } = await supabase.rpc("correct_document_metadata", {
+    p_document_id: documentId,
+    p_category: values.category ?? null,
+    p_language: values.language ?? null,
+    p_country: values.country ?? null,
+    p_program_version_id: values.versionId ?? null,
+    p_clear_version: values.versionId === null,
+  })
+  if (error) throw toRequestError(error)
+}
+
+/** RG-4.2 : « Ajouter quand même » ; RG-4.1 : « Annuler ». */
 export async function decideDocument(
   documentId: string,
-  decision: "integrate" | "verify" | "reject"
+  decision: "add_anyway" | "cancel",
+  reason?: string
 ) {
-  const { data } = await supabase.auth.getUser()
-  const now = new Date().toISOString()
-  const values =
-    decision === "integrate"
-      ? {
-          status: "integre_decision_humaine" as const,
-          status_reason: "Intégré sur décision humaine",
-          integrated_by_human: true,
-          integrated_by_user_id: data.user?.id ?? null,
-          integrated_at: now,
-        }
-      : decision === "reject"
-        ? {
-            status: "rejete" as const,
-            status_reason: "Écarté lors de la revue documentaire",
-            integrated_by_human: false,
-          }
-        : {
-            status: "a_verifier" as const,
-            status_reason: "Vérification manuelle demandée",
-            integrated_by_human: false,
-          }
-
-  const { error } = await supabase
-    .from("documents")
-    .update(values)
-    .eq("id", documentId)
-  if (error) throw error
-  await addDocumentEvent(
-    documentId,
-    `document_${decision}`,
-    values.status_reason
-  )
+  const { error } = await supabase.rpc("decide_document", {
+    p_document_id: documentId,
+    p_decision: decision,
+    p_reason: reason ?? null,
+  })
+  if (error) throw toRequestError(error)
 }
 
+export async function retryDocumentIngestion(documentId: string) {
+  const { error } = await supabase.rpc("retry_document_ingestion", {
+    p_document_id: documentId,
+  })
+  if (error) throw toRequestError(error)
+}
+
+/** Historique des contrôles, blocages, corrections et validations (US-10.3). */
 export async function listDocumentEvents(
   documentId: string
 ): Promise<DocumentEvent[]> {
   const { data, error } = await supabase
-    .from("document_events")
-    .select("id, event_type, message, created_at")
-    .eq("document_id", documentId)
+    .from("audit_events")
+    .select("id, operation, metadata, created_at")
+    .eq("object_type", "document")
+    .eq("object_id", documentId)
     .order("created_at", { ascending: false })
   if (error) throw error
-  return (data ?? []).map((row) => ({
-    id: row.id,
-    type: row.event_type,
-    message: row.message,
-    createdAt: row.created_at,
-  }))
+  return (data ?? []).map((row) => {
+    const metadata = (row.metadata ?? {}) as Record<string, unknown>
+    const message = [metadata.reason, metadata.message].find(
+      (value): value is string => typeof value === "string" && value !== ""
+    )
+    return {
+      id: row.id,
+      type: row.operation,
+      message: message ?? null,
+      createdAt: row.created_at,
+    }
+  })
 }
 
 export async function getDocumentUrl(path: string) {

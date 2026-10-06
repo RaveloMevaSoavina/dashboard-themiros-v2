@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 
 import { DocumentStatusBadge } from "@/features/corpus/components/document-status-badge"
+import { canAddAnyway, canCancel } from "@/features/corpus/model/ingestion"
 import type {
   CorpusDocument,
   DocumentCategory,
@@ -70,7 +71,7 @@ export function DocumentsTable({
       decision,
     }: {
       id: string
-      decision: "integrate" | "verify" | "reject"
+      decision: "add_anyway" | "cancel"
     }) => decideDocument(id, decision),
     onSuccess: async () => {
       await refresh()
@@ -185,8 +186,17 @@ export function DocumentsTable({
                   t(`corpus.category.${document.category}`)
                 )}
               </td>
-              <td className="px-3 py-3 uppercase text-muted-foreground">
-                {document.language ?? "—"}
+              <td className="px-3 py-3 text-muted-foreground">
+                <span className="uppercase">{document.language ?? "—"}</span>
+                {document.languageToConfirm ? (
+                  <span className="mt-0.5 block text-[11px] normal-case">
+                    {t("corpus.table.languageToConfirm")}
+                  </span>
+                ) : document.languageExpected === false ? (
+                  <span className="mt-0.5 block text-[11px] normal-case">
+                    {t("corpus.table.languageUnexpected")}
+                  </span>
+                ) : null}
               </td>
               <td className="px-3 py-3 text-muted-foreground">
                 {document.country ?? "—"}
@@ -223,39 +233,34 @@ export function DocumentsTable({
                     >
                       <ExternalLink /> {t("corpus.actions.open")}
                     </DropdownMenuItem>
-                    {editable ? (
+                    {editable &&
+                    (canAddAnyway(document) || canCancel(document)) ? (
                       <>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() =>
-                            decisionMutation.mutate({
-                              id: document.id,
-                              decision: "integrate",
-                            })
-                          }
-                        >
-                          {t("corpus.actions.integrate")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            decisionMutation.mutate({
-                              id: document.id,
-                              decision: "verify",
-                            })
-                          }
-                        >
-                          {t("corpus.actions.verify")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            decisionMutation.mutate({
-                              id: document.id,
-                              decision: "reject",
-                            })
-                          }
-                        >
-                          {t("corpus.actions.reject")}
-                        </DropdownMenuItem>
+                        {canAddAnyway(document) ? (
+                          <DropdownMenuItem
+                            onClick={() =>
+                              decisionMutation.mutate({
+                                id: document.id,
+                                decision: "add_anyway",
+                              })
+                            }
+                          >
+                            {t("corpus.actions.integrate")}
+                          </DropdownMenuItem>
+                        ) : null}
+                        {canCancel(document) ? (
+                          <DropdownMenuItem
+                            onClick={() =>
+                              decisionMutation.mutate({
+                                id: document.id,
+                                decision: "cancel",
+                              })
+                            }
+                          >
+                            {t("corpus.actions.reject")}
+                          </DropdownMenuItem>
+                        ) : null}
                       </>
                     ) : null}
                   </DropdownMenuContent>

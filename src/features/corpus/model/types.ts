@@ -12,8 +12,20 @@ export const documentStatuses = [
   "non_classe",
 ] as const
 
+/** Avancement technique du pipeline, indépendant de la décision (status). */
+export const ingestionStates = [
+  "pending",
+  "extraction",
+  "detection",
+  "pertinence",
+  "indexation",
+  "ready",
+  "failed",
+] as const
+
 export type DocumentCategory = (typeof documentCategories)[number]
 export type DocumentStatus = (typeof documentStatuses)[number]
+export type IngestionState = (typeof ingestionStates)[number]
 
 export type CorpusDocument = {
   id: string
@@ -28,6 +40,13 @@ export type CorpusDocument = {
   relevanceScore: number | null
   status: DocumentStatus
   statusReason: string | null
+  statusReasonCode: string | null
+  statusReasonParams: Record<string, unknown>
+  processingState: IngestionState
+  languageToConfirm: boolean
+  languageExpected: boolean | null
+  ingestionErrorCode: string | null
+  indexedAt: string | null
   exploitablePages: number | null
   totalPages: number | null
   integratedByHuman: boolean

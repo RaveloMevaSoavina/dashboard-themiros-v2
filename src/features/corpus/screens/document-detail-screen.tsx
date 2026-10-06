@@ -3,7 +3,10 @@ import { ArrowLeft, ExternalLink, FileText, RotateCcw } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router-dom"
 
+import { DocumentDecisionActions } from "@/features/corpus/components/document-decision-actions"
 import { DocumentStatusBadge } from "@/features/corpus/components/document-status-badge"
+import { DocumentStatusMessage } from "@/features/corpus/components/document-status-message"
+import { isAwaitingQualification } from "@/features/corpus/model/ingestion"
 import {
   getDocument,
   getDocumentUrl,
@@ -23,6 +26,10 @@ export function DocumentDetailScreen() {
     queryKey: ["corpus", workspaceId, "document", documentId],
     queryFn: () => getDocument(workspaceId, documentId),
     enabled: Boolean(workspaceId && documentId),
+    refetchInterval: (query) =>
+      query.state.data && isAwaitingQualification(query.state.data)
+        ? 5000
+        : false,
   })
   const events = useQuery({
     queryKey: ["corpus", workspaceId, "document", documentId, "events"],
@@ -109,11 +116,8 @@ export function DocumentDetailScreen() {
         </Button>
       </div>
 
-      {item.statusReason ? (
-        <div className="mt-6 rounded-xl border border-border p-4 text-[13px] text-muted-foreground">
-          {item.statusReason}
-        </div>
-      ) : null}
+      <DocumentStatusMessage className="mt-6 text-[13px]" document={item} />
+      <DocumentDecisionActions className="mt-3" document={item} />
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section className="rounded-xl border border-border p-5">

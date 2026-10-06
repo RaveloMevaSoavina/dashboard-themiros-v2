@@ -7,6 +7,7 @@ import { toast } from "sonner"
 
 import { CorpusPageHeader } from "@/features/corpus/components/corpus-page-header"
 import { DocumentsTable } from "@/features/corpus/components/documents-table"
+import { isAwaitingQualification } from "@/features/corpus/model/ingestion"
 import type {
   DocumentCategory,
   DocumentStatus,
@@ -31,6 +32,8 @@ export function DocumentsReviewScreen() {
     queryKey: ["corpus", workspaceId, "documents"],
     queryFn: () => listDocuments(workspaceId),
     enabled: Boolean(workspaceId),
+    refetchInterval: (query) =>
+      query.state.data?.some(isAwaitingQualification) ? 5000 : false,
   })
   const filtered = useMemo(
     () =>

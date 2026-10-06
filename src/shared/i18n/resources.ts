@@ -664,6 +664,8 @@ export const resources = {
           version: "Version",
           score: "Pertinence",
           status: "Statut",
+          languageToConfirm: "À confirmer",
+          languageUnexpected: "Langue non attendue",
           actions: "Actions",
         },
         actions: {
@@ -672,6 +674,63 @@ export const resources = {
           verify: "Marquer à vérifier",
           reject: "Rejeter",
         },
+        messages: {
+          countryMismatch:
+            "⚠ Ce document semble concerner {{detected}}, alors que ce workspace est configuré pour {{target}}. Souhaitez-vous l'ajouter quand même, vérifier le document, ou l'annuler ?",
+          outOfScope:
+            "⚠ Ce document ne semble pas lié au programme analysé dans ce workspace. Le moteur n'a pas identifié de contenu pertinent pour les piliers d'analyse définis. Souhaitez-vous l'ajouter quand même, vérifier, ou annuler ?",
+          countryUndetected:
+            "⚠ Le pays concerné par ce document n'a pas pu être détecté. Souhaitez-vous l'ajouter quand même, vérifier le document, ou l'annuler ?",
+          partialCoverage:
+            "ℹ Ce document a été accepté, mais seules {{n}} pages sur {{total}} contiennent du contenu exploitable pour l'analyse. Les scores refléteront cette couverture partielle.",
+          humanAdd: "Intégré au corpus sur décision humaine.",
+          humanCancel:
+            "Annulé sur décision humaine : ce document n'alimente pas l'analyse.",
+        },
+        ingestionErrors: {
+          default:
+            "Le traitement du document a échoué. Vous pouvez le relancer.",
+          CORRUPTED_FILE:
+            "Le contenu du document est illisible ou corrompu : il n'a pas été intégré.",
+          UNSUPPORTED_FORMAT:
+            "Ce format n'est pas pris en charge : seuls les PDF, DOCX et XLSX le sont.",
+          PASSWORD_PROTECTED_PDF:
+            "Le PDF est protégé par un mot de passe : chargez une version sans protection.",
+          NO_EXPLOITABLE_CONTENT:
+            "Aucune page du document ne contient de texte exploitable.",
+          FILE_INTEGRITY_ERROR:
+            "Le fichier stocké ne correspond pas au document chargé. Chargez-le de nouveau.",
+          DOCUMENT_FILE_NOT_FOUND:
+            "Le fichier du document est introuvable dans le stockage.",
+          OCR_SERVICE_UNAVAILABLE:
+            "Le service de lecture des scans est indisponible. Relancez le traitement plus tard.",
+          EMBEDDING_SERVICE_UNAVAILABLE:
+            "L'analyse sémantique est momentanément indisponible. Relancez le traitement plus tard.",
+          AI_PROVIDER_NOT_CONFIGURED:
+            "L'analyse sémantique n'est pas configurée sur le serveur.",
+          WORKER_TIMEOUT:
+            "Le traitement a dépassé le délai autorisé. Vous pouvez le relancer.",
+        },
+        requestErrors: {
+          INGESTION_LOCKED:
+            "L'import s'ouvre à la validation du cadre d'analyse.",
+          UNSUPPORTED_FORMAT:
+            "Seuls les fichiers PDF, DOCX et XLSX sont acceptés.",
+          FILE_TOO_LARGE: "Le fichier dépasse la taille maximale autorisée.",
+          DUPLICATE_DOCUMENT:
+            "Un fichier identique est déjà présent dans ce corpus documentaire.",
+          VERSION_REQUIRED:
+            "Choisissez la version de rattachement du programme.",
+          VERSION_NOT_FOUND: "Cette version du programme n'existe plus.",
+          STORAGE_OBJECT_MISSING:
+            "Le fichier n'a pas été reçu par le stockage. Réessayez.",
+          INVALID_FILE_HASH: "Le fichier n'a pas pu être vérifié. Réessayez.",
+          WORKSPACE_ACCESS_DENIED:
+            "Vous n'avez pas accès à cet espace de travail.",
+          DOCUMENT_NOT_READY: "Le document est encore en cours de traitement.",
+          INVALID_TRANSITION:
+            "Cette décision n'est plus possible pour ce document.",
+        },
         errors: {
           load: "Impossible de charger le corpus documentaire.",
           update: "La modification du document a échoué.",
@@ -679,28 +738,119 @@ export const resources = {
         import: {
           title: "Import documentaire",
           description:
-            "Ajoutez plusieurs fichiers avec des métadonnées communes. Leur contenu sera ensuite qualifié avant d'alimenter l'analyse.",
+            "Chargez un ou plusieurs fichiers. Vous ne choisissez que la catégorie : le moteur lit chaque document, détecte sa langue et son pays, puis décide s'il a le droit d'entrer dans l'analyse.",
+          lock: {
+            title: "L'ingestion n'est pas encore activée",
+            description:
+              "Le cadre d'analyse de ce workspace n'est pas encore validé - les piliers doivent être confirmés avant de lancer une analyse. L'import de documents s'ouvre à la validation du cadre.",
+            action: "Voir le cadre",
+          },
           dropTitle: "Déposez vos documents ici",
-          dropDescription: "PDF, DOCX ou XLSX · sélection multiple autorisée",
+          dropDescription: "PDF, DOCX ou XLSX · un ou plusieurs fichiers",
           invalidFormat: "Seuls les fichiers PDF, DOCX et XLSX sont acceptés.",
-          category: "Catégorie commune",
-          country: "Pays cible (pré-rempli)",
+          confirm: {
+            title: "Confirmer le chargement",
+            description:
+              "Vérifiez les fichiers ajoutés et les métadonnées communes qui leur seront appliquées avant de lancer le chargement.",
+            files_one: "{{count}} fichier ajouté",
+            files_other: "{{count}} fichiers ajoutés",
+            filesDescription:
+              "Chaque fichier reprend la catégorie commune ; changez-la ici pour un fichier différent. Les doublons sont signalés et ne seront pas chargés.",
+            cancel: "Annuler",
+          },
+          uploads: {
+            title_one: "{{count}} fichier en cours de chargement",
+            title_other: "{{count}} fichiers en cours de chargement",
+          },
+          retry: "Réessayer",
+          duplicate:
+            "Doublon : identique à « {{name}} », déjà présent. Il ne sera pas chargé.",
+          duplicateAllowed:
+            "Doublon de « {{name}} » : il sera chargé sur votre décision.",
+          duplicateUpload: "Charger quand même",
+          duplicateSkip: "Ne pas charger",
+          state: {
+            checking: "Vérification du fichier…",
+            ready: "Prêt à charger",
+            uploading: "Chargement en cours",
+          },
+          errors: {
+            check:
+              "Le fichier n'a pas pu être vérifié. Retirez-le puis ajoutez-le de nouveau.",
+            duplicate:
+              "Un fichier identique est déjà présent dans ce corpus documentaire.",
+            tooLarge: "Le fichier dépasse la taille maximale autorisée.",
+            upload: "Le chargement a échoué. Vous pouvez réessayer.",
+          },
+          remove: "Retirer {{name}}",
+          tracking: {
+            title: "Suivi du traitement",
+            description:
+              "Les fichiers chargés sont conservés : vous pouvez quitter cette page et retrouver leur état ici ou dans la revue documentaire.",
+            score: "Pertinence {{score}}/100",
+            state: {
+              pending: "En file d'attente de traitement",
+              extraction: "Extraction du texte et OCR",
+              detection: "Détection de la langue et du pays",
+              pertinence: "Analyse de pertinence",
+              indexation: "Segmentation et indexation",
+              failed: "Échec du traitement",
+            },
+          },
+          steps: {
+            upload: "Chargement",
+            extraction: "Extraction",
+            detection: "Détection",
+            pertinence: "Pertinence",
+          },
+          decision: {
+            addAnyway: "Ajouter quand même",
+            verify: "Vérifier",
+            cancel: "Annuler",
+          },
+          metadata: {
+            title: "Métadonnées communes",
+            description:
+              "Saisies une seule fois pour tous les fichiers du lot. Les anomalies se corrigent ensuite ligne à ligne dans la revue documentaire.",
+          },
+          category: "Catégorie documentaire",
+          commonCategory: "Catégorie commune",
+          commonCategoryHint:
+            "Appliquée à tous les fichiers du lot, sauf ceux dont la catégorie a été changée.",
+          commonCategoryOption: "Catégorie commune ({{category}})",
+          fileCategory: "Catégorie de {{name}}",
+          categoryHint: {
+            principal: "ProDoc, PAR, rapport d'évaluation…",
+            complementaire: "Annexes, données, budgets, MRV…",
+            autre: "Toute autre pièce utile à l'analyse",
+          },
           version: "Version de rattachement",
           selectVersion: "Sélectionnez une version",
+          versionHint:
+            "Demandée car l'espace compare plusieurs versions du programme.",
+          versionRequired:
+            "Choisissez la version de rattachement pour charger les fichiers.",
+          country: "Pays cible",
+          countryHint:
+            "Pré-rempli depuis l'espace de travail et comparé au pays détecté dans chaque document.",
+          language: "Langue",
+          languageHint:
+            "Détectée automatiquement pour chaque document. Une langue non attendue est signalée, sans bloquer l'analyse. Langues attendues :",
           submit: "Charger les documents",
+          submitCount_one: "Charger {{count}} document",
+          submitCount_other: "Charger {{count}} documents",
           openReview: "Ouvrir la revue documentaire",
-          remove: "Retirer le fichier",
-          processingNote:
-            "Après le chargement, les documents restent « À vérifier » jusqu'à la fin du traitement d'extraction, de détection et de pertinence.",
           success:
             "Les documents ont été chargés et ajoutés à la file de traitement.",
           failure:
             "Un ou plusieurs documents n'ont pas pu être chargés. Vous pouvez les relancer.",
-          state: {
-            ready: "Prêt à charger",
-            uploading: "Chargement en cours",
-            complete: "Chargé · traitement en attente",
-            error: "Échec du chargement",
+          engine: {
+            title: "Décision du moteur",
+            description:
+              "Chaque document reçoit un score de pertinence de 0 à 100, calculé par rapport à l'empreinte sémantique de l'espace.",
+            accepted: "Conforme, intégré au corpus",
+            ambiguous: "À vérifier : ajouter, vérifier ou annuler",
+            rejected: "Rejeté avec motif, non intégré",
           },
         },
         review: {
@@ -768,6 +918,21 @@ export const resources = {
         },
         events: {
           document_uploaded: "Document chargé",
+          document_duplicate_detected: "Doublon détecté",
+          document_extracted: "Texte extrait",
+          document_language_detected: "Langue détectée",
+          document_country_detected: "Pays détecté",
+          document_relevance_scored: "Pertinence calculée",
+          document_qualified: "Document qualifié",
+          document_rejected: "Document rejeté",
+          document_segmented: "Document segmenté",
+          document_indexed: "Document indexé",
+          document_unindexed: "Document retiré de l'index",
+          document_integrated_by_human: "Intégré sur décision humaine",
+          document_cancelled_by_human: "Annulé sur décision humaine",
+          document_metadata_corrected: "Métadonnées corrigées",
+          document_ingestion_failed: "Échec du traitement",
+          document_ingestion_retried: "Traitement relancé",
           metadata_corrected: "Métadonnées corrigées",
           document_integrate: "Intégration décidée manuellement",
           document_verify: "Vérification demandée",
@@ -1590,6 +1755,8 @@ export const resources = {
           version: "Version",
           score: "Relevance",
           status: "Status",
+          languageToConfirm: "To confirm",
+          languageUnexpected: "Unexpected language",
           actions: "Actions",
         },
         actions: {
@@ -1598,6 +1765,57 @@ export const resources = {
           verify: "Mark for review",
           reject: "Reject",
         },
+        messages: {
+          countryMismatch:
+            "⚠ This document seems to concern {{detected}}, while this workspace is configured for {{target}}. Do you want to add it anyway, review the document, or cancel it?",
+          outOfScope:
+            "⚠ This document does not seem related to the programme analysed in this workspace. The engine found no content relevant to the defined analysis pillars. Do you want to add it anyway, review it, or cancel it?",
+          countryUndetected:
+            "⚠ The country this document concerns could not be detected. Do you want to add it anyway, review the document, or cancel it?",
+          partialCoverage:
+            "ℹ This document was accepted, but only {{n}} of {{total}} pages contain content usable for the analysis. Scores will reflect this partial coverage.",
+          humanAdd: "Included in the corpus by human decision.",
+          humanCancel:
+            "Cancelled by human decision: this document does not feed the analysis.",
+        },
+        ingestionErrors: {
+          default: "Document processing failed. You can run it again.",
+          CORRUPTED_FILE:
+            "The document content is unreadable or corrupted: it was not included.",
+          UNSUPPORTED_FORMAT:
+            "This format is not supported: only PDF, DOCX and XLSX are.",
+          PASSWORD_PROTECTED_PDF:
+            "The PDF is password-protected: upload an unprotected version.",
+          NO_EXPLOITABLE_CONTENT:
+            "No page of the document contains usable text.",
+          FILE_INTEGRITY_ERROR:
+            "The stored file does not match the uploaded document. Upload it again.",
+          DOCUMENT_FILE_NOT_FOUND:
+            "The document file cannot be found in storage.",
+          OCR_SERVICE_UNAVAILABLE:
+            "The scan reading service is unavailable. Run the processing again later.",
+          EMBEDDING_SERVICE_UNAVAILABLE:
+            "Semantic analysis is temporarily unavailable. Run the processing again later.",
+          AI_PROVIDER_NOT_CONFIGURED:
+            "Semantic analysis is not configured on the server.",
+          WORKER_TIMEOUT: "Processing took too long. You can run it again.",
+        },
+        requestErrors: {
+          INGESTION_LOCKED:
+            "Import opens once the analysis framework is validated.",
+          UNSUPPORTED_FORMAT: "Only PDF, DOCX and XLSX files are accepted.",
+          FILE_TOO_LARGE: "The file exceeds the maximum allowed size.",
+          DUPLICATE_DOCUMENT:
+            "An identical file already exists in this corpus.",
+          VERSION_REQUIRED: "Choose the programme version.",
+          VERSION_NOT_FOUND: "This programme version no longer exists.",
+          STORAGE_OBJECT_MISSING: "The file did not reach storage. Try again.",
+          INVALID_FILE_HASH: "The file could not be checked. Try again.",
+          WORKSPACE_ACCESS_DENIED: "You do not have access to this workspace.",
+          DOCUMENT_NOT_READY: "The document is still being processed.",
+          INVALID_TRANSITION:
+            "This decision is no longer possible for this document.",
+        },
         errors: {
           load: "Unable to load the document corpus.",
           update: "The document could not be updated.",
@@ -1605,28 +1823,116 @@ export const resources = {
         import: {
           title: "Document import",
           description:
-            "Add several files with shared metadata. Their content will be qualified before it can feed the analysis.",
+            "Upload one or more files. You only choose the category: the engine reads each document, detects its language and country, then decides whether it may enter the analysis.",
+          lock: {
+            title: "Ingestion is not enabled yet",
+            description:
+              "The analysis framework of this workspace is not validated yet - the pillars must be confirmed before running an analysis. Document import opens once the framework is validated.",
+            action: "View framework",
+          },
           dropTitle: "Drop your documents here",
-          dropDescription: "PDF, DOCX or XLSX · multiple selection supported",
+          dropDescription: "PDF, DOCX or XLSX · one or more files",
           invalidFormat: "Only PDF, DOCX and XLSX files are accepted.",
-          category: "Shared category",
-          country: "Target country (pre-filled)",
+          confirm: {
+            title: "Confirm upload",
+            description:
+              "Check the added files and the shared metadata applied to them before starting the upload.",
+            files_one: "{{count}} file added",
+            files_other: "{{count}} files added",
+            filesDescription:
+              "Each file uses the shared category; change it here for a different file. Duplicates are flagged and will not be uploaded.",
+            cancel: "Cancel",
+          },
+          uploads: {
+            title_one: "{{count}} file uploading",
+            title_other: "{{count}} files uploading",
+          },
+          retry: "Retry",
+          duplicate:
+            "Duplicate: identical to “{{name}}”, already present. It will not be uploaded.",
+          duplicateAllowed:
+            "Duplicate of “{{name}}”: it will be uploaded on your decision.",
+          duplicateUpload: "Upload anyway",
+          duplicateSkip: "Do not upload",
+          state: {
+            checking: "Checking file…",
+            ready: "Ready to upload",
+            uploading: "Uploading",
+          },
+          errors: {
+            check: "The file could not be checked. Remove it and add it again.",
+            duplicate: "An identical file already exists in this corpus.",
+            tooLarge: "The file exceeds the maximum allowed size.",
+            upload: "The upload failed. You can try again.",
+          },
+          remove: "Remove {{name}}",
+          tracking: {
+            title: "Processing status",
+            description:
+              "Uploaded files are kept: you can leave this page and find their status here or in the document review.",
+            score: "Relevance {{score}}/100",
+            state: {
+              pending: "Waiting for processing",
+              extraction: "Text extraction and OCR",
+              detection: "Language and country detection",
+              pertinence: "Relevance analysis",
+              indexation: "Segmentation and indexing",
+              failed: "Processing failed",
+            },
+          },
+          steps: {
+            upload: "Upload",
+            extraction: "Extraction",
+            detection: "Detection",
+            pertinence: "Relevance",
+          },
+          decision: {
+            addAnyway: "Add anyway",
+            verify: "Review",
+            cancel: "Cancel",
+          },
+          metadata: {
+            title: "Shared metadata",
+            description:
+              "Entered once for every file in the batch. Anomalies are then fixed row by row in the document review.",
+          },
+          category: "Document category",
+          commonCategory: "Shared category",
+          commonCategoryHint:
+            "Applied to every file in the batch, except those whose category was changed.",
+          commonCategoryOption: "Shared category ({{category}})",
+          fileCategory: "Category of {{name}}",
+          categoryHint: {
+            principal: "ProDoc, PAR, evaluation report…",
+            complementaire: "Annexes, data, budgets, MRV…",
+            autre: "Any other item useful to the analysis",
+          },
           version: "Programme version",
           selectVersion: "Select a version",
+          versionHint:
+            "Required because this workspace compares several programme versions.",
+          versionRequired: "Choose the programme version to upload the files.",
+          country: "Target country",
+          countryHint:
+            "Pre-filled from the workspace and compared with the country detected in each document.",
+          language: "Language",
+          languageHint:
+            "Detected automatically for each document. An unexpected language is flagged without blocking the analysis. Expected languages:",
           submit: "Upload documents",
+          submitCount_one: "Upload {{count}} document",
+          submitCount_other: "Upload {{count}} documents",
           openReview: "Open document review",
-          remove: "Remove file",
-          processingNote:
-            "After upload, documents remain in “Needs review” until extraction, detection and relevance processing is complete.",
           success:
             "The documents were uploaded and added to the processing queue.",
           failure:
             "One or more documents could not be uploaded. You can retry them.",
-          state: {
-            ready: "Ready to upload",
-            uploading: "Uploading",
-            complete: "Uploaded · processing pending",
-            error: "Upload failed",
+          engine: {
+            title: "Engine decision",
+            description:
+              "Each document receives a relevance score from 0 to 100, computed against the workspace's semantic fingerprint.",
+            accepted: "Compliant, included in the corpus",
+            ambiguous: "Needs review: add, review or cancel",
+            rejected: "Rejected with a reason, not included",
           },
         },
         review: {
@@ -1690,6 +1996,21 @@ export const resources = {
         },
         events: {
           document_uploaded: "Document uploaded",
+          document_duplicate_detected: "Duplicate detected",
+          document_extracted: "Text extracted",
+          document_language_detected: "Language detected",
+          document_country_detected: "Country detected",
+          document_relevance_scored: "Relevance scored",
+          document_qualified: "Document qualified",
+          document_rejected: "Document rejected",
+          document_segmented: "Document segmented",
+          document_indexed: "Document indexed",
+          document_unindexed: "Document removed from the index",
+          document_integrated_by_human: "Included by human decision",
+          document_cancelled_by_human: "Cancelled by human decision",
+          document_metadata_corrected: "Metadata corrected",
+          document_ingestion_failed: "Processing failed",
+          document_ingestion_retried: "Processing restarted",
           metadata_corrected: "Metadata corrected",
           document_integrate: "Included by human decision",
           document_verify: "Review requested",

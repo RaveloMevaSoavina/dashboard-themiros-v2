@@ -1,0 +1,1782 @@
+-- E4 — Ingestion documentaire.
+-- Stockage des fichiers, file de traitement, texte extrait, segments indexés
+-- et décisions humaines. Référence : docs/Specification de l'ingestion
+-- documentaire.md, docs/Schéma de base de données.md, Catalogue des API §6.
+--
+-- Principes :
+-- * `documents.status` porte la décision métier (conforme, à vérifier, rejeté,
+--   intégré sur décision humaine) ; `documents.processing_state` porte
+--   l'avancement technique du pipeline.
+-- * Les statuts, scores et détections ne sont écrits que par des fonctions
+--   `security definer` : le client ne peut plus se déclarer « conforme ».
+-- * Chaque écriture du worker est conditionnée à son bail (`lease_token`) :
+--   un worker qui a perdu son job ne peut plus rien écraser.
+
+create extension if not exists vector with schema extensions;
+create extension if not exists pg_trgm with schema extensions;
+
+-- Une extension déjà installée n'est pas déplacée par IF NOT EXISTS : on
+-- cherche les types et opclasses dans public comme dans extensions.
+set search_path = public, extensions;
+
+-- ---------------------------------------------------------------------------
+-- Nettoyage d'une éventuelle première version du pipeline (jamais livrée).
+-- La file ne contient que des tâches techniques : elle peut être recréée.
+-- ---------------------------------------------------------------------------
+drop function if exists public.enqueue_ingestion_job(uuid, uuid, integer);
+drop function if exists public.claim_ingestion_job(text, integer);
+drop function if exists public.touch_ingestion_job(uuid, text, text);
+drop function if exists public.complete_ingestion_job(uuid, text, jsonb);
+drop function if exists public.fail_ingestion_job(uuid, text, text, boolean);
+drop table if exists public.ingestion_jobs cascade;
+
+-- ---------------------------------------------------------------------------
+-- Paramètres du moteur d'ingestion (RG-5.4 : paramètres journalisés, pas des
+-- constantes de code). Chaque modification est une nouvelle version.
+-- ---------------------------------------------------------------------------
+create table if not exists public.ingestion_settings (
+  version integer primary key,
+  conformity_threshold integer not null default 70,
+  ambiguous_threshold integer not null default 40,
+  bonus_country integer not null default 10,
+  bonus_financier integer not null default 5,
+  bonus_theme integer not null default 5,
+  bonus_language integer not null default 5,
+  malus_off_topic integer not null default 20,
+  malus_other_country integer not null default 30,
+  language_confidence_threshold numeric(3, 2) not null default 0.70,
+  exploitable_page_min_chars integer not null default 100,
+  off_topic_keywords text[] not null default array[
+    'technical offer', 'offre technique', 'financial offer', 'offre financiere',
+    'appel d offres', 'call for tenders', 'request for proposals',
+    'dossier d appel d offres', 'cahier des clauses administratives'
+  ]::text[],
+  max_file_size_bytes bigint not null default 52428800,
+  max_files_per_batch integer not null default 20,
+  note text,
+  created_by uuid references auth.users (id) on delete set null,
+  created_at timestamptz not null default now(),
+  constraint ingestion_settings_thresholds_check check (
+    ambiguous_threshold between 0 and 100
+    and conformity_threshold between ambiguous_threshold and 100
+  ),
+  constraint ingestion_settings_language_confidence_check check (
+    language_confidence_threshold between 0 and 1
+  ),
+  constraint ingestion_settings_limits_check check (
+    max_file_size_bytes > 0 and max_files_per_batch > 0
+    and exploitable_page_min_chars >= 0
+  )
+);
+
+insert into public.ingestion_settings (version, note)
+values (1, 'Valeurs de la spécification d''ingestion v1.0')
+on conflict (version) do nothing;
+
+alter table public.ingestion_settings enable row level security;
+drop policy if exists "ingestion_settings_read" on public.ingestion_settings;
+create policy "ingestion_settings_read" on public.ingestion_settings
+  for select to authenticated using (true);
+
+create or replace function public.current_ingestion_settings()
+returns public.ingestion_settings
+language sql
+stable
+set search_path = public
+as $$
+  select * from public.ingestion_settings order by version desc limit 1;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Documents : avancement technique et traçabilité de la décision.
+-- ---------------------------------------------------------------------------
+do $$
+begin
+  create type public.ingestion_state as enum (
+    'pending', 'extraction', 'detection', 'pertinence', 'indexation',
+    'ready', 'failed'
+  );
+exception when duplicate_object then null;
+end
+$$;
+
+alter table public.documents
+  add column if not exists processing_state public.ingestion_state
+    not null default 'pending',
+  add column if not exists status_reason_code text,
+  add column if not exists status_reason_params jsonb not null default '{}'::jsonb,
+  add column if not exists relevance_details jsonb,
+  add column if not exists pdf_type text,
+  add column if not exists language_confidence numeric(5, 4),
+  add column if not exists country_confidence numeric(5, 4),
+  add column if not exists language_to_confirm boolean not null default false,
+  add column if not exists language_expected boolean,
+  add column if not exists indexed_at timestamptz,
+  add column if not exists ingestion_error_code text,
+  add column if not exists settings_version integer
+    references public.ingestion_settings (version);
+
+alter table public.documents
+  drop constraint if exists documents_pdf_type_check,
+  add constraint documents_pdf_type_check check (
+    pdf_type is null or pdf_type in ('natif', 'scan', 'mixte')
+  ),
+  drop constraint if exists documents_status_reason_params_object_check,
+  add constraint documents_status_reason_params_object_check check (
+    jsonb_typeof(status_reason_params) = 'object'
+  );
+
+comment on column public.documents.processing_state is
+  'Avancement du pipeline d''ingestion, indépendant de la décision (status).';
+comment on column public.documents.status_reason_code is
+  'Code du motif (country_mismatch, out_of_scope, partial_coverage...) rendu dans la langue de l''interface.';
+comment on column public.documents.relevance_details is
+  'Détail du score : similarité sémantique, bonus et malus appliqués, seuils.';
+
+-- §3.3 : un doublon est signalé puis tranché par l'utilisateur, jamais
+-- bloqué ni supprimé automatiquement.
+drop index if exists public.idx_documents_workspace_hash_active;
+create index if not exists idx_documents_workspace_hash
+  on public.documents (workspace_id, file_hash)
+  where deleted_at is null;
+create index if not exists idx_documents_workspace_processing
+  on public.documents (workspace_id, processing_state)
+  where deleted_at is null;
+
+-- Le corpus éligible change : le bandeau « le corpus a changé depuis ce
+-- calcul » (CA-6.2) compare cette date à celle du run.
+alter table public.workspaces
+  add column if not exists corpus_changed_at timestamptz;
+
+-- ---------------------------------------------------------------------------
+-- Texte extrait, page par page (RG-4.6 : texte source conservé intact).
+-- Sert aussi de point de reprise : requalifier ou indexer ne refait jamais
+-- l'OCR.
+-- ---------------------------------------------------------------------------
+create table if not exists public.document_pages (
+  document_id uuid not null references public.documents (id) on delete cascade,
+  workspace_id uuid not null references public.workspaces (id) on delete cascade,
+  page_number integer not null,
+  text text not null default '',
+  section_title text,
+  is_ocr boolean not null default false,
+  ocr_failed boolean not null default false,
+  is_exploitable boolean not null default false,
+  char_start integer not null default 0,
+  created_at timestamptz not null default now(),
+  primary key (document_id, page_number),
+  constraint document_pages_page_number_check check (page_number > 0)
+);
+
+create index if not exists idx_document_pages_workspace
+  on public.document_pages (workspace_id);
+
+alter table public.document_pages enable row level security;
+drop policy if exists "document_pages_members" on public.document_pages;
+create policy "document_pages_members" on public.document_pages
+  for select to authenticated
+  using (public.is_workspace_member(workspace_id));
+
+-- ---------------------------------------------------------------------------
+-- Métadonnées extensibles d'un document (Schéma §17).
+-- ---------------------------------------------------------------------------
+create table if not exists public.document_metadata (
+  id uuid primary key default gen_random_uuid(),
+  document_id uuid not null references public.documents (id) on delete cascade,
+  key text not null,
+  value text,
+  source text not null check (source in ('user', 'auto', 'system')),
+  created_at timestamptz not null default now(),
+  unique (document_id, key)
+);
+create index if not exists idx_document_metadata_document
+  on public.document_metadata (document_id);
+alter table public.document_metadata enable row level security;
+drop policy if exists "document_metadata_members" on public.document_metadata;
+create policy "document_metadata_members" on public.document_metadata
+  for select to authenticated
+  using (exists (
+    select 1 from public.documents d
+    where d.id = document_id and public.is_workspace_member(d.workspace_id)
+  ));
+
+-- ---------------------------------------------------------------------------
+-- Empreinte sémantique du workspace (Schéma §4). L'embedding n'est recalculé
+-- que si le texte de l'empreinte change (`source_hash`).
+-- ---------------------------------------------------------------------------
+create table if not exists public.semantic_fingerprints (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid not null unique
+    references public.workspaces (id) on delete cascade,
+  country text not null,
+  financiers jsonb not null,
+  themes text[] not null,
+  expected_languages text[] not null default array['fr', 'en']::text[],
+  stage text not null,
+  start_year integer not null,
+  end_year integer not null,
+  embedding vector(1536),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.semantic_fingerprints
+  add column if not exists source_text text,
+  add column if not exists source_hash text,
+  add column if not exists model text;
+
+drop trigger if exists set_semantic_fingerprints_updated_at
+  on public.semantic_fingerprints;
+create trigger set_semantic_fingerprints_updated_at
+before update on public.semantic_fingerprints
+for each row execute function public.set_updated_at();
+
+alter table public.semantic_fingerprints enable row level security;
+drop policy if exists "semantic_fingerprints_members"
+  on public.semantic_fingerprints;
+create policy "semantic_fingerprints_members" on public.semantic_fingerprints
+  for select to authenticated
+  using (public.is_workspace_member(workspace_id));
+
+-- ---------------------------------------------------------------------------
+-- Segments et embeddings (Spec ingestion §8-9, Spec RAG §3).
+-- Une indexation écrit une nouvelle génération de segments non publiés, puis
+-- les publie d'un coup : l'index n'est jamais à moitié remplacé.
+-- ---------------------------------------------------------------------------
+create table if not exists public.segments (
+  id uuid primary key default gen_random_uuid(),
+  document_id uuid not null references public.documents (id) on delete cascade,
+  page_number integer,
+  section_title text,
+  paragraph_index integer,
+  text text not null,
+  language text,
+  char_start integer,
+  char_end integer,
+  token_count integer,
+  text_search tsvector,
+  created_at timestamptz not null default now()
+);
+
+alter table public.segments
+  add column if not exists workspace_id uuid
+    references public.workspaces (id) on delete cascade,
+  add column if not exists generation uuid,
+  add column if not exists published boolean not null default false;
+
+update public.segments as segment
+set workspace_id = document.workspace_id,
+    published = true
+from public.documents as document
+where document.id = segment.document_id and segment.workspace_id is null;
+
+alter table public.segments alter column workspace_id set not null;
+
+create or replace function public.set_segment_text_search()
+returns trigger
+language plpgsql
+set search_path = public, extensions
+as $$
+begin
+  -- P-3 : FR, EN, PT, ES. Les autres langues passent par la configuration
+  -- neutre « simple ».
+  new.text_search := to_tsvector(
+    case new.language
+      when 'fr' then 'french'::regconfig
+      when 'en' then 'english'::regconfig
+      when 'pt' then 'portuguese'::regconfig
+      when 'es' then 'spanish'::regconfig
+      else 'simple'::regconfig
+    end,
+    new.text
+  );
+  return new;
+end;
+$$;
+
+drop trigger if exists set_segments_text_search on public.segments;
+create trigger set_segments_text_search
+before insert or update of text, language on public.segments
+for each row execute function public.set_segment_text_search();
+
+create index if not exists idx_segments_document
+  on public.segments (document_id);
+create index if not exists idx_segments_page
+  on public.segments (document_id, page_number);
+create index if not exists idx_segments_workspace_published
+  on public.segments (workspace_id)
+  where published;
+create index if not exists idx_segments_text_search
+  on public.segments using gin (text_search);
+create index if not exists idx_segments_text_trgm
+  on public.segments using gin (text gin_trgm_ops);
+
+alter table public.segments enable row level security;
+drop policy if exists "segments_members" on public.segments;
+create policy "segments_members" on public.segments
+  for select to authenticated
+  using (public.is_workspace_member(workspace_id));
+
+create table if not exists public.segment_embeddings (
+  segment_id uuid primary key references public.segments (id) on delete cascade,
+  embedding vector(1536) not null,
+  model text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.segment_embeddings
+  add column if not exists workspace_id uuid
+    references public.workspaces (id) on delete cascade;
+
+update public.segment_embeddings as embedding
+set workspace_id = segment.workspace_id
+from public.segments as segment
+where segment.id = embedding.segment_id and embedding.workspace_id is null;
+
+alter table public.segment_embeddings alter column workspace_id set not null;
+
+drop index if exists public.idx_segment_embeddings_hnsw;
+create index idx_segment_embeddings_hnsw
+  on public.segment_embeddings
+  using hnsw (embedding vector_cosine_ops)
+  with (m = 16, ef_construction = 64);
+create index if not exists idx_segment_embeddings_workspace
+  on public.segment_embeddings (workspace_id);
+
+alter table public.segment_embeddings enable row level security;
+drop policy if exists "segment_embeddings_members"
+  on public.segment_embeddings;
+create policy "segment_embeddings_members" on public.segment_embeddings
+  for select to authenticated
+  using (public.is_workspace_member(workspace_id));
+
+-- ---------------------------------------------------------------------------
+-- File de traitement (même modèle que pillar_generation_jobs).
+-- ---------------------------------------------------------------------------
+create table public.ingestion_jobs (
+  id uuid primary key default gen_random_uuid(),
+  document_id uuid not null references public.documents (id) on delete cascade,
+  workspace_id uuid not null references public.workspaces (id) on delete cascade,
+  kind text not null,
+  status text not null default 'queued',
+  stage text,
+  requested_by uuid references auth.users (id) on delete set null,
+  attempts integer not null default 0,
+  max_attempts integer not null default 4,
+  available_at timestamptz not null default now(),
+  lease_token uuid,
+  locked_by text,
+  locked_until timestamptz,
+  result jsonb,
+  error_code text,
+  error_message text,
+  error_history jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  started_at timestamptz,
+  completed_at timestamptz,
+  updated_at timestamptz not null default now(),
+  -- full : pipeline complet ; requalify : détection + pertinence à partir du
+  -- texte conservé, puis indexation ou retrait de l'index ; extract, qualify
+  -- et index : étapes isolées des endpoints synchrones du catalogue.
+  constraint ingestion_jobs_kind_check check (
+    kind in ('full', 'requalify', 'extract', 'qualify', 'index')
+  ),
+  constraint ingestion_jobs_status_check check (
+    status in ('queued', 'running', 'completed', 'failed', 'cancelled')
+  ),
+  constraint ingestion_jobs_attempts_check check (
+    attempts >= 0 and max_attempts > 0
+  ),
+  constraint ingestion_jobs_result_object_check check (
+    result is null or jsonb_typeof(result) = 'object'
+  )
+);
+
+create unique index idx_ingestion_jobs_document_active
+  on public.ingestion_jobs (document_id)
+  where status in ('queued', 'running');
+create index idx_ingestion_jobs_claim
+  on public.ingestion_jobs (available_at, created_at)
+  where status = 'queued';
+create index idx_ingestion_jobs_running_lease
+  on public.ingestion_jobs (locked_until)
+  where status = 'running';
+create index idx_ingestion_jobs_workspace
+  on public.ingestion_jobs (workspace_id, created_at desc);
+
+create trigger set_ingestion_jobs_updated_at
+before update on public.ingestion_jobs
+for each row execute function public.set_updated_at();
+
+alter table public.ingestion_jobs enable row level security;
+create policy "ingestion_jobs_members" on public.ingestion_jobs
+  for select to authenticated
+  using (public.is_workspace_member(workspace_id));
+
+-- ---------------------------------------------------------------------------
+-- Droits : le client ne modifie plus directement un document. Catégorie,
+-- version, langue, pays et décisions passent par les fonctions ci-dessous.
+-- ---------------------------------------------------------------------------
+drop policy if exists "documents_insert_members" on public.documents;
+drop policy if exists "documents_update_members" on public.documents;
+drop policy if exists "documents_delete_members" on public.documents;
+revoke insert, update, delete on public.documents from anon, authenticated;
+drop policy if exists "document_versions_members" on public.document_versions;
+drop policy if exists "document_versions_select_members"
+  on public.document_versions;
+create policy "document_versions_select_members" on public.document_versions
+  for select to authenticated
+  using (exists (
+    select 1 from public.documents d
+    where d.id = document_id and public.is_workspace_member(d.workspace_id)
+  ));
+revoke insert, update, delete on public.document_versions
+  from anon, authenticated;
+
+-- L'historique documentaire est désormais le journal d'audit (§11.1).
+insert into public.audit_events (
+  workspace_id, actor_type, actor_user_id, operation, object_type, object_id,
+  metadata, created_at
+)
+select
+  document.workspace_id,
+  case when event.actor_id is null then 'engine' else 'human' end,
+  event.actor_id,
+  event.event_type,
+  'document',
+  event.document_id,
+  coalesce(event.metadata, '{}'::jsonb)
+    || jsonb_build_object('message', event.message, 'migrated_from', 'document_events'),
+  event.created_at
+from public.document_events as event
+join public.documents as document on document.id = event.document_id
+where not exists (
+  select 1 from public.audit_events as audit
+  where audit.object_id = event.document_id
+    and audit.operation = event.event_type
+    and audit.created_at = event.created_at
+);
+drop policy if exists "document_events_insert_members" on public.document_events;
+revoke insert, update, delete on public.document_events from anon, authenticated;
+
+-- Stockage : formats et taille de la spécification (§4.1, arbitrage taille).
+update storage.buckets
+set file_size_limit = 52428800,
+    allowed_mime_types = array[
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ]
+where id = 'documents';
+
+-- ---------------------------------------------------------------------------
+-- Fonctions internes (non exposées au client).
+-- ---------------------------------------------------------------------------
+create or replace function public.log_document_event(
+  p_workspace_id uuid,
+  p_document_id uuid,
+  p_actor_type text,
+  p_actor_user_id uuid,
+  p_operation text,
+  p_metadata jsonb default '{}'::jsonb,
+  p_before jsonb default null,
+  p_after jsonb default null
+)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  insert into public.audit_events (
+    workspace_id, actor_type, actor_user_id, operation, object_type,
+    object_id, before_value, after_value, metadata
+  )
+  values (
+    p_workspace_id, p_actor_type, p_actor_user_id, p_operation, 'document',
+    p_document_id, p_before, p_after, coalesce(p_metadata, '{}'::jsonb)
+  );
+$$;
+
+create or replace function public.workspace_ingestion_open(p_workspace_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  -- US-6.6 : « Valider le cadre » active l'ingestion. Le verrou passera à la
+  -- confirmation des critères quand E3b existera (arbitrage n° 2).
+  select coalesce(
+    (
+      select workspace.pillar_framework_status in ('validated', 'locked')
+      from public.workspaces as workspace
+      where workspace.id = p_workspace_id
+    ),
+    false
+  );
+$$;
+
+create or replace function public.enqueue_ingestion_job(
+  p_document_id uuid,
+  p_kind text,
+  p_requested_by uuid default null
+)
+returns public.ingestion_jobs
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  target public.documents;
+  job public.ingestion_jobs;
+begin
+  select * into target
+  from public.documents
+  where id = p_document_id and deleted_at is null;
+  if not found then
+    raise exception using errcode = 'P0001', message = 'DOCUMENT_NOT_FOUND';
+  end if;
+
+  -- Une seule tâche active par document : la mise en file est idempotente.
+  select * into job
+  from public.ingestion_jobs
+  where document_id = p_document_id and status in ('queued', 'running')
+  limit 1;
+  if found then
+    return job;
+  end if;
+
+  insert into public.ingestion_jobs (
+    document_id, workspace_id, kind, requested_by
+  )
+  values (p_document_id, target.workspace_id, p_kind, p_requested_by)
+  returning * into job;
+
+  if p_kind in ('full', 'requalify') then
+    update public.documents
+    set processing_state = 'pending', ingestion_error_code = null
+    where id = p_document_id;
+  end if;
+
+  return job;
+exception when unique_violation then
+  select * into job
+  from public.ingestion_jobs
+  where document_id = p_document_id and status in ('queued', 'running')
+  limit 1;
+  return job;
+end;
+$$;
+
+create or replace function public.document_is_eligible(
+  p_status public.document_status
+)
+returns boolean
+language sql
+immutable
+as $$
+  -- RG-4.1 / RG-5.1 : seuls ces statuts alimentent le pipeline.
+  select p_status in ('conforme', 'integre_decision_humaine');
+$$;
+
+create or replace function public.remove_document_index(
+  p_document_id uuid,
+  p_actor_type text,
+  p_actor_user_id uuid
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  target public.documents;
+  removed integer;
+begin
+  select * into target from public.documents where id = p_document_id;
+  delete from public.segments where document_id = p_document_id;
+  get diagnostics removed = row_count;
+  update public.documents set indexed_at = null where id = p_document_id;
+  if target.indexed_at is not null then
+    perform public.log_document_event(
+      target.workspace_id, p_document_id, p_actor_type, p_actor_user_id,
+      'document_unindexed', jsonb_build_object('segments_count', removed)
+    );
+  end if;
+end;
+$$;
+
+revoke all on function public.log_document_event(
+  uuid, uuid, text, uuid, text, jsonb, jsonb, jsonb
+) from public, anon, authenticated;
+revoke all on function public.enqueue_ingestion_job(uuid, text, uuid)
+  from public, anon, authenticated;
+revoke all on function public.remove_document_index(uuid, text, uuid)
+  from public, anon, authenticated;
+grant execute on function public.enqueue_ingestion_job(uuid, text, uuid)
+  to service_role;
+
+-- Le corpus éligible a changé (ajout, retrait, changement de statut).
+create or replace function public.touch_workspace_corpus()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  was_eligible boolean := false;
+  is_eligible boolean := false;
+begin
+  if tg_op <> 'INSERT' then
+    was_eligible := old.deleted_at is null and public.document_is_eligible(old.status);
+  end if;
+  if tg_op <> 'DELETE' then
+    is_eligible := new.deleted_at is null and public.document_is_eligible(new.status);
+  end if;
+  if was_eligible is distinct from is_eligible then
+    update public.workspaces
+    set corpus_changed_at = now()
+    where id = coalesce(new.workspace_id, old.workspace_id);
+  end if;
+  return null;
+end;
+$$;
+
+drop trigger if exists touch_workspace_corpus on public.documents;
+create trigger touch_workspace_corpus
+after insert or update of status, deleted_at or delete on public.documents
+for each row execute function public.touch_workspace_corpus();
+
+-- Arbitrage n° 10 : quand l'empreinte change, les documents qui n'ont pas fait
+-- l'objet d'une décision humaine sont requalifiés.
+create or replace function public.requalify_workspace_documents()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  document_id uuid;
+begin
+  for document_id in
+    select document.id
+    from public.documents as document
+    where document.workspace_id = new.id
+      and document.deleted_at is null
+      and document.processing_state = 'ready'
+      and coalesce(document.status_reason_code, '') not in ('human_add', 'human_cancel')
+  loop
+    perform public.enqueue_ingestion_job(document_id, 'requalify', null);
+  end loop;
+  return null;
+end;
+$$;
+
+drop trigger if exists requalify_workspace_documents on public.workspaces;
+create trigger requalify_workspace_documents
+after update of target_country, financiers, themes, expected_languages,
+  declared_stage, start_year, end_year
+on public.workspaces
+for each row
+when (
+  old.target_country is distinct from new.target_country
+  or old.financiers is distinct from new.financiers
+  or old.themes is distinct from new.themes
+  or old.expected_languages is distinct from new.expected_languages
+  or old.declared_stage is distinct from new.declared_stage
+  or old.start_year is distinct from new.start_year
+  or old.end_year is distinct from new.end_year
+)
+execute function public.requalify_workspace_documents();
+
+-- ---------------------------------------------------------------------------
+-- Fonctions appelées par le front (utilisateur authentifié).
+-- Les erreurs métier sont levées avec un code stable dans `message`.
+-- ---------------------------------------------------------------------------
+create or replace function public.register_document(
+  p_document_id uuid,
+  p_workspace_id uuid,
+  p_storage_path text,
+  p_original_filename text,
+  p_file_hash text,
+  p_file_size_bytes bigint,
+  p_mime_type text,
+  p_category public.document_category,
+  p_program_version_id uuid default null,
+  p_allow_duplicate boolean default false
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  actor uuid := auth.uid();
+  settings public.ingestion_settings := public.current_ingestion_settings();
+  extension text := lower(substring(p_original_filename from '\.([^.]+)$'));
+  versions_count integer;
+  duplicate public.documents;
+  job public.ingestion_jobs;
+begin
+  if actor is null or not public.is_workspace_member(p_workspace_id) then
+    raise exception using errcode = '42501', message = 'WORKSPACE_ACCESS_DENIED';
+  end if;
+  if not public.workspace_ingestion_open(p_workspace_id) then
+    raise exception using errcode = 'P0001', message = 'INGESTION_LOCKED';
+  end if;
+  if coalesce(extension, '') not in ('pdf', 'docx', 'xlsx') then
+    raise exception using errcode = 'P0001', message = 'UNSUPPORTED_FORMAT';
+  end if;
+  if p_file_size_bytes <= 0 or p_file_size_bytes > settings.max_file_size_bytes then
+    raise exception using errcode = 'P0001', message = 'FILE_TOO_LARGE';
+  end if;
+  if p_file_hash !~ '^[0-9a-f]{64}$' then
+    raise exception using errcode = 'P0001', message = 'INVALID_FILE_HASH';
+  end if;
+  -- Chemin imposé par la spec §3.2 : {workspace_id}/{document_id}/{fichier}.
+  if p_storage_path not like p_workspace_id::text || '/' || p_document_id::text || '/%'
+    or not exists (
+      select 1 from storage.objects
+      where bucket_id = 'documents' and name = p_storage_path
+    ) then
+    raise exception using errcode = 'P0001', message = 'STORAGE_OBJECT_MISSING';
+  end if;
+
+  select count(*) into versions_count
+  from public.program_versions where workspace_id = p_workspace_id;
+  if p_program_version_id is not null and not exists (
+    select 1 from public.program_versions
+    where id = p_program_version_id and workspace_id = p_workspace_id
+  ) then
+    raise exception using errcode = 'P0001', message = 'VERSION_NOT_FOUND';
+  end if;
+  -- US-8.4 : en mode comparatif, la version de rattachement est demandée.
+  if versions_count > 1 and p_program_version_id is null then
+    raise exception using errcode = 'P0001', message = 'VERSION_REQUIRED';
+  end if;
+
+  select * into duplicate
+  from public.documents
+  where workspace_id = p_workspace_id
+    and file_hash = p_file_hash
+    and deleted_at is null
+  order by created_at
+  limit 1;
+  if found and not p_allow_duplicate then
+    raise exception using
+      errcode = 'P0001',
+      message = 'DUPLICATE_DOCUMENT',
+      detail = duplicate.original_filename;
+  end if;
+
+  insert into public.documents (
+    id, workspace_id, original_filename, storage_path, file_hash,
+    file_size_bytes, mime_type, category, status, status_reason,
+    status_reason_code, processing_state
+  )
+  values (
+    p_document_id, p_workspace_id, p_original_filename, p_storage_path,
+    p_file_hash, p_file_size_bytes, p_mime_type, p_category, 'a_verifier',
+    'Contrôle en attente', 'pending', 'pending'
+  );
+
+  if p_program_version_id is not null then
+    insert into public.document_versions (document_id, program_version_id)
+    values (p_document_id, p_program_version_id);
+  end if;
+
+  perform public.log_document_event(
+    p_workspace_id, p_document_id, 'human', actor, 'document_uploaded',
+    jsonb_build_object(
+      'filename', p_original_filename,
+      'category', p_category,
+      'size', p_file_size_bytes,
+      'mime_type', p_mime_type,
+      'program_version_id', p_program_version_id
+    )
+  );
+  if duplicate.id is not null then
+    -- §3.3 : doublon chargé sur décision de l'utilisateur.
+    perform public.log_document_event(
+      p_workspace_id, p_document_id, 'human', actor,
+      'document_duplicate_detected',
+      jsonb_build_object(
+        'hash', p_file_hash,
+        'existing_document_id', duplicate.id,
+        'existing_filename', duplicate.original_filename,
+        'decision', 'uploaded_anyway'
+      )
+    );
+  end if;
+
+  job := public.enqueue_ingestion_job(p_document_id, 'full', actor);
+  return jsonb_build_object('document_id', p_document_id, 'job_id', job.id);
+end;
+$$;
+
+create or replace function public.record_duplicate_detected(
+  p_existing_document_id uuid,
+  p_filename text,
+  p_hash text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  existing public.documents;
+begin
+  select * into existing from public.documents where id = p_existing_document_id;
+  if not found or not public.is_workspace_member(existing.workspace_id) then
+    raise exception using errcode = '42501', message = 'WORKSPACE_ACCESS_DENIED';
+  end if;
+  perform public.log_document_event(
+    existing.workspace_id, existing.id, 'human', auth.uid(),
+    'document_duplicate_detected',
+    jsonb_build_object(
+      'hash', p_hash,
+      'filename', p_filename,
+      'existing_filename', existing.original_filename
+    )
+  );
+end;
+$$;
+
+create or replace function public.decide_document(
+  p_document_id uuid,
+  p_decision text,
+  p_reason text default null
+)
+returns public.documents
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  actor uuid := auth.uid();
+  target public.documents;
+  updated public.documents;
+begin
+  select * into target
+  from public.documents
+  where id = p_document_id and deleted_at is null
+  for update;
+  if not found or actor is null
+    or not public.is_workspace_member(target.workspace_id) then
+    raise exception using errcode = '42501', message = 'WORKSPACE_ACCESS_DENIED';
+  end if;
+  if target.processing_state <> 'ready' then
+    raise exception using errcode = 'P0001', message = 'DOCUMENT_NOT_READY';
+  end if;
+
+  if p_decision = 'add_anyway' then
+    -- RG-4.2 ; arbitrage n° 1 : possible aussi pour un document rejeté.
+    if target.status not in ('a_verifier', 'rejete') then
+      raise exception using errcode = 'P0001', message = 'INVALID_TRANSITION';
+    end if;
+    update public.documents
+    set status = 'integre_decision_humaine',
+        status_reason = 'Intégré sur décision humaine',
+        status_reason_code = 'human_add',
+        status_reason_params = jsonb_build_object(
+          'previous_code', target.status_reason_code
+        ),
+        integrated_by_human = true,
+        integrated_by_user_id = actor,
+        integrated_at = now()
+    where id = p_document_id
+    returning * into updated;
+    perform public.log_document_event(
+      target.workspace_id, p_document_id, 'human', actor,
+      'document_integrated_by_human',
+      jsonb_build_object(
+        'relevance_score', target.relevance_score,
+        'previous_reason', target.status_reason_code,
+        'reason', p_reason
+      ),
+      jsonb_build_object('status', target.status),
+      jsonb_build_object('status', updated.status)
+    );
+    perform public.enqueue_ingestion_job(p_document_id, 'index', actor);
+  elsif p_decision = 'cancel' then
+    -- RG-4.1 : un document annulé n'alimente jamais le pipeline ; il reste
+    -- visible dans la liste avec son motif.
+    if target.status not in ('a_verifier', 'conforme', 'integre_decision_humaine') then
+      raise exception using errcode = 'P0001', message = 'INVALID_TRANSITION';
+    end if;
+    update public.documents
+    set status = 'rejete',
+        status_reason = 'Annulé par décision humaine',
+        status_reason_code = 'human_cancel',
+        status_reason_params = jsonb_build_object(
+          'previous_code', target.status_reason_code
+        ),
+        integrated_by_human = false,
+        integrated_by_user_id = null,
+        integrated_at = null
+    where id = p_document_id
+    returning * into updated;
+    perform public.log_document_event(
+      target.workspace_id, p_document_id, 'human', actor,
+      'document_cancelled_by_human',
+      jsonb_build_object(
+        'relevance_score', target.relevance_score,
+        'previous_reason', target.status_reason_code,
+        'reason', p_reason
+      ),
+      jsonb_build_object('status', target.status),
+      jsonb_build_object('status', updated.status)
+    );
+    perform public.remove_document_index(p_document_id, 'human', actor);
+  else
+    raise exception using errcode = 'P0001', message = 'INVALID_DECISION';
+  end if;
+
+  return updated;
+end;
+$$;
+
+create or replace function public.correct_document_metadata(
+  p_document_id uuid,
+  p_category public.document_category default null,
+  p_language text default null,
+  p_country text default null,
+  p_program_version_id uuid default null,
+  p_clear_version boolean default false
+)
+returns public.documents
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  actor uuid := auth.uid();
+  target public.documents;
+  updated public.documents;
+  previous_version uuid;
+  next_version uuid;
+  language_value text := nullif(lower(btrim(p_language)), '');
+  country_value text := nullif(upper(btrim(p_country)), '');
+  requalify boolean := false;
+begin
+  select * into target
+  from public.documents
+  where id = p_document_id and deleted_at is null
+  for update;
+  if not found or actor is null
+    or not public.is_workspace_member(target.workspace_id) then
+    raise exception using errcode = '42501', message = 'WORKSPACE_ACCESS_DENIED';
+  end if;
+  if language_value is not null and language_value !~ '^[a-z]{2}$' then
+    raise exception using errcode = 'P0001', message = 'INVALID_LANGUAGE';
+  end if;
+  if country_value is not null and country_value !~ '^[A-Z]{2}$' then
+    raise exception using errcode = 'P0001', message = 'INVALID_COUNTRY';
+  end if;
+
+  select program_version_id into previous_version
+  from public.document_versions where document_id = p_document_id limit 1;
+  next_version := case
+    when p_clear_version then null
+    when p_program_version_id is not null then p_program_version_id
+    else previous_version
+  end;
+  if next_version is not null and not exists (
+    select 1 from public.program_versions
+    where id = next_version and workspace_id = target.workspace_id
+  ) then
+    raise exception using errcode = 'P0001', message = 'VERSION_NOT_FOUND';
+  end if;
+
+  update public.documents
+  set category = coalesce(p_category, category),
+      detected_language = coalesce(language_value, detected_language),
+      detected_country = coalesce(country_value, detected_country),
+      language_to_confirm = case
+        when language_value is not null then false else language_to_confirm
+      end
+  where id = p_document_id
+  returning * into updated;
+
+  if next_version is distinct from previous_version then
+    delete from public.document_versions where document_id = p_document_id;
+    if next_version is not null then
+      insert into public.document_versions (document_id, program_version_id)
+      values (p_document_id, next_version);
+    end if;
+  end if;
+
+  -- Les valeurs corrigées priment sur la détection lors des requalifications.
+  if language_value is not null then
+    insert into public.document_metadata (document_id, key, value, source)
+    values (p_document_id, 'language', language_value, 'user')
+    on conflict (document_id, key)
+    do update set value = excluded.value, source = 'user', created_at = now();
+    requalify := language_value is distinct from target.detected_language;
+  end if;
+  if country_value is not null then
+    insert into public.document_metadata (document_id, key, value, source)
+    values (p_document_id, 'country', country_value, 'user')
+    on conflict (document_id, key)
+    do update set value = excluded.value, source = 'user', created_at = now();
+    requalify := requalify or country_value is distinct from target.detected_country;
+  end if;
+
+  -- UC15 : aucune valeur écrasée silencieusement, l'avant et l'après sont
+  -- journalisés.
+  perform public.log_document_event(
+    target.workspace_id, p_document_id, 'human', actor,
+    'document_metadata_corrected',
+    jsonb_build_object('requalify', requalify),
+    jsonb_build_object(
+      'category', target.category,
+      'language', target.detected_language,
+      'country', target.detected_country,
+      'program_version_id', previous_version
+    ),
+    jsonb_build_object(
+      'category', updated.category,
+      'language', updated.detected_language,
+      'country', updated.detected_country,
+      'program_version_id', next_version
+    )
+  );
+
+  -- UC15 : une correction de pays ou de langue relance le contrôle, sauf si
+  -- un humain a déjà tranché.
+  if requalify
+    and target.processing_state = 'ready'
+    and coalesce(target.status_reason_code, '') not in ('human_add', 'human_cancel') then
+    perform public.enqueue_ingestion_job(p_document_id, 'requalify', actor);
+  end if;
+
+  return updated;
+end;
+$$;
+
+create or replace function public.retry_document_ingestion(p_document_id uuid)
+returns public.ingestion_jobs
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  actor uuid := auth.uid();
+  target public.documents;
+begin
+  select * into target
+  from public.documents
+  where id = p_document_id and deleted_at is null;
+  if not found or actor is null
+    or not public.is_workspace_member(target.workspace_id) then
+    raise exception using errcode = '42501', message = 'WORKSPACE_ACCESS_DENIED';
+  end if;
+  if target.processing_state <> 'failed' then
+    raise exception using errcode = 'P0001', message = 'INVALID_TRANSITION';
+  end if;
+  perform public.log_document_event(
+    target.workspace_id, p_document_id, 'human', actor,
+    'document_ingestion_retried',
+    jsonb_build_object('previous_error', target.ingestion_error_code)
+  );
+  return public.enqueue_ingestion_job(p_document_id, 'full', actor);
+end;
+$$;
+
+revoke all on function public.register_document(
+  uuid, uuid, text, text, text, bigint, text, public.document_category, uuid, boolean
+) from public, anon;
+revoke all on function public.record_duplicate_detected(uuid, text, text)
+  from public, anon;
+revoke all on function public.decide_document(uuid, text, text)
+  from public, anon;
+revoke all on function public.correct_document_metadata(
+  uuid, public.document_category, text, text, uuid, boolean
+) from public, anon;
+revoke all on function public.retry_document_ingestion(uuid)
+  from public, anon;
+grant execute on function public.register_document(
+  uuid, uuid, text, text, text, bigint, text, public.document_category, uuid, boolean
+) to authenticated;
+grant execute on function public.record_duplicate_detected(uuid, text, text)
+  to authenticated;
+grant execute on function public.decide_document(uuid, text, text)
+  to authenticated;
+grant execute on function public.correct_document_metadata(
+  uuid, public.document_category, text, text, uuid, boolean
+) to authenticated;
+grant execute on function public.retry_document_ingestion(uuid)
+  to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Fonctions du worker (service_role uniquement).
+-- ---------------------------------------------------------------------------
+create or replace function public.assert_ingestion_lease(
+  p_job_id uuid,
+  p_lease_token uuid
+)
+returns public.ingestion_jobs
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  job public.ingestion_jobs;
+begin
+  select * into job
+  from public.ingestion_jobs
+  where id = p_job_id
+    and status = 'running'
+    and lease_token = p_lease_token
+  for update;
+  if not found then
+    raise exception using errcode = 'P0001', message = 'LEASE_LOST';
+  end if;
+  return job;
+end;
+$$;
+
+create or replace function public.mark_ingestion_failed(
+  p_job public.ingestion_jobs,
+  p_error_code text,
+  p_error_message text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  -- Un échec technique n'est pas une décision : le document reste hors
+  -- corpus et l'erreur est affichée en langage utilisateur (US-26.3).
+  if p_job.kind in ('full', 'requalify', 'extract', 'qualify') then
+    update public.documents
+    set processing_state = 'failed',
+        ingestion_error_code = p_error_code,
+        status_reason_code = 'ingestion_failed',
+        status_reason_params = jsonb_build_object('error_code', p_error_code),
+        status_reason = left(p_error_message, 500)
+    where id = p_job.document_id;
+  else
+    update public.documents
+    set ingestion_error_code = p_error_code
+    where id = p_job.document_id;
+  end if;
+  -- RG-13.3 : les échecs sont journalisés au même titre que les succès.
+  perform public.log_document_event(
+    p_job.workspace_id, p_job.document_id, 'engine', null,
+    'document_ingestion_failed',
+    jsonb_build_object(
+      'job_id', p_job.id,
+      'kind', p_job.kind,
+      'code', p_error_code,
+      'reason', left(p_error_message, 500),
+      'attempts', p_job.attempts
+    )
+  );
+end;
+$$;
+
+create or replace function public.claim_ingestion_job(
+  p_worker_id text,
+  p_lease_seconds integer default 300
+)
+returns public.ingestion_jobs
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  expired public.ingestion_jobs;
+  claimed public.ingestion_jobs;
+begin
+  -- Baux expirés : nouvelle tentative, ou échec définitif au dernier essai.
+  for expired in
+    select * from public.ingestion_jobs
+    where status = 'running' and locked_until < now()
+    for update skip locked
+  loop
+    if expired.attempts >= expired.max_attempts then
+      update public.ingestion_jobs
+      set status = 'failed',
+          error_code = 'WORKER_TIMEOUT',
+          error_message = 'Le traitement a dépassé le délai autorisé',
+          error_history = error_history || jsonb_build_array(jsonb_build_object(
+            'attempt', attempts, 'at', now(), 'code', 'WORKER_TIMEOUT'
+          )),
+          completed_at = now(),
+          lease_token = null,
+          locked_by = null,
+          locked_until = null
+      where id = expired.id;
+      perform public.mark_ingestion_failed(
+        expired, 'WORKER_TIMEOUT', 'Le traitement a dépassé le délai autorisé'
+      );
+    else
+      update public.ingestion_jobs
+      set status = 'queued',
+          available_at = now(),
+          error_history = error_history || jsonb_build_array(jsonb_build_object(
+            'attempt', attempts, 'at', now(), 'code', 'LEASE_EXPIRED'
+          )),
+          lease_token = null,
+          locked_by = null,
+          locked_until = null
+      where id = expired.id;
+    end if;
+  end loop;
+
+  with next_job as (
+    select id
+    from public.ingestion_jobs
+    where status = 'queued' and available_at <= now()
+    order by available_at, created_at
+    for update skip locked
+    limit 1
+  )
+  update public.ingestion_jobs as job
+  set status = 'running',
+      stage = null,
+      attempts = job.attempts + 1,
+      lease_token = gen_random_uuid(),
+      locked_by = p_worker_id,
+      locked_until = now() + make_interval(secs => greatest(p_lease_seconds, 30)),
+      started_at = coalesce(job.started_at, now())
+  from next_job
+  where job.id = next_job.id
+  returning job.* into claimed;
+
+  return claimed;
+end;
+$$;
+
+-- Démarre directement une tâche pour les endpoints synchrones du catalogue.
+create or replace function public.start_ingestion_job(
+  p_document_id uuid,
+  p_kind text,
+  p_worker_id text,
+  p_requested_by uuid,
+  p_lease_seconds integer default 600
+)
+returns public.ingestion_jobs
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  target public.documents;
+  job public.ingestion_jobs;
+begin
+  select * into target
+  from public.documents
+  where id = p_document_id and deleted_at is null;
+  if not found then
+    raise exception using errcode = 'P0001', message = 'DOCUMENT_NOT_FOUND';
+  end if;
+  if exists (
+    select 1 from public.ingestion_jobs
+    where document_id = p_document_id and status in ('queued', 'running')
+  ) then
+    raise exception using errcode = 'P0001', message = 'INGESTION_IN_PROGRESS';
+  end if;
+  insert into public.ingestion_jobs (
+    document_id, workspace_id, kind, status, requested_by, attempts,
+    max_attempts, lease_token, locked_by, locked_until, started_at
+  )
+  values (
+    p_document_id, target.workspace_id, p_kind, 'running', p_requested_by, 1,
+    1, gen_random_uuid(), p_worker_id,
+    now() + make_interval(secs => greatest(p_lease_seconds, 30)), now()
+  )
+  returning * into job;
+  return job;
+exception when unique_violation then
+  raise exception using errcode = 'P0001', message = 'INGESTION_IN_PROGRESS';
+end;
+$$;
+
+create or replace function public.heartbeat_ingestion_job(
+  p_job_id uuid,
+  p_lease_token uuid,
+  p_stage text default null,
+  p_lease_seconds integer default 300
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  job public.ingestion_jobs;
+begin
+  update public.ingestion_jobs
+  set locked_until = now() + make_interval(secs => greatest(p_lease_seconds, 30)),
+      stage = coalesce(p_stage, stage)
+  where id = p_job_id and status = 'running' and lease_token = p_lease_token
+  returning * into job;
+  if not found then
+    return false;
+  end if;
+  -- US-8.10 : la progression du fichier suit l'étape en cours.
+  if p_stage in ('extraction', 'detection', 'pertinence', 'indexation') then
+    update public.documents
+    set processing_state = p_stage::public.ingestion_state
+    where id = job.document_id
+      and (job.kind in ('full', 'requalify', 'extract', 'qualify')
+        or p_stage = 'indexation');
+  end if;
+  return true;
+end;
+$$;
+
+create or replace function public.fail_ingestion_job(
+  p_job_id uuid,
+  p_lease_token uuid,
+  p_error_code text,
+  p_error_message text,
+  p_retry boolean default false
+)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  job public.ingestion_jobs;
+  next_status text;
+begin
+  job := public.assert_ingestion_lease(p_job_id, p_lease_token);
+  next_status := case
+    when p_retry and job.attempts < job.max_attempts then 'queued'
+    else 'failed'
+  end;
+
+  update public.ingestion_jobs
+  set status = next_status,
+      error_code = p_error_code,
+      error_message = left(p_error_message, 4000),
+      error_history = error_history || jsonb_build_array(jsonb_build_object(
+        'attempt', attempts, 'at', now(), 'code', p_error_code,
+        'message', left(p_error_message, 1000)
+      )),
+      -- Spec §4.7 / §12.2 : nouvel essai avec backoff exponentiel.
+      available_at = case
+        when next_status = 'queued'
+          then now() + make_interval(secs => least(600, (power(2, attempts) * 15)::integer))
+        else available_at
+      end,
+      completed_at = case when next_status = 'failed' then now() else null end,
+      lease_token = null,
+      locked_by = null,
+      locked_until = null
+  where id = p_job_id;
+
+  if next_status = 'failed' then
+    perform public.mark_ingestion_failed(job, p_error_code, p_error_message);
+  end if;
+  return next_status;
+end;
+$$;
+
+create or replace function public.complete_ingestion_job(
+  p_job_id uuid,
+  p_lease_token uuid,
+  p_result jsonb default '{}'::jsonb
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  job public.ingestion_jobs;
+begin
+  job := public.assert_ingestion_lease(p_job_id, p_lease_token);
+  update public.ingestion_jobs
+  set status = 'completed',
+      stage = 'completed',
+      result = coalesce(p_result, '{}'::jsonb),
+      error_code = null,
+      error_message = null,
+      completed_at = now(),
+      lease_token = null,
+      locked_by = null,
+      locked_until = null
+  where id = p_job_id;
+
+  -- Une extraction seule laisse le document en attente de qualification.
+  update public.documents
+  set processing_state = case
+        when job.kind = 'extract' then 'pending'::public.ingestion_state
+        else 'ready'::public.ingestion_state
+      end,
+      ingestion_error_code = null
+  where id = job.document_id;
+end;
+$$;
+
+create or replace function public.commit_document_extraction(
+  p_job_id uuid,
+  p_lease_token uuid,
+  p_pages jsonb,
+  p_pdf_type text,
+  p_metadata jsonb default '{}'::jsonb
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  job public.ingestion_jobs;
+  total integer;
+  exploitable integer;
+begin
+  job := public.assert_ingestion_lease(p_job_id, p_lease_token);
+
+  delete from public.document_pages where document_id = job.document_id;
+  insert into public.document_pages (
+    document_id, workspace_id, page_number, text, section_title, is_ocr,
+    ocr_failed, is_exploitable, char_start
+  )
+  select
+    job.document_id,
+    job.workspace_id,
+    (page ->> 'page_number')::integer,
+    coalesce(page ->> 'text', ''),
+    page ->> 'section_title',
+    coalesce((page ->> 'is_ocr')::boolean, false),
+    coalesce((page ->> 'ocr_failed')::boolean, false),
+    coalesce((page ->> 'is_exploitable')::boolean, false),
+    coalesce((page ->> 'char_start')::integer, 0)
+  from jsonb_array_elements(p_pages) as page;
+
+  select count(*), count(*) filter (where is_exploitable)
+  into total, exploitable
+  from public.document_pages
+  where document_id = job.document_id;
+
+  update public.documents
+  set total_pages = total,
+      exploitable_pages = exploitable,
+      pdf_type = p_pdf_type
+  where id = job.document_id;
+
+  perform public.log_document_event(
+    job.workspace_id, job.document_id, 'engine', null, 'document_extracted',
+    coalesce(p_metadata, '{}'::jsonb) || jsonb_build_object(
+      'pdf_type', p_pdf_type,
+      'total_pages', total,
+      'exploitable_pages', exploitable
+    )
+  );
+end;
+$$;
+
+create or replace function public.commit_document_qualification(
+  p_job_id uuid,
+  p_lease_token uuid,
+  p_result jsonb
+)
+returns public.documents
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  job public.ingestion_jobs;
+  target public.documents;
+  updated public.documents;
+begin
+  job := public.assert_ingestion_lease(p_job_id, p_lease_token);
+  select * into target from public.documents where id = job.document_id for update;
+
+  -- Une décision humaine prise entre-temps n'est jamais écrasée par le moteur.
+  if coalesce(target.status_reason_code, '') in ('human_add', 'human_cancel') then
+    raise exception using errcode = 'P0001', message = 'HUMAN_DECISION_LOCKED';
+  end if;
+
+  update public.documents
+  set detected_language = p_result ->> 'language',
+      language_confidence = (p_result ->> 'language_confidence')::numeric,
+      language_to_confirm = coalesce((p_result ->> 'language_to_confirm')::boolean, false),
+      language_expected = (p_result ->> 'language_expected')::boolean,
+      detected_country = p_result ->> 'country',
+      country_confidence = (p_result ->> 'country_confidence')::numeric,
+      relevance_score = (p_result ->> 'relevance_score')::integer,
+      relevance_details = p_result -> 'relevance_details',
+      status = (p_result ->> 'status')::public.document_status,
+      status_reason = p_result ->> 'status_reason',
+      status_reason_code = p_result ->> 'status_reason_code',
+      status_reason_params = coalesce(p_result -> 'status_reason_params', '{}'::jsonb),
+      settings_version = (p_result ->> 'settings_version')::integer,
+      integrated_by_human = false
+  where id = job.document_id
+  returning * into updated;
+
+  insert into public.document_metadata (document_id, key, value, source)
+  values
+    (job.document_id, 'language_confidence', p_result ->> 'language_confidence', 'auto'),
+    (job.document_id, 'country_confidence', p_result ->> 'country_confidence', 'auto')
+  on conflict (document_id, key)
+  do update set value = excluded.value, source = 'auto', created_at = now();
+
+  -- §11.1 : chaque étape de la décision est journalisée.
+  perform public.log_document_event(
+    job.workspace_id, job.document_id, 'engine', null,
+    'document_language_detected',
+    jsonb_build_object(
+      'language', updated.detected_language,
+      'confidence', updated.language_confidence,
+      'to_confirm', updated.language_to_confirm,
+      'expected', updated.language_expected,
+      'source', p_result ->> 'language_source'
+    )
+  );
+  perform public.log_document_event(
+    job.workspace_id, job.document_id, 'engine', null,
+    'document_country_detected',
+    jsonb_build_object(
+      'country', updated.detected_country,
+      'confidence', updated.country_confidence,
+      'source', p_result ->> 'country_source'
+    )
+  );
+  perform public.log_document_event(
+    job.workspace_id, job.document_id, 'engine', null,
+    'document_relevance_scored',
+    coalesce(p_result -> 'relevance_details', '{}'::jsonb)
+      || jsonb_build_object('score', updated.relevance_score, 'decision', updated.status)
+  );
+  perform public.log_document_event(
+    job.workspace_id, job.document_id, 'engine', null, 'document_qualified',
+    jsonb_build_object(
+      'status', updated.status,
+      'reason_code', updated.status_reason_code,
+      'message', updated.status_reason,
+      'settings_version', updated.settings_version
+    ),
+    jsonb_build_object('status', target.status),
+    jsonb_build_object('status', updated.status)
+  );
+  if updated.status = 'rejete' then
+    perform public.log_document_event(
+      job.workspace_id, job.document_id, 'engine', null, 'document_rejected',
+      jsonb_build_object(
+        'reason_code', updated.status_reason_code,
+        'reason', updated.status_reason
+      )
+    );
+  end if;
+
+  -- RG-4.1 : un document qui n'est plus éligible sort immédiatement de l'index.
+  if not public.document_is_eligible(updated.status) and target.indexed_at is not null then
+    perform public.remove_document_index(job.document_id, 'engine', null);
+  end if;
+
+  return updated;
+end;
+$$;
+
+create or replace function public.append_document_segments(
+  p_job_id uuid,
+  p_lease_token uuid,
+  p_generation uuid,
+  p_segments jsonb
+)
+returns integer
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  job public.ingestion_jobs;
+  inserted integer;
+begin
+  job := public.assert_ingestion_lease(p_job_id, p_lease_token);
+
+  with rows as (
+    select
+      gen_random_uuid() as id,
+      item
+    from jsonb_array_elements(p_segments) as item
+  ),
+  segment_rows as (
+    insert into public.segments (
+      id, document_id, workspace_id, generation, published, page_number,
+      section_title, paragraph_index, text, language, char_start, char_end,
+      token_count
+    )
+    select
+      rows.id,
+      job.document_id,
+      job.workspace_id,
+      p_generation,
+      false,
+      (rows.item ->> 'page_number')::integer,
+      rows.item ->> 'section_title',
+      (rows.item ->> 'paragraph_index')::integer,
+      rows.item ->> 'text',
+      rows.item ->> 'language',
+      (rows.item ->> 'char_start')::integer,
+      (rows.item ->> 'char_end')::integer,
+      (rows.item ->> 'token_count')::integer
+    from rows
+    returning id
+  )
+  insert into public.segment_embeddings (segment_id, workspace_id, embedding, model)
+  select
+    rows.id,
+    job.workspace_id,
+    (rows.item ->> 'embedding')::vector,
+    rows.item ->> 'model'
+  from rows
+  join segment_rows on segment_rows.id = rows.id;
+
+  get diagnostics inserted = row_count;
+  return inserted;
+end;
+$$;
+
+create or replace function public.publish_document_index(
+  p_job_id uuid,
+  p_lease_token uuid,
+  p_generation uuid,
+  p_model text
+)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  job public.ingestion_jobs;
+  target public.documents;
+  published_count integer;
+begin
+  job := public.assert_ingestion_lease(p_job_id, p_lease_token);
+  select * into target from public.documents where id = job.document_id for update;
+
+  -- Spec §9.4 : jamais d'indexation pour un document rejeté ou à vérifier.
+  if not public.document_is_eligible(target.status) or target.deleted_at is not null then
+    delete from public.segments
+    where document_id = job.document_id and generation = p_generation;
+    raise exception using
+      errcode = 'P0001', message = 'DOCUMENT_NOT_ELIGIBLE_FOR_INDEXING';
+  end if;
+
+  -- Bascule atomique : l'ancienne génération disparaît, la nouvelle devient
+  -- visible pour le RAG.
+  delete from public.segments
+  where document_id = job.document_id
+    and generation is distinct from p_generation;
+  update public.segments
+  set published = true
+  where document_id = job.document_id and generation = p_generation;
+  get diagnostics published_count = row_count;
+
+  update public.documents set indexed_at = now() where id = job.document_id;
+
+  perform public.log_document_event(
+    job.workspace_id, job.document_id, 'engine', null, 'document_segmented',
+    jsonb_build_object('segments_count', published_count)
+  );
+  perform public.log_document_event(
+    job.workspace_id, job.document_id, 'engine', null, 'document_indexed',
+    jsonb_build_object('embeddings_count', published_count, 'model', p_model)
+  );
+  return published_count;
+end;
+$$;
+
+create or replace function public.unpublish_document_index(
+  p_job_id uuid,
+  p_lease_token uuid
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  job public.ingestion_jobs;
+begin
+  job := public.assert_ingestion_lease(p_job_id, p_lease_token);
+  perform public.remove_document_index(job.document_id, 'engine', null);
+end;
+$$;
+
+revoke all on function public.assert_ingestion_lease(uuid, uuid)
+  from public, anon, authenticated;
+revoke all on function public.mark_ingestion_failed(public.ingestion_jobs, text, text)
+  from public, anon, authenticated;
+revoke all on function public.claim_ingestion_job(text, integer)
+  from public, anon, authenticated;
+revoke all on function public.start_ingestion_job(uuid, text, text, uuid, integer)
+  from public, anon, authenticated;
+revoke all on function public.heartbeat_ingestion_job(uuid, uuid, text, integer)
+  from public, anon, authenticated;
+revoke all on function public.fail_ingestion_job(uuid, uuid, text, text, boolean)
+  from public, anon, authenticated;
+revoke all on function public.complete_ingestion_job(uuid, uuid, jsonb)
+  from public, anon, authenticated;
+revoke all on function public.commit_document_extraction(uuid, uuid, jsonb, text, jsonb)
+  from public, anon, authenticated;
+revoke all on function public.commit_document_qualification(uuid, uuid, jsonb)
+  from public, anon, authenticated;
+revoke all on function public.append_document_segments(uuid, uuid, uuid, jsonb)
+  from public, anon, authenticated;
+revoke all on function public.publish_document_index(uuid, uuid, uuid, text)
+  from public, anon, authenticated;
+revoke all on function public.unpublish_document_index(uuid, uuid)
+  from public, anon, authenticated;
+
+grant execute on function public.claim_ingestion_job(text, integer) to service_role;
+grant execute on function public.start_ingestion_job(uuid, text, text, uuid, integer)
+  to service_role;
+grant execute on function public.heartbeat_ingestion_job(uuid, uuid, text, integer)
+  to service_role;
+grant execute on function public.fail_ingestion_job(uuid, uuid, text, text, boolean)
+  to service_role;
+grant execute on function public.complete_ingestion_job(uuid, uuid, jsonb)
+  to service_role;
+grant execute on function public.commit_document_extraction(uuid, uuid, jsonb, text, jsonb)
+  to service_role;
+grant execute on function public.commit_document_qualification(uuid, uuid, jsonb)
+  to service_role;
+grant execute on function public.append_document_segments(uuid, uuid, uuid, jsonb)
+  to service_role;
+grant execute on function public.publish_document_index(uuid, uuid, uuid, text)
+  to service_role;
+grant execute on function public.unpublish_document_index(uuid, uuid)
+  to service_role;
+
+-- ---------------------------------------------------------------------------
+-- Reprise des documents déjà chargés : ils entrent dans la file.
+-- ---------------------------------------------------------------------------
+update public.documents
+set processing_state = 'ready'
+where deleted_at is null and relevance_score is not null;
+
+select public.enqueue_ingestion_job(document.id, 'full', null)
+from public.documents as document
+where document.deleted_at is null
+  and document.relevance_score is null
+  and document.processing_state = 'pending';
+
+-- La file et l'avancement sont suivis en temps réel par le front.
+do $$
+begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    begin
+      alter publication supabase_realtime add table public.documents;
+    exception when duplicate_object then null;
+    end;
+  end if;
+end
+$$;
+
+notify pgrst, 'reload schema';
+
+reset search_path;
