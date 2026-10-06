@@ -5,7 +5,6 @@ import { AuthGuard } from "@/features/auth/screens/auth-guard"
 import { LoginScreen } from "@/features/auth/screens/login-screen"
 import { ProfileScreen } from "@/features/auth/screens/profile-screen"
 import { PublicOnlyRoute } from "@/features/auth/screens/public-only-route"
-import { CorpusInventoryScreen } from "@/features/corpus/screens/corpus-inventory-screen"
 import { DocumentDetailScreen } from "@/features/corpus/screens/document-detail-screen"
 import { DocumentsReviewScreen } from "@/features/corpus/screens/documents-review-screen"
 import { ImportDocumentsScreen } from "@/features/corpus/screens/import-documents-screen"
@@ -42,7 +41,7 @@ const workspaceRoutes = navSections.flatMap((section) =>
         index: true,
         element:
           item.segment === "corpus" ? (
-            <CorpusInventoryScreen />
+            <Navigate replace to="documents" />
           ) : item.segment === "framework" ? (
             <FrameworkPillarsScreen />
           ) : item.segment === "analysis" ? (
@@ -60,8 +59,6 @@ const workspaceRoutes = navSections.flatMap((section) =>
             <ImportDocumentsScreen />
           ) : item.segment === "corpus" && child.segment === "documents" ? (
             <DocumentsReviewScreen />
-          ) : item.segment === "corpus" && child.segment === "inventory" ? (
-            <CorpusInventoryScreen />
           ) : item.segment === "framework" && child.segment === "brief" ? (
             <FrameworkBriefScreen />
           ) : item.segment === "framework" && child.segment === "pillars" ? (

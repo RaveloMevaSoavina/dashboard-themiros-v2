@@ -52,7 +52,6 @@ export const resources = {
           corpus: "Corpus",
           import: "Import documentaire",
           documents: "Revue documentaire",
-          inventory: "Masse critique",
           framework: "Cadre d'évaluation",
           approach: "Approche d'évaluation",
           recommendedApproach: "Approche recommandée",
@@ -660,12 +659,6 @@ export const resources = {
           integre_decision_humaine: "Intégré sur décision humaine",
           non_classe: "Non classé",
         },
-        level: {
-          insufficient: "Insuffisant",
-          exploratoire: "Exploratoire",
-          standard: "Standard",
-          approfondie: "Approfondie",
-        },
         table: {
           name: "Nom",
           category: "Catégorie",
@@ -913,31 +906,6 @@ export const resources = {
           apply: "Appliquer au lot",
           bulkSuccess:
             "La catégorie a été appliquée aux documents sélectionnés.",
-        },
-        inventory: {
-          title: "Corpus et masse critique",
-          description:
-            "Visualisez les pièces qui nourrissent l'analyse et le niveau de fiabilité documentaire atteint.",
-          add: "Ajouter des documents",
-          mass: "Masse documentaire",
-          included_one: "{{count}} document admissible",
-          included_other: "{{count}} documents admissibles",
-          level: "Niveau atteint",
-          next_one:
-            "Ajoutez encore {{count}} document pour atteindre le niveau {{level}}.",
-          next_other:
-            "Ajoutez encore {{count}} documents pour atteindre le niveau {{level}}.",
-          blocked:
-            "Analyse impossible. Le corpus actuel contient {{count}} document(s), soit insuffisant pour produire des résultats fiables. EvoranQ requiert un minimum de {{threshold}} documents pour ce type d'analyse. Ajoutez des documents pour continuer.",
-          warning:
-            "Le corpus contient {{count}} documents. Les résultats sont indicatifs et ne doivent pas être utilisés comme base de décision formelle. Pour une analyse fiable, ajoutez {{remaining}} documents supplémentaires.",
-          documents: "Inventaire documentaire",
-          documentsDescription_one:
-            "{{count}} document chargé, tous statuts confondus.",
-          documentsDescription_other:
-            "{{count}} documents chargés, tous statuts confondus.",
-          empty:
-            "Le corpus est vide. Ajoutez vos premiers documents pour commencer.",
         },
         detail: {
           eyebrow: "Fiche document",
@@ -1219,7 +1187,6 @@ export const resources = {
           corpus: "Corpus",
           import: "Document import",
           documents: "Document review",
-          inventory: "Critical mass",
           framework: "Evaluation framework",
           approach: "Evaluation approach",
           recommendedApproach: "Recommended approach",
@@ -1816,12 +1783,6 @@ export const resources = {
           integre_decision_humaine: "Included by human decision",
           non_classe: "Unclassified",
         },
-        level: {
-          insufficient: "Insufficient",
-          exploratoire: "Exploratory",
-          standard: "Standard",
-          approfondie: "In-depth",
-        },
         table: {
           name: "Name",
           category: "Category",
@@ -2056,29 +2017,6 @@ export const resources = {
           selected_other: "{{count}} documents selected",
           apply: "Apply to selection",
           bulkSuccess: "The category was applied to the selected documents.",
-        },
-        inventory: {
-          title: "Corpus and critical mass",
-          description:
-            "See the documents feeding the analysis and the reliability level reached by the corpus.",
-          add: "Add documents",
-          mass: "Document mass",
-          included_one: "{{count}} eligible document",
-          included_other: "{{count}} eligible documents",
-          level: "Current level",
-          next_one: "Add {{count}} more document to reach the {{level}} level.",
-          next_other:
-            "Add {{count}} more documents to reach the {{level}} level.",
-          blocked:
-            "Analysis is impossible. The current corpus contains {{count}} document(s), which is insufficient to produce reliable results. EvoranQ requires at least {{threshold}} documents for this analysis. Add documents to continue.",
-          warning:
-            "The corpus contains {{count}} documents. Results are indicative and must not be used for formal decisions. Add {{remaining}} documents for a reliable analysis.",
-          documents: "Document inventory",
-          documentsDescription_one:
-            "{{count}} uploaded document across all statuses.",
-          documentsDescription_other:
-            "{{count}} uploaded documents across all statuses.",
-          empty: "The corpus is empty. Add your first documents to begin.",
         },
         detail: {
           eyebrow: "Document details",

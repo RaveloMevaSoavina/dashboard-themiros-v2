@@ -1,6 +1,5 @@
 import type {
   CorpusDocument,
-  CorpusThreshold,
   DocumentCategory,
   DocumentEvent,
   DocumentStatus,
@@ -143,20 +142,6 @@ export async function listProgramVersions(
 
   if (error) throw error
   return (data ?? []) as ProgramVersion[]
-}
-
-export async function listCorpusThresholds(): Promise<CorpusThreshold[]> {
-  const { data, error } = await supabase
-    .from("corpus_thresholds")
-    .select("analysis_type, minimum_documents, recommended_documents")
-    .order("minimum_documents")
-
-  if (error) throw error
-  return (data ?? []).map((row) => ({
-    type: row.analysis_type as CorpusThreshold["type"],
-    minimum: row.minimum_documents,
-    recommended: row.recommended_documents,
-  }))
 }
 
 export async function hashFile(file: File) {

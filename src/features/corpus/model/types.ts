@@ -66,9 +66,3 @@ export type DocumentEvent = {
   message: string | null
   createdAt: string
 }
-
-export type CorpusThreshold = {
-  type: "exploratoire" | "standard" | "approfondie"
-  minimum: number
-  recommended: number
-}

@@ -67,12 +67,6 @@ export const navSections: readonly NavSection[] = [
             labelKey: "documents",
             personas: withoutDecideur,
           },
-          /* Ecran 11 */
-          {
-            segment: "inventory",
-            labelKey: "inventory",
-            personas: withoutDecideur,
-          },
         ],
       },
     ],
