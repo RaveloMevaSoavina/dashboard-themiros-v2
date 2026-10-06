@@ -1,5 +1,3 @@
-import type { DocumentStatus } from "@/features/corpus/model/types"
-
 /** Paramètres du contrôle d'ingestion (RG-5.4), versionnés par espace. */
 export type IngestionSettingsValues = {
   conformityThreshold: number
@@ -53,52 +51,4 @@ export const defaultIngestionSettings: IngestionSettingsValues = {
   offTopicKeywords: [],
   maxFileSizeBytes: maxUploadSizeBytes,
   maxFilesPerBatch: 20,
-}
-
-export const ingestionSettingsFields = Object.keys(
-  defaultIngestionSettings
-) as (keyof IngestionSettingsValues)[]
-
-/** Champs qui modifient la décision des documents déjà contrôlés. */
-export const scoringFields: readonly (keyof IngestionSettingsValues)[] = [
-  "conformityThreshold",
-  "ambiguousThreshold",
-  "bonusCountry",
-  "bonusFinancier",
-  "bonusTheme",
-  "bonusLanguage",
-  "malusOffTopic",
-  "malusOtherCountry",
-  "languageConfidenceThreshold",
-  "offTopicKeywords",
-]
-
-export function pickSettingsValues(
-  settings: IngestionSettingsValues
-): IngestionSettingsValues {
-  return Object.fromEntries(
-    ingestionSettingsFields.map((field) => [field, settings[field]])
-  ) as IngestionSettingsValues
-}
-
-export function changedSettingsFields(
-  previous: IngestionSettingsValues,
-  next: IngestionSettingsValues
-) {
-  return ingestionSettingsFields.filter(
-    (field) => JSON.stringify(previous[field]) !== JSON.stringify(next[field])
-  )
-}
-
-/** Zone de décision d'un score selon les seuils (spec §7.5). */
-export function relevanceZone(
-  score: number,
-  settings: Pick<
-    IngestionSettingsValues,
-    "conformityThreshold" | "ambiguousThreshold"
-  >
-): Extract<DocumentStatus, "conforme" | "a_verifier" | "rejete"> {
-  if (score >= settings.conformityThreshold) return "conforme"
-  if (score >= settings.ambiguousThreshold) return "a_verifier"
-  return "rejete"
 }

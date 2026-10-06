@@ -1,8 +1,4 @@
-import type {
-  IngestionSettings,
-  IngestionSettingsValues,
-} from "@/features/corpus/model/ingestion-settings"
-import { toRequestError } from "@/features/corpus/services/corpus-service"
+import type { IngestionSettings } from "@/features/corpus/model/ingestion-settings"
 import { supabase } from "@/shared/lib/supabase"
 
 type SettingsRow = {
@@ -47,24 +43,6 @@ function toSettings(row: SettingsRow): IngestionSettings {
   }
 }
 
-function toRow(values: IngestionSettingsValues) {
-  return {
-    conformity_threshold: values.conformityThreshold,
-    ambiguous_threshold: values.ambiguousThreshold,
-    bonus_country: values.bonusCountry,
-    bonus_financier: values.bonusFinancier,
-    bonus_theme: values.bonusTheme,
-    bonus_language: values.bonusLanguage,
-    malus_off_topic: values.malusOffTopic,
-    malus_other_country: values.malusOtherCountry,
-    language_confidence_threshold: values.languageConfidenceThreshold,
-    exploitable_page_min_chars: values.exploitablePageMinChars,
-    off_topic_keywords: values.offTopicKeywords,
-    max_file_size_bytes: values.maxFileSizeBytes,
-    max_files_per_batch: values.maxFilesPerBatch,
-  }
-}
-
 export type WorkspaceIngestionSettings = {
   /** Paramètres appliqués aux prochains contrôles de l'espace. */
   current: IngestionSettings
@@ -90,23 +68,4 @@ export async function getIngestionSettings(
   if (!defaults) return null
   const history = rows.filter((row) => row.workspaceId === workspaceId)
   return { current: history.at(0) ?? defaults, defaults, history }
-}
-
-/**
- * Crée une nouvelle version des paramètres de l'espace ; les documents sans
- * décision humaine sont requalifiés si les règles de décision changent.
- */
-export async function updateIngestionSettings(
-  workspaceId: string,
-  values: IngestionSettingsValues,
-  options: { note?: string; requalify: boolean }
-): Promise<{ version: number; changed: boolean; requalified: number }> {
-  const { data, error } = await supabase.rpc("update_ingestion_settings", {
-    p_workspace_id: workspaceId,
-    p_values: toRow(values),
-    p_note: options.note?.trim() || null,
-    p_requalify: options.requalify,
-  })
-  if (error) throw toRequestError(error)
-  return data as { version: number; changed: boolean; requalified: number }
 }

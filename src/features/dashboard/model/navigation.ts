@@ -195,11 +195,6 @@ export const navSections: readonly NavSection[] = [
             personas: withoutDecideur,
           },
           {
-            segment: "ingestion",
-            labelKey: "ingestionSettings",
-            personas: withoutDecideur,
-          },
-          {
             segment: "versions",
             labelKey: "versions",
             personas: withoutDecideur,

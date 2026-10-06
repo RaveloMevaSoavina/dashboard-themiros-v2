@@ -73,7 +73,6 @@ export const resources = {
           settings: "Paramètres",
           general: "Général",
           fingerprint: "Empreinte sémantique",
-          ingestionSettings: "Contrôle des documents",
           versions: "Versions du programme",
         },
       },
@@ -770,117 +769,6 @@ export const resources = {
             "Certaines valeurs sont hors des limites autorisées.",
           DOCUMENT_NOT_FOUND: "Ce document n'existe plus.",
         },
-        settings: {
-          title: "Contrôle des documents",
-          description:
-            "Seuils et règles qui décident si un document chargé entre dans le corpus. Chaque modification crée une nouvelle version, journalisée.",
-          loadError: "Impossible de charger les paramètres du contrôle.",
-          custom: "Paramètres de l'espace",
-          defaults: "Valeurs par défaut",
-          versionInfo: "Version {{version}} · {{date}}",
-          adminOnly:
-            "Seul un administrateur de l'espace peut modifier ces paramètres.",
-          points: "points",
-          characters: "caractères",
-          megabytes: "Mo",
-          files: "fichiers",
-          decision: {
-            title: "Décision automatique",
-            description:
-              "Le score de pertinence (0 à 100) place chaque document dans l'une des trois zones.",
-            conformity: "Seuil de conformité",
-            conformityHint: "À partir de ce score, le document est intégré.",
-            ambiguous: "Seuil de rejet",
-            ambiguousHint:
-              "Sous ce score, le document est rejeté. Entre les deux, il est à vérifier.",
-            order:
-              "Le seuil de rejet doit être inférieur au seuil de conformité.",
-          },
-          adjustments: {
-            title: "Bonus et malus",
-            description:
-              "Ajoutés au score sémantique avant la décision, selon ce que le document mentionne.",
-            bonusCountry: "Pays cible mentionné",
-            bonusCountryHint: "Le pays détecté est celui de l'espace.",
-            bonusFinancier: "Bailleur mentionné",
-            bonusFinancierHint: "Un bailleur déclaré de l'espace apparaît.",
-            bonusTheme: "Thème mentionné",
-            bonusThemeHint: "Un thème déclaré de l'espace apparaît.",
-            bonusLanguage: "Langue attendue",
-            bonusLanguageHint:
-              "La langue détectée fait partie des langues attendues.",
-            malusOffTopic: "Mots-clés hors sujet",
-            malusOffTopicHint:
-              "Le document ressemble à un appel d'offres ou une offre.",
-            malusOtherCountry: "Autre pays",
-            malusOtherCountryHint:
-              "Le pays détecté n'est pas celui de l'espace.",
-          },
-          keywords: {
-            title: "Mots-clés hors sujet",
-            description:
-              "Un document qui en contient un dans ses premières pages, ou au moins 3 fois, perd {{malus}} points. Accents et ponctuation sont ignorés.",
-            empty: "Aucun mot-clé : le malus hors sujet ne s'applique jamais.",
-            placeholder: "Ex. offre technique",
-            add: "Ajouter",
-            remove: "Retirer {{keyword}}",
-          },
-          detection: {
-            title: "Détection",
-            description: "Réglages de la lecture des documents.",
-            language: "Confiance minimale de la langue",
-            languageHint: "En dessous, la langue est affichée « À confirmer ».",
-            page: "Page exploitable",
-            pageHint:
-              "Nombre minimal de caractères pour qu'une page compte. S'applique aux prochains fichiers.",
-          },
-          limits: {
-            title: "Limites de chargement",
-            description: "S'appliquent aux prochains fichiers chargés.",
-            fileSize: "Taille maximale par fichier",
-            fileSizeHint: "Au plus {{max}} Mo, limite du stockage.",
-            files: "Fichiers par ajout",
-            filesHint: "Nombre maximal de fichiers déposés en une fois.",
-          },
-          note: "Motif de la modification",
-          notePlaceholder: "Ex. calibrage sur le corpus de recette",
-          restoreDefaults: "Valeurs par défaut",
-          discard: "Annuler",
-          save: "Enregistrer",
-          saved: "Paramètres enregistrés.",
-          savedRequalify_one:
-            "Paramètres enregistrés. {{count}} document est en cours de recontrôle.",
-          savedRequalify_other:
-            "Paramètres enregistrés. {{count}} documents sont en cours de recontrôle.",
-          saveError: "Les paramètres n'ont pas pu être enregistrés.",
-          invalid: "Corrigez les valeurs signalées avant d'enregistrer.",
-          requalify_one:
-            "Recontrôler le document déjà traité sans décision humaine",
-          requalify_other:
-            "Recontrôler les {{count}} documents déjà traités sans décision humaine",
-          requalifyHint:
-            "Sinon, les nouvelles règles ne s'appliquent qu'aux prochains documents. Les décisions humaines ne sont jamais modifiées.",
-          futureOnly:
-            "Ces changements s'appliquent aux prochains fichiers chargés.",
-          preview: {
-            title: "Effet des seuils",
-            description_one:
-              "Estimation sur le document dont la décision est automatique.",
-            description_other:
-              "Estimation sur les {{count}} documents dont la décision est automatique.",
-            empty: "Aucun document contrôlé pour l'instant.",
-            moved_one: "{{count}} document changerait de décision",
-            moved_other: "{{count}} documents changeraient de décision",
-            caveat:
-              "À score constant. Les bonus, malus et mots-clés modifiés ne sont pris en compte qu'au recontrôle.",
-          },
-          history: {
-            title: "Historique",
-            version: "Version {{version}}",
-            thresholds: "Seuils {{conformity}} / {{ambiguous}}",
-            defaults: "Valeurs par défaut de la plateforme",
-          },
-        },
         errors: {
           load: "Impossible de charger le corpus documentaire.",
           update: "La modification du document a échoué.",
@@ -1004,7 +892,6 @@ export const resources = {
             accepted: "Conforme, intégré au corpus",
             ambiguous: "À vérifier : ajouter, vérifier ou annuler",
             rejected: "Rejeté avec motif, non intégré",
-            adjust: "Ajuster les seuils",
             limits: "{{size}} max. par fichier · {{count}} fichiers par ajout",
           },
         },
@@ -1355,7 +1242,6 @@ export const resources = {
           settings: "Settings",
           general: "General",
           fingerprint: "Semantic fingerprint",
-          ingestionSettings: "Document screening",
           versions: "Programme versions",
         },
       },
@@ -2033,114 +1919,6 @@ export const resources = {
           INVALID_SETTINGS: "Some values are outside the allowed limits.",
           DOCUMENT_NOT_FOUND: "This document no longer exists.",
         },
-        settings: {
-          title: "Document screening",
-          description:
-            "Thresholds and rules that decide whether an uploaded document enters the corpus. Every change creates a new, logged version.",
-          loadError: "Unable to load the screening settings.",
-          custom: "Workspace settings",
-          defaults: "Default values",
-          versionInfo: "Version {{version}} · {{date}}",
-          adminOnly:
-            "Only a workspace administrator can change these settings.",
-          points: "points",
-          characters: "characters",
-          megabytes: "MB",
-          files: "files",
-          decision: {
-            title: "Automatic decision",
-            description:
-              "The relevance score (0 to 100) places each document in one of three zones.",
-            conformity: "Compliance threshold",
-            conformityHint: "From this score, the document is integrated.",
-            ambiguous: "Rejection threshold",
-            ambiguousHint:
-              "Below this score, the document is rejected. In between, it needs review.",
-            order:
-              "The rejection threshold must be lower than the compliance threshold.",
-          },
-          adjustments: {
-            title: "Bonuses and penalties",
-            description:
-              "Added to the semantic score before the decision, depending on what the document mentions.",
-            bonusCountry: "Target country mentioned",
-            bonusCountryHint: "The detected country is the workspace country.",
-            bonusFinancier: "Funder mentioned",
-            bonusFinancierHint: "A declared workspace funder appears.",
-            bonusTheme: "Theme mentioned",
-            bonusThemeHint: "A declared workspace theme appears.",
-            bonusLanguage: "Expected language",
-            bonusLanguageHint: "The detected language is an expected language.",
-            malusOffTopic: "Off-topic keywords",
-            malusOffTopicHint: "The document looks like a tender or a bid.",
-            malusOtherCountry: "Other country",
-            malusOtherCountryHint:
-              "The detected country is not the workspace country.",
-          },
-          keywords: {
-            title: "Off-topic keywords",
-            description:
-              "A document containing one in its first pages, or at least 3 times, loses {{malus}} points. Accents and punctuation are ignored.",
-            empty: "No keywords: the off-topic penalty never applies.",
-            placeholder: "E.g. technical offer",
-            add: "Add",
-            remove: "Remove {{keyword}}",
-          },
-          detection: {
-            title: "Detection",
-            description: "How documents are read.",
-            language: "Minimum language confidence",
-            languageHint: "Below it, the language is shown as “To confirm”.",
-            page: "Usable page",
-            pageHint:
-              "Minimum number of characters for a page to count. Applies to upcoming files.",
-          },
-          limits: {
-            title: "Upload limits",
-            description: "Apply to upcoming uploads.",
-            fileSize: "Maximum file size",
-            fileSizeHint: "At most {{max}} MB, the storage limit.",
-            files: "Files per upload",
-            filesHint: "Maximum number of files dropped at once.",
-          },
-          note: "Reason for the change",
-          notePlaceholder: "E.g. calibration on the acceptance corpus",
-          restoreDefaults: "Default values",
-          discard: "Discard",
-          save: "Save",
-          saved: "Settings saved.",
-          savedRequalify_one:
-            "Settings saved. {{count}} document is being screened again.",
-          savedRequalify_other:
-            "Settings saved. {{count}} documents are being screened again.",
-          saveError: "The settings could not be saved.",
-          invalid: "Fix the highlighted values before saving.",
-          requalify_one:
-            "Screen again the processed document without a human decision",
-          requalify_other:
-            "Screen again the {{count}} processed documents without a human decision",
-          requalifyHint:
-            "Otherwise, the new rules only apply to upcoming documents. Human decisions are never changed.",
-          futureOnly: "These changes apply to upcoming uploads.",
-          preview: {
-            title: "Effect of the thresholds",
-            description_one:
-              "Estimate on the document with an automatic decision.",
-            description_other:
-              "Estimate on the {{count}} documents with an automatic decision.",
-            empty: "No screened document yet.",
-            moved_one: "{{count}} document would change decision",
-            moved_other: "{{count}} documents would change decision",
-            caveat:
-              "At constant score. Changed bonuses, penalties and keywords only apply when documents are screened again.",
-          },
-          history: {
-            title: "History",
-            version: "Version {{version}}",
-            thresholds: "Thresholds {{conformity}} / {{ambiguous}}",
-            defaults: "Platform default values",
-          },
-        },
         errors: {
           load: "Unable to load the document corpus.",
           update: "The document could not be updated.",
@@ -2261,7 +2039,6 @@ export const resources = {
             accepted: "Compliant, included in the corpus",
             ambiguous: "Needs review: add, review or cancel",
             rejected: "Rejected with a reason, not included",
-            adjust: "Adjust thresholds",
             limits: "{{size}} max. per file · {{count}} files per upload",
           },
         },

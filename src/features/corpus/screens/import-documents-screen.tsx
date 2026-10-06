@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { FileText, Lock, RotateCcw, Trash2, Upload, X } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Link, useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { toast } from "sonner"
 
 import { CorpusPageHeader } from "@/features/corpus/components/corpus-page-header"
@@ -623,12 +623,6 @@ export function ImportDocumentsScreen() {
               count: ingestionSettings.maxFilesPerBatch,
             })}
           </p>
-          <Link
-            className="mt-2 inline-block text-[12px] font-medium underline-offset-4 hover:underline"
-            to={`/workspaces/${workspaceId}/settings/ingestion`}
-          >
-            {t("corpus.import.engine.adjust")}
-          </Link>
         </aside>
       </div>
 
