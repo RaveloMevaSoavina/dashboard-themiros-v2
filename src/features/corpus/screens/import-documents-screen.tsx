@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { FileText, Lock, RotateCcw, Upload, X } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { useNavigate, useParams } from "react-router-dom"
+import { Link, useNavigate, useParams } from "react-router-dom"
 import { toast } from "sonner"
 
 import { CorpusPageHeader } from "@/features/corpus/components/corpus-page-header"
@@ -18,12 +18,13 @@ import { IngestionSteps } from "@/features/corpus/components/ingestion-steps"
 import {
   ingestionProgress,
   isAwaitingQualification,
-  relevanceThresholds,
 } from "@/features/corpus/model/ingestion"
+import { formatSizeLimit } from "@/features/corpus/model/ingestion-settings"
 import type {
   CorpusDocument,
   DocumentCategory,
 } from "@/features/corpus/model/types"
+import { useIngestionSettings } from "@/features/corpus/model/use-ingestion-settings"
 import {
   findDocumentsByHash,
   hashFile,
@@ -99,6 +100,8 @@ export function ImportDocumentsScreen() {
     readTrackedIds(workspaceId)
   )
   const locale = i18n.resolvedLanguage ?? i18n.language
+  /* Seuils et limites de l'espace (RG-5.4), pas des constantes du front. */
+  const { settings: ingestionSettings } = useIngestionSettings(workspaceId)
 
   useEffect(() => {
     writeTrackedIds(workspaceId, trackedIds)
@@ -153,15 +156,29 @@ export function ImportDocumentsScreen() {
     if (supported.length !== candidates.length) {
       toast.error(t("corpus.import.invalidFormat"))
     }
-    if (supported.length === 0) return
+    const room = ingestionSettings.maxFilesPerBatch - (batch?.length ?? 0)
+    if (supported.length > room) {
+      toast.error(
+        t("corpus.import.tooManyFiles", {
+          count: ingestionSettings.maxFilesPerBatch,
+        })
+      )
+    }
+    const accepted = supported.slice(0, Math.max(room, 0))
+    if (accepted.length === 0) return
 
-    const entries: BatchFile[] = supported.map((file) => ({
+    const added: BatchFile[] = accepted.map((file) => ({
       id: crypto.randomUUID(),
       file,
-      state: "checking",
+      state:
+        file.size > ingestionSettings.maxFileSizeBytes
+          ? "too_large"
+          : "checking",
     }))
+    const entries = added.filter((entry) => entry.state === "checking")
     /* Chaque ajout ouvre la modale de confirmation des métadonnées. */
-    setBatch((current) => [...(current ?? []), ...entries])
+    setBatch((current) => [...(current ?? []), ...added])
+    if (entries.length === 0) return
 
     try {
       const hashed = await Promise.all(
@@ -563,7 +580,7 @@ export function ImportDocumentsScreen() {
           <dl className="mt-3 space-y-2 text-[12px]">
             <div className="flex items-baseline justify-between gap-3">
               <dt className="tabular-nums text-muted-foreground">
-                ≥ {relevanceThresholds.conforme}
+                ≥ {ingestionSettings.conformityThreshold}
               </dt>
               <dd className="text-right">
                 {t("corpus.import.engine.accepted")}
@@ -571,7 +588,8 @@ export function ImportDocumentsScreen() {
             </div>
             <div className="flex items-baseline justify-between gap-3">
               <dt className="tabular-nums text-muted-foreground">
-                {relevanceThresholds.ambigu}–{relevanceThresholds.conforme - 1}
+                {ingestionSettings.ambiguousThreshold}–
+                {ingestionSettings.conformityThreshold - 1}
               </dt>
               <dd className="text-right">
                 {t("corpus.import.engine.ambiguous")}
@@ -579,13 +597,25 @@ export function ImportDocumentsScreen() {
             </div>
             <div className="flex items-baseline justify-between gap-3">
               <dt className="tabular-nums text-muted-foreground">
-                &lt; {relevanceThresholds.ambigu}
+                &lt; {ingestionSettings.ambiguousThreshold}
               </dt>
               <dd className="text-right">
                 {t("corpus.import.engine.rejected")}
               </dd>
             </div>
           </dl>
+          <p className="mt-4 border-t border-border pt-3 text-[11px] leading-4 text-muted-foreground">
+            {t("corpus.import.engine.limits", {
+              size: formatSizeLimit(ingestionSettings.maxFileSizeBytes, locale),
+              count: ingestionSettings.maxFilesPerBatch,
+            })}
+          </p>
+          <Link
+            className="mt-2 inline-block text-[12px] font-medium underline-offset-4 hover:underline"
+            to={`/workspaces/${workspaceId}/settings/ingestion`}
+          >
+            {t("corpus.import.engine.adjust")}
+          </Link>
         </aside>
       </div>
 
@@ -595,6 +625,7 @@ export function ImportDocumentsScreen() {
         countryCode={details.data?.targetCountry ?? ""}
         countryName={countryName}
         expectedLanguages={details.data?.expectedLanguages ?? []}
+        maxFileSizeBytes={ingestionSettings.maxFileSizeBytes}
         files={batch}
         onCancel={() => setBatch(null)}
         onCategoryChange={setCategory}

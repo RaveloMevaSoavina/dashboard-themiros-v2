@@ -10,6 +10,7 @@ import {
 import { useTranslation } from "react-i18next"
 
 import { DocumentCategoryField } from "@/features/corpus/components/document-category-field"
+import { formatSizeLimit } from "@/features/corpus/model/ingestion-settings"
 import {
   type DocumentCategory,
   documentCategories,
@@ -33,7 +34,7 @@ import { Label } from "@/shared/ui/base/label"
 export type BatchFile = {
   id: string
   file: File
-  state: "checking" | "ready" | "duplicate" | "error"
+  state: "checking" | "ready" | "duplicate" | "too_large" | "error"
   hash?: string
   duplicateOf?: string
   /** Catégorie propre au fichier ; à défaut, la catégorie commune. */
@@ -68,6 +69,7 @@ export function ImportConfirmDialog({
   countryCode,
   countryName,
   expectedLanguages,
+  maxFileSizeBytes,
   onFileCategoryChange,
   onAllowDuplicate,
   onRemove,
@@ -84,6 +86,7 @@ export function ImportConfirmDialog({
   countryCode: string
   countryName: string | null
   expectedLanguages: WorkspaceLanguage[]
+  maxFileSizeBytes: number
   onFileCategoryChange: (
     id: string,
     value: DocumentCategory | undefined
@@ -159,9 +162,13 @@ export function ImportConfirmDialog({
                               : "corpus.import.duplicate",
                             { name: item.duplicateOf }
                           )
-                        : item.state === "error"
-                          ? t("corpus.import.errors.check")
-                          : t(`corpus.import.state.${item.state}`)}
+                        : item.state === "too_large"
+                          ? t("corpus.import.fileTooLarge", {
+                              max: formatSizeLimit(maxFileSizeBytes, locale),
+                            })
+                          : item.state === "error"
+                            ? t("corpus.import.errors.check")
+                            : t(`corpus.import.state.${item.state}`)}
                     </p>
                     {item.state === "duplicate" ? (
                       <Button

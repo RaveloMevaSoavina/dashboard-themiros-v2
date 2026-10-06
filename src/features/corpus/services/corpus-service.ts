@@ -68,7 +68,7 @@ export class IngestionRequestError extends Error {
   }
 }
 
-function toRequestError(error: {
+export function toRequestError(error: {
   message?: string
   details?: string | null
 }): Error {

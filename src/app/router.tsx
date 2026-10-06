@@ -9,6 +9,7 @@ import { CorpusInventoryScreen } from "@/features/corpus/screens/corpus-inventor
 import { DocumentDetailScreen } from "@/features/corpus/screens/document-detail-screen"
 import { DocumentsReviewScreen } from "@/features/corpus/screens/documents-review-screen"
 import { ImportDocumentsScreen } from "@/features/corpus/screens/import-documents-screen"
+import { IngestionSettingsScreen } from "@/features/corpus/screens/ingestion-settings-screen"
 import { navSections } from "@/features/dashboard/model/navigation"
 import { DashboardLayout } from "@/features/dashboard/screens/dashboard-layout"
 import { PlaceholderScreen } from "@/features/dashboard/screens/placeholder-screen"
@@ -75,6 +76,8 @@ const workspaceRoutes = navSections.flatMap((section) =>
             <AlertsScreen />
           ) : item.segment === "settings" && child.segment === "general" ? (
             <WorkspaceSettingsScreen />
+          ) : item.segment === "settings" && child.segment === "ingestion" ? (
+            <IngestionSettingsScreen />
           ) : (
             <PlaceholderScreen labelKey={child.labelKey} />
           ),

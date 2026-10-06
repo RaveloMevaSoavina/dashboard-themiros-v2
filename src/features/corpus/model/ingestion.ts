@@ -10,9 +10,6 @@ export const ingestionSteps = [
 
 export type IngestionStep = (typeof ingestionSteps)[number]
 
-/** Spec ingestion §7.5 : seuils de décision automatique par défaut. */
-export const relevanceThresholds = { conforme: 70, ambigu: 40 } as const
-
 /** Le pipeline n'a pas fini : ni prêt, ni en échec. */
 export function isAwaitingQualification(document: CorpusDocument) {
   return (
