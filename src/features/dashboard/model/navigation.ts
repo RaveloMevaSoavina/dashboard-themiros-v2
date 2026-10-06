@@ -186,11 +186,6 @@ export const navSections: readonly NavSection[] = [
         children: [
           {
             segment: "general",
-            labelKey: "general",
-            personas: withoutDecideur,
-          },
-          {
-            segment: "fingerprint",
             labelKey: "fingerprint",
             personas: withoutDecideur,
           },
