@@ -1,11 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { FileText, Lock, RotateCcw, Upload, X } from "lucide-react"
+import { FileText, Lock, RotateCcw, Trash2, Upload, X } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { toast } from "sonner"
 
 import { CorpusPageHeader } from "@/features/corpus/components/corpus-page-header"
+import { DeleteDocumentsDialog } from "@/features/corpus/components/delete-documents-dialog"
 import { DocumentDecisionActions } from "@/features/corpus/components/document-decision-actions"
 import { DocumentStatusBadge } from "@/features/corpus/components/document-status-badge"
 import { DocumentStatusMessage } from "@/features/corpus/components/document-status-message"
@@ -96,6 +97,7 @@ export function ImportDocumentsScreen() {
   const [uploads, setUploads] = useState<UploadItem[]>([])
   const [category, setCategory] = useState<DocumentCategory>("principal")
   const [versionId, setVersionId] = useState("")
+  const [deleting, setDeleting] = useState<CorpusDocument[] | null>(null)
   const [trackedIds, setTrackedIds] = useState(() =>
     readTrackedIds(workspaceId)
   )
@@ -536,6 +538,17 @@ export function ImportDocumentsScreen() {
                             <DocumentStatusBadge status={document.status} />
                           </div>
                         )}
+                        <Button
+                          aria-label={t("corpus.delete.actionFor", {
+                            name: document.filename,
+                          })}
+                          onClick={() => setDeleting([document])}
+                          size="icon-xs"
+                          title={t("corpus.delete.action")}
+                          variant="ghost"
+                        >
+                          <Trash2 />
+                        </Button>
                       </div>
 
                       {!awaiting ? (
@@ -618,6 +631,19 @@ export function ImportDocumentsScreen() {
           </Link>
         </aside>
       </div>
+
+      <DeleteDocumentsDialog
+        documents={deleting}
+        onClose={() => setDeleting(null)}
+        onDeleted={(ids) =>
+          setTrackedIds((current) => {
+            const next = new Set(current)
+            for (const id of ids) next.delete(id)
+            return next
+          })
+        }
+        workspaceId={workspaceId}
+      />
 
       <ImportConfirmDialog
         category={category}

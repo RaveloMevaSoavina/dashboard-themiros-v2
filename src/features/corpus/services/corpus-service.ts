@@ -291,6 +291,26 @@ export async function decideDocument(
   if (error) throw toRequestError(error)
 }
 
+/**
+ * Suppression définitive : le fichier quitte d'abord le bucket, puis la
+ * ligne et tout ce qui en dépend (texte, segments, index). Un échec entre
+ * les deux laisse une ligne sans fichier, que l'on peut supprimer de nouveau,
+ * jamais un fichier orphelin dans le stockage. Le journal d'audit est gardé.
+ */
+export async function deleteDocument(
+  document: Pick<CorpusDocument, "id" | "storagePath">
+) {
+  const { error: storageError } = await supabase.storage
+    .from("documents")
+    .remove([document.storagePath])
+  if (storageError) throw storageError
+
+  const { error } = await supabase.rpc("delete_document", {
+    p_document_id: document.id,
+  })
+  if (error) throw toRequestError(error)
+}
+
 export async function retryDocumentIngestion(documentId: string) {
   const { error } = await supabase.rpc("retry_document_ingestion", {
     p_document_id: documentId,

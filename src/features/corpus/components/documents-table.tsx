@@ -1,9 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { ExternalLink, MoreHorizontal } from "lucide-react"
+import { ExternalLink, MoreHorizontal, Trash2 } from "lucide-react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 
+import { DeleteDocumentsDialog } from "@/features/corpus/components/delete-documents-dialog"
 import { DocumentStatusBadge } from "@/features/corpus/components/document-status-badge"
 import { canAddAnyway, canCancel } from "@/features/corpus/model/ingestion"
 import type {
@@ -51,6 +53,7 @@ export function DocumentsTable({
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const locale = i18n.resolvedLanguage ?? "fr"
+  const [deleting, setDeleting] = useState<CorpusDocument[] | null>(null)
   const refresh = () =>
     queryClient.invalidateQueries({ queryKey: ["corpus", workspaceId] })
 
@@ -263,6 +266,17 @@ export function DocumentsTable({
                         ) : null}
                       </>
                     ) : null}
+                    {editable ? (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => setDeleting([document])}
+                          variant="destructive"
+                        >
+                          <Trash2 /> {t("corpus.delete.action")}
+                        </DropdownMenuItem>
+                      </>
+                    ) : null}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </td>
@@ -270,6 +284,17 @@ export function DocumentsTable({
           ))}
         </tbody>
       </table>
+      <DeleteDocumentsDialog
+        documents={deleting}
+        onClose={() => setDeleting(null)}
+        onDeleted={(ids) => {
+          if (!onSelectionChange) return
+          const next = new Set(selectedIds)
+          for (const id of ids) next.delete(id)
+          onSelectionChange(next)
+        }}
+        workspaceId={workspaceId}
+      />
     </div>
   )
 }

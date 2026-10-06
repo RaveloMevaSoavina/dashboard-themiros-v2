@@ -1,14 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { FileSearch, Plus, RotateCcw } from "lucide-react"
+import { FileSearch, Plus, RotateCcw, Trash2 } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router-dom"
 import { toast } from "sonner"
 
 import { CorpusPageHeader } from "@/features/corpus/components/corpus-page-header"
+import { DeleteDocumentsDialog } from "@/features/corpus/components/delete-documents-dialog"
 import { DocumentsTable } from "@/features/corpus/components/documents-table"
 import { isAwaitingQualification } from "@/features/corpus/model/ingestion"
 import type {
+  CorpusDocument,
   DocumentCategory,
   DocumentStatus,
 } from "@/features/corpus/model/types"
@@ -28,6 +30,7 @@ export function DocumentsReviewScreen() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkCategory, setBulkCategory] =
     useState<DocumentCategory>("principal")
+  const [deleting, setDeleting] = useState<CorpusDocument[] | null>(null)
   const documents = useQuery({
     queryKey: ["corpus", workspaceId, "documents"],
     queryFn: () => listDocuments(workspaceId),
@@ -130,8 +133,34 @@ export function DocumentsReviewScreen() {
           >
             {t("corpus.review.apply")}
           </Button>
+          <Button
+            disabled={bulkUpdate.isPending}
+            onClick={() =>
+              setDeleting(
+                (documents.data ?? []).filter((document) =>
+                  selectedIds.has(document.id)
+                )
+              )
+            }
+            size="sm"
+            variant="destructive"
+          >
+            <Trash2 /> {t("corpus.delete.action")}
+          </Button>
         </div>
       ) : null}
+      <DeleteDocumentsDialog
+        documents={deleting}
+        onClose={() => setDeleting(null)}
+        onDeleted={(ids) =>
+          setSelectedIds((current) => {
+            const next = new Set(current)
+            for (const id of ids) next.delete(id)
+            return next
+          })
+        }
+        workspaceId={workspaceId}
+      />
 
       {documents.isPending ? (
         <Skeleton className="mt-4 h-72 rounded-xl" />

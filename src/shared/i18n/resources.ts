@@ -712,6 +712,27 @@ export const resources = {
           WORKER_TIMEOUT:
             "Le traitement a dépassé le délai autorisé. Vous pouvez le relancer.",
         },
+        delete: {
+          action: "Supprimer",
+          actionFor: "Supprimer {{name}}",
+          title_one: "Supprimer ce document ?",
+          title_other: "Supprimer ces {{count}} documents ?",
+          description:
+            "Le fichier est supprimé définitivement du stockage, avec son texte extrait et son index. Cette action est irréversible ; elle reste tracée dans le journal d'audit.",
+          more_one: "et {{count}} autre",
+          more_other: "et {{count}} autres",
+          corpusWarning_one:
+            "Ce document fait partie du corpus : il ne sera plus utilisé par les analyses.",
+          corpusWarning_other:
+            "{{count}} de ces documents font partie du corpus : ils ne seront plus utilisés par les analyses.",
+          cancel: "Annuler",
+          confirm: "Supprimer définitivement",
+          success_one: "Document supprimé.",
+          success_other: "{{count}} documents supprimés.",
+          partial_one: "Un document n'a pas pu être supprimé. Réessayez.",
+          partial_other:
+            "{{count}} documents n'ont pas pu être supprimés. Réessayez.",
+        },
         requestErrors: {
           INGESTION_LOCKED:
             "L'import s'ouvre à la validation du cadre d'analyse.",
@@ -735,6 +756,7 @@ export const resources = {
             "Seul un administrateur de l'espace peut modifier ces paramètres.",
           INVALID_SETTINGS:
             "Certaines valeurs sont hors des limites autorisées.",
+          DOCUMENT_NOT_FOUND: "Ce document n'existe plus.",
         },
         settings: {
           title: "Contrôle des documents",
@@ -1054,6 +1076,7 @@ export const resources = {
           document_metadata_corrected: "Métadonnées corrigées",
           document_ingestion_failed: "Échec du traitement",
           document_ingestion_retried: "Traitement relancé",
+          document_deleted: "Document supprimé",
           metadata_corrected: "Métadonnées corrigées",
           document_integrate: "Intégration décidée manuellement",
           document_verify: "Vérification demandée",
@@ -1922,6 +1945,26 @@ export const resources = {
             "Semantic analysis is not configured on the server.",
           WORKER_TIMEOUT: "Processing took too long. You can run it again.",
         },
+        delete: {
+          action: "Delete",
+          actionFor: "Delete {{name}}",
+          title_one: "Delete this document?",
+          title_other: "Delete these {{count}} documents?",
+          description:
+            "The file is permanently deleted from storage, along with its extracted text and index. This cannot be undone; it remains recorded in the audit log.",
+          more_one: "and {{count}} more",
+          more_other: "and {{count}} more",
+          corpusWarning_one:
+            "This document is part of the corpus: analyses will no longer use it.",
+          corpusWarning_other:
+            "{{count}} of these documents are part of the corpus: analyses will no longer use them.",
+          cancel: "Cancel",
+          confirm: "Delete permanently",
+          success_one: "Document deleted.",
+          success_other: "{{count}} documents deleted.",
+          partial_one: "One document could not be deleted. Try again.",
+          partial_other: "{{count}} documents could not be deleted. Try again.",
+        },
         requestErrors: {
           INGESTION_LOCKED:
             "Import opens once the analysis framework is validated.",
@@ -1940,6 +1983,7 @@ export const resources = {
           WORKSPACE_ADMIN_REQUIRED:
             "Only a workspace administrator can change these settings.",
           INVALID_SETTINGS: "Some values are outside the allowed limits.",
+          DOCUMENT_NOT_FOUND: "This document no longer exists.",
         },
         settings: {
           title: "Document screening",
@@ -2249,6 +2293,7 @@ export const resources = {
           document_metadata_corrected: "Metadata corrected",
           document_ingestion_failed: "Processing failed",
           document_ingestion_retried: "Processing restarted",
+          document_deleted: "Document deleted",
           metadata_corrected: "Metadata corrected",
           document_integrate: "Included by human decision",
           document_verify: "Review requested",

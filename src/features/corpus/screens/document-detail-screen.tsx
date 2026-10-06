@@ -1,8 +1,16 @@
 import { useQuery } from "@tanstack/react-query"
-import { ArrowLeft, ExternalLink, FileText, RotateCcw } from "lucide-react"
+import {
+  ArrowLeft,
+  ExternalLink,
+  FileText,
+  RotateCcw,
+  Trash2,
+} from "lucide-react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router-dom"
 
+import { DeleteDocumentsDialog } from "@/features/corpus/components/delete-documents-dialog"
 import { DocumentDecisionActions } from "@/features/corpus/components/document-decision-actions"
 import { DocumentStatusBadge } from "@/features/corpus/components/document-status-badge"
 import { DocumentStatusMessage } from "@/features/corpus/components/document-status-message"
@@ -31,6 +39,7 @@ export function DocumentDetailScreen() {
         ? 5000
         : false,
   })
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const events = useQuery({
     queryKey: ["corpus", workspaceId, "document", documentId, "events"],
     queryFn: () => listDocumentEvents(documentId),
@@ -111,10 +120,25 @@ export function DocumentDetailScreen() {
             </div>
           </div>
         </div>
-        <Button onClick={() => void openSource()} variant="outline">
-          <ExternalLink /> {t("corpus.detail.openSource")}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => void openSource()} variant="outline">
+            <ExternalLink /> {t("corpus.detail.openSource")}
+          </Button>
+          <Button onClick={() => setConfirmDelete(true)} variant="destructive">
+            <Trash2 /> {t("corpus.delete.action")}
+          </Button>
+        </div>
       </div>
+      <DeleteDocumentsDialog
+        documents={confirmDelete ? [item] : null}
+        onClose={() => setConfirmDelete(false)}
+        onDeleted={() =>
+          void navigate(`/workspaces/${workspaceId}/corpus/documents`, {
+            replace: true,
+          })
+        }
+        workspaceId={workspaceId}
+      />
 
       <DocumentStatusMessage className="mt-6 text-[13px]" document={item} />
       <DocumentDecisionActions className="mt-3" document={item} />
