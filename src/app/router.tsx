@@ -19,6 +19,7 @@ import { ApproachPillarsScreen } from "@/features/evaluation-frameworks/screens/
 import { RecommendedApproachScreen } from "@/features/evaluation-frameworks/screens/recommended-approach-screen"
 import { AlertsScreen } from "@/features/evaluations/screens/alerts-screen"
 import { AnalysisOverviewScreen } from "@/features/evaluations/screens/analysis-overview-screen"
+import { FrameworkBriefScreen } from "@/features/evaluations/screens/framework-brief-screen"
 import { FrameworkCriteriaScreen } from "@/features/evaluations/screens/framework-criteria-screen"
 import { FrameworkPillarsScreen } from "@/features/evaluations/screens/framework-pillars-screen"
 import { LayerAScreen } from "@/features/evaluations/screens/layer-a-screen"
@@ -62,6 +63,8 @@ const workspaceRoutes = navSections.flatMap((section) =>
             <DocumentsReviewScreen />
           ) : item.segment === "corpus" && child.segment === "inventory" ? (
             <CorpusInventoryScreen />
+          ) : item.segment === "framework" && child.segment === "brief" ? (
+            <FrameworkBriefScreen />
           ) : item.segment === "framework" && child.segment === "pillars" ? (
             <FrameworkPillarsScreen />
           ) : item.segment === "framework" && child.segment === "criteria" ? (

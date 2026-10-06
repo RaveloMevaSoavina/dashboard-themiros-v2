@@ -261,3 +261,67 @@ test("keeps non-applicable criteria at zero", () => {
     100
   )
 })
+
+const counterfactualQuestionnaire: ApproachQuestionnaire = {
+  ...questionnaire,
+  baseline: "yes",
+  comparisonGroup: "yes",
+  monitoringData: "yes",
+}
+
+test("keeps only the causal chain contribution for a complicated counterfactual", () => {
+  assert.deepEqual(
+    computeMethods("complique", "finale", counterfactualQuestionnaire),
+    {
+      engine: ["contribution_analysis", "process_tracing", "coherence_check"],
+      off_engine: ["quasi_experimental_by_component"],
+    }
+  )
+})
+
+test("recommends synthetic control only at national or multi-country scale", () => {
+  assert.deepEqual(
+    computeMethods("complexe", "finale", counterfactualQuestionnaire)
+      .off_engine,
+    ["synthetic_control"]
+  )
+  assert.deepEqual(
+    computeMethods("complexe", "finale", {
+      ...counterfactualQuestionnaire,
+      scale: "local",
+    }).off_engine,
+    []
+  )
+})
+
+test("adds a cost-effectiveness reading to a final evaluation with a known budget", () => {
+  assert.ok(
+    computeMethods("simple", "finale", {
+      ...questionnaire,
+      budget: "under_5m",
+    }).engine.includes("cost_effectiveness_reading")
+  )
+  assert.ok(
+    !computeMethods("simple", "finale", questionnaire).engine.includes(
+      "cost_effectiveness_reading"
+    )
+  )
+})
+
+test("adds synthetic control to an ex-post evaluation when conditions are met", () => {
+  assert.deepEqual(
+    computeMethods("simple", "ex_post", counterfactualQuestionnaire).off_engine,
+    [
+      "difference_in_differences",
+      "propensity_score_matching",
+      "synthetic_control",
+    ]
+  )
+  assert.deepEqual(
+    computeMethods("simple", "ex_post", {
+      ...counterfactualQuestionnaire,
+      scale: "local",
+    }).off_engine,
+    ["difference_in_differences", "propensity_score_matching"]
+  )
+})

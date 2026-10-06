@@ -57,6 +57,7 @@ export const resources = {
           approach: "Approche d'évaluation",
           recommendedApproach: "Approche recommandée",
           pillarGeneration: "Génération des piliers",
+          brief: "Brief du cadre",
           pillars: "Piliers",
           criteria: "Critères et questions",
           analysis: "Analyse",
@@ -430,7 +431,7 @@ export const resources = {
           nature:
             "La relation de l'utilisateur à l'objet, son rôle de lecture et le nombre de financeurs déterminent si l'évaluation est une auto-évaluation, interne, externe indépendante ou conjointe.",
           method:
-            "La classe de complexité, le cycle, la disponibilité d'une situation de référence, d'un groupe de comparaison et de données de suivi déterminent les méthodes exécutées ou recommandées hors moteur.",
+            "Le moteur exécute toujours le socle : analyse de contribution, traçage de processus et contrôle de cohérence. La classe de complexité, le cycle, la finalité, la disponibilité d'une situation de référence, d'un groupe de comparaison et de données de suivi, l'échelle et le budget ajoutent des méthodes exécutées ou recommandées hors moteur.",
         },
         inputsUsed: "Éléments pris en compte",
         contextFilter: "Questions de cadrage",
@@ -506,6 +507,7 @@ export const resources = {
             "Comparaison des indicateurs avant-après",
           process_evaluation: "Évaluation de processus",
           sustainability_assessment: "Évaluation de la durabilité",
+          cost_effectiveness_reading: "Lecture d'une analyse coût-efficacité",
         },
         rationales: {
           framework:
@@ -1090,6 +1092,26 @@ export const resources = {
         openPillar: "Ouvrir le pilier",
         viewEvidence: "Voir la preuve",
         nonConcluded: "Non conclu",
+        brief: {
+          title: "Brief du cadre",
+          description:
+            "Retrouvez l'approche retenue pour cette évaluation : référentiel, cycle, instrument, complexité, nature, méthodes et critères appliqués.",
+          version: "Version {{version}}",
+          status: {
+            proposed: "Proposée",
+            modified: "Modifiée",
+            confirmed: "Confirmée",
+          },
+          confirmedAt: "Approche confirmée le {{date}}",
+          updatedAt: "Dernière mise à jour le {{date}}",
+          approachTitle: "Approche retenue",
+          offEngine: "Hors moteur : {{methods}}",
+          criteriaTitle: "Critères appliqués",
+          empty: "Aucune approche retenue",
+          emptyDescription:
+            "Le brief apparaîtra une fois l'approche d'évaluation confirmée pour cet espace.",
+          configure: "Définir l'approche",
+        },
         framework: {
           title: "Piliers du cadre",
           description:
@@ -1303,6 +1325,7 @@ export const resources = {
           approach: "Evaluation approach",
           recommendedApproach: "Recommended approach",
           pillarGeneration: "Pillar generation",
+          brief: "Framework brief",
           pillars: "Pillars",
           criteria: "Criteria and questions",
           analysis: "Analysis",
@@ -1667,7 +1690,7 @@ export const resources = {
           nature:
             "The user's relationship to the object, reading role and number of funders determine whether the evaluation is self-led, internal, independent external or joint.",
           method:
-            "The complexity class, cycle, and availability of a baseline, comparison group and monitoring data determine the methods run by the engine or recommended outside it.",
+            "The engine always runs the core: contribution analysis, process tracing and coherence check. The complexity class, cycle, purpose, availability of a baseline, comparison group and monitoring data, scale and budget add methods run by the engine or recommended outside it.",
         },
         inputsUsed: "Inputs used",
         contextFilter: "Scoping questions",
@@ -1742,6 +1765,7 @@ export const resources = {
             "Before-and-after indicator comparison",
           process_evaluation: "Process evaluation",
           sustainability_assessment: "Sustainability assessment",
+          cost_effectiveness_reading: "Cost-effectiveness analysis review",
         },
         rationales: {
           framework: "Framework selected from the main funder: {{financier}}.",
@@ -2307,6 +2331,26 @@ export const resources = {
         openPillar: "Open pillar",
         viewEvidence: "View evidence",
         nonConcluded: "Not concluded",
+        brief: {
+          title: "Framework brief",
+          description:
+            "Review the approach selected for this evaluation: framework, cycle, instrument, complexity, nature, methods and applied criteria.",
+          version: "Version {{version}}",
+          status: {
+            proposed: "Proposed",
+            modified: "Modified",
+            confirmed: "Confirmed",
+          },
+          confirmedAt: "Approach confirmed on {{date}}",
+          updatedAt: "Last updated on {{date}}",
+          approachTitle: "Selected approach",
+          offEngine: "Off-engine: {{methods}}",
+          criteriaTitle: "Applied criteria",
+          empty: "No approach selected yet",
+          emptyDescription:
+            "The brief will appear once the evaluation approach is confirmed for this workspace.",
+          configure: "Define the approach",
+        },
         framework: {
           title: "Framework pillars",
           description:

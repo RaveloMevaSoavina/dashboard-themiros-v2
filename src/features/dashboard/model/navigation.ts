@@ -86,6 +86,12 @@ export const navSections: readonly NavSection[] = [
         icon: ClipboardList,
         personas: withoutDecideur,
         children: [
+          /* Brief de l'approche retenue (ecran 5 en lecture) */
+          {
+            segment: "brief",
+            labelKey: "brief",
+            personas: withoutDecideur,
+          },
           /* Ecran 6 */
           {
             segment: "pillars",

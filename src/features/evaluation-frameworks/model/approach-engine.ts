@@ -373,6 +373,10 @@ export function computeMethods(
     questionnaire.comparisonGroup === "yes" &&
     questionnaire.monitoringData === "yes"
   const hasMonitoringData = questionnaire.monitoringData !== "no"
+  /* Le controle synthetique suppose des unites comparables agregees : il
+     n'est recommande qu'a l'echelle nationale ou multi-pays (RG-4.5). */
+  const syntheticControlPossible =
+    counterfactualPossible && questionnaire.scale !== "local"
 
   if (cycle === "ex_ante") {
     return {
@@ -391,9 +395,10 @@ export function computeMethods(
       offEngine.push("difference_in_differences", "propensity_score_matching")
     } else if (complexity === "complique") {
       offEngine.push("quasi_experimental_by_component")
-      engine.push("realist_evaluation")
     } else {
-      offEngine.push("synthetic_control")
+      if (syntheticControlPossible) {
+        offEngine.push("synthetic_control")
+      }
       engine.push("realist_evaluation")
     }
   } else if (hasMonitoringData) {
@@ -414,8 +419,16 @@ export function computeMethods(
     engine.push("process_evaluation")
   }
 
+  if (cycle === "finale" && questionnaire.budget !== "unknown") {
+    engine.push("cost_effectiveness_reading")
+  }
+
   if (cycle === "ex_post") {
     engine.push("sustainability_assessment")
+
+    if (syntheticControlPossible) {
+      offEngine.push("synthetic_control")
+    }
   }
 
   if (questionnaire.purpose === "learning_steering") {
@@ -670,6 +683,8 @@ export function computeApproach(input: ComputeApproachInput): ComputedApproach {
           comparisonGroup: input.questionnaire.comparisonGroup,
           monitoringData: input.questionnaire.monitoringData,
           purpose: input.questionnaire.purpose,
+          scale: input.questionnaire.scale,
+          budget: input.questionnaire.budget,
         },
         result: methods,
         overridden: Boolean(overrides.recommendedMethods),
