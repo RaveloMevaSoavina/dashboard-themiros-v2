@@ -19,6 +19,7 @@ import { IngestionSteps } from "@/features/corpus/components/ingestion-steps"
 import {
   ingestionProgress,
   isAwaitingQualification,
+  isQualificationPending,
 } from "@/features/corpus/model/ingestion"
 import { formatSizeLimit } from "@/features/corpus/model/ingestion-settings"
 import type {
@@ -493,7 +494,7 @@ export function ImportDocumentsScreen() {
               </div>
               <ul className="mt-3 divide-y divide-border rounded-xl border border-border">
                 {tracked.map((document) => {
-                  const awaiting = isAwaitingQualification(document)
+                  const awaiting = isQualificationPending(document)
                   const failed = document.processingState === "failed"
                   const progress = ingestionProgress(document)
                   return (

@@ -18,6 +18,14 @@ export function isAwaitingQualification(document: CorpusDocument) {
   )
 }
 
+/** Pertinence et décision encore inconnues : l'indexation vient après elles. */
+export function isQualificationPending(document: CorpusDocument) {
+  return (
+    isAwaitingQualification(document) &&
+    document.processingState !== "indexation"
+  )
+}
+
 /** Étapes terminées et étape en cours, pour l'indicateur de progression. */
 export function ingestionProgress(document: CorpusDocument): {
   completed: number
