@@ -490,7 +490,8 @@ export const resources = {
           coherence_check: "Contrôle de cohérence",
           realist_evaluation: "Évaluation réaliste",
           outcome_harvesting: "Récolte des effets",
-          most_significant_change: "Changement le plus significatif",
+          most_significant_change:
+            "Changement le plus significatif (si témoignages au corpus)",
           difference_in_differences: "Doubles différences",
           propensity_score_matching: "Appariement sur score de propension",
           regression_discontinuity: "Régression sur discontinuité",
@@ -1748,7 +1749,8 @@ export const resources = {
           coherence_check: "Coherence review",
           realist_evaluation: "Realist evaluation",
           outcome_harvesting: "Outcome harvesting",
-          most_significant_change: "Most significant change",
+          most_significant_change:
+            "Most significant change (if testimonies in the corpus)",
           difference_in_differences: "Difference in differences",
           propensity_score_matching: "Propensity score matching",
           regression_discontinuity: "Regression discontinuity",

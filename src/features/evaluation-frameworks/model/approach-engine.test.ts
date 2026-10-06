@@ -325,3 +325,30 @@ test("adds synthetic control to an ex-post evaluation when conditions are met", 
     ["difference_in_differences", "propensity_score_matching"]
   )
 })
+
+test("adds most significant change to a complex corpus-only final or ex-post evaluation", () => {
+  const corpusOnly: ApproachQuestionnaire = {
+    ...questionnaire,
+    monitoringData: "no",
+  }
+
+  for (const cycle of ["finale", "ex_post"] as const) {
+    assert.ok(
+      computeMethods("complexe", cycle, corpusOnly).engine.includes(
+        "most_significant_change"
+      )
+    )
+  }
+  for (const cycle of ["en_cours", "mi_parcours"] as const) {
+    assert.ok(
+      !computeMethods("complexe", cycle, corpusOnly).engine.includes(
+        "most_significant_change"
+      )
+    )
+  }
+  assert.ok(
+    !computeMethods("complexe", "finale", questionnaire).engine.includes(
+      "most_significant_change"
+    )
+  )
+})
