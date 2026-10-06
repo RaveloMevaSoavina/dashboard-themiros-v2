@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router-dom"
 
 import { CorpusPageHeader } from "@/features/corpus/components/corpus-page-header"
+import { RecommendedMethodsSummary } from "@/features/evaluation-frameworks/components/recommended-methods"
 import type { ReferenceLocale } from "@/features/evaluation-frameworks/model/types"
 import {
   getLatestWorkspaceApproach,
@@ -174,8 +175,6 @@ export function FrameworkBriefScreen() {
     .filter((criterion) => criterion.applicability !== "non_applicable")
     .sort((first, second) => Number(second.weight) - Number(first.weight))
   const dateFormatter = new Intl.DateTimeFormat(locale, { dateStyle: "long" })
-  const methodLabel = (method: string) =>
-    t(`approach.methods.${method}`, { defaultValue: humanize(method) })
 
   const cards = [
     {
@@ -202,18 +201,6 @@ export function FrameworkBriefScreen() {
     {
       key: "nature",
       value: t(`approach.nature.${approach.evaluation_nature}`),
-    },
-    {
-      key: "method",
-      value: approach.recommended_methods.engine.map(methodLabel).join(", "),
-      detail:
-        approach.recommended_methods.off_engine.length > 0
-          ? t("evaluation.brief.offEngine", {
-              methods: approach.recommended_methods.off_engine
-                .map(methodLabel)
-                .join(", "),
-            })
-          : t("approach.engineOnly"),
     },
   ]
   const answers = questionnaireFields.filter(
@@ -257,6 +244,16 @@ export function FrameworkBriefScreen() {
               ) : null}
             </article>
           ))}
+          <article className="flex flex-col rounded-xl border border-border p-5">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {t("approach.cards.method")}
+            </span>
+            <RecommendedMethodsSummary
+              className="mt-3"
+              cycle={approach.cycle}
+              methods={approach.recommended_methods}
+            />
+          </article>
         </div>
       </section>
 

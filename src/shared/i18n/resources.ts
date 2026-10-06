@@ -573,8 +573,17 @@ export const resources = {
           externe_independante: "Évaluation externe indépendante",
           conjointe: "Évaluation conjointe",
         },
-        engineOnly: "Exécutable dans le moteur",
-        externalMethods: "{{count}} méthode(s) hors moteur",
+        methodGroups: {
+          core: "Socle ({{count}})",
+          coreHint: "toujours appliqué",
+          added: "Ajoutées ({{count}})",
+          addedHint: "selon votre contexte",
+          noAdded: "Aucune méthode ajoutée pour ce contexte.",
+          offEngine: "hors moteur",
+          coreBadge: "Socle",
+          coreOnly: "Socle uniquement",
+          offEngineBadge: "Hors moteur",
+        },
         warnings: "Incohérences à vérifier",
         warningCodes: {
           start_year_after_end_year: "L'année de début dépasse l'année de fin.",
@@ -1106,7 +1115,6 @@ export const resources = {
           confirmedAt: "Approche confirmée le {{date}}",
           updatedAt: "Dernière mise à jour le {{date}}",
           approachTitle: "Approche retenue",
-          offEngine: "Hors moteur : {{methods}}",
           criteriaTitle: "Critères appliqués",
           empty: "Aucune approche retenue",
           emptyDescription:
@@ -1115,6 +1123,11 @@ export const resources = {
         },
         framework: {
           title: "Piliers du cadre",
+          methodsBanner: {
+            title: "Piliers dérivés des méthodes recommandées",
+            meta: "Approche v{{version}} · {{cycle}}",
+            link: "Voir l'approche",
+          },
           description:
             "Vérifiez la structure de l'évaluation, ses variables observables et la pondération de chaque pilier.",
           templateNotice:
@@ -1831,8 +1844,17 @@ export const resources = {
           externe_independante: "Independent external evaluation",
           conjointe: "Joint evaluation",
         },
-        engineOnly: "Executable in the engine",
-        externalMethods: "{{count}} off-engine method(s)",
+        methodGroups: {
+          core: "Core ({{count}})",
+          coreHint: "always applied",
+          added: "Added ({{count}})",
+          addedHint: "based on your context",
+          noAdded: "No method added for this context.",
+          offEngine: "off-engine",
+          coreBadge: "Core",
+          coreOnly: "Core methods only",
+          offEngineBadge: "Off-engine",
+        },
         warnings: "Inconsistencies to review",
         warningCodes: {
           start_year_after_end_year: "The start year is after the end year.",
@@ -2346,7 +2368,6 @@ export const resources = {
           confirmedAt: "Approach confirmed on {{date}}",
           updatedAt: "Last updated on {{date}}",
           approachTitle: "Selected approach",
-          offEngine: "Off-engine: {{methods}}",
           criteriaTitle: "Applied criteria",
           empty: "No approach selected yet",
           emptyDescription:
@@ -2355,6 +2376,11 @@ export const resources = {
         },
         framework: {
           title: "Framework pillars",
+          methodsBanner: {
+            title: "Pillars derived from the recommended methods",
+            meta: "Approach v{{version}} · {{cycle}}",
+            link: "View the approach",
+          },
           description:
             "Review the evaluation structure, observable variables and weight of each pillar.",
           templateNotice:

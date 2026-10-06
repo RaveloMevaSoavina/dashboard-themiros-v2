@@ -125,6 +125,25 @@ const applicabilityValues: CriterionApplicability[] = [
   "non_applicable",
 ]
 
+/* Socle de methodes toujours recommande pour un cycle donne ; les autres
+   methodes sont ajoutees selon le contexte (RG-4.5). */
+const coreMethods = [
+  "contribution_analysis",
+  "process_tracing",
+  "coherence_check",
+]
+
+const exAnteMethods = [
+  "intervention_logic_analysis",
+  "evaluability_assessment",
+  "forecast_economic_analysis",
+  "coherence_check",
+]
+
+export function coreMethodsForCycle(cycle: EvaluationCycle) {
+  return cycle === "ex_ante" ? exAnteMethods : coreMethods
+}
+
 function unique(values: string[]) {
   return [...new Set(values)]
 }
@@ -366,7 +385,7 @@ export function computeMethods(
     }
   }
 
-  const engine = ["contribution_analysis", "process_tracing", "coherence_check"]
+  const engine = [...coreMethods]
   const offEngine: string[] = []
   const counterfactualPossible =
     questionnaire.baseline === "yes" &&
@@ -379,15 +398,7 @@ export function computeMethods(
     counterfactualPossible && questionnaire.scale !== "local"
 
   if (cycle === "ex_ante") {
-    return {
-      engine: [
-        "intervention_logic_analysis",
-        "evaluability_assessment",
-        "forecast_economic_analysis",
-        "coherence_check",
-      ],
-      off_engine: [],
-    }
+    return { engine: [...exAnteMethods], off_engine: [] }
   }
 
   if (counterfactualPossible) {

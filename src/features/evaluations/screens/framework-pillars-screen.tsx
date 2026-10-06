@@ -1,12 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { AlertCircle, LoaderCircle, Plus, RotateCcw, Scale } from "lucide-react"
+import {
+  AlertCircle,
+  ArrowRight,
+  LoaderCircle,
+  Plus,
+  RotateCcw,
+  Scale,
+  Workflow,
+} from "lucide-react"
 import { type FormEvent, useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { useParams } from "react-router-dom"
+import { Link, useParams } from "react-router-dom"
 import { toast } from "sonner"
 
 import { CorpusPageHeader } from "@/features/corpus/components/corpus-page-header"
+import { RecommendedMethodsInline } from "@/features/evaluation-frameworks/components/recommended-methods"
 import type { EvaluationCycle } from "@/features/evaluation-frameworks/model/types"
+import { getLatestWorkspaceApproach } from "@/features/evaluation-frameworks/services/approach-service"
 import { listReferencePillars } from "@/features/evaluation-frameworks/services/reference-service"
 import { PillarCard } from "@/features/evaluations/components/pillar-card"
 import type { EvaluationPillar } from "@/features/evaluations/model/types"
@@ -58,6 +68,12 @@ export function FrameworkPillarsScreen({
   const generated = useQuery({
     queryKey: ["evaluation", workspaceId, "pillars"],
     queryFn: () => getWorkspacePillars(workspaceId),
+    enabled: Boolean(workspaceId),
+  })
+  /* Bandeau informatif seulement : son chargement ne bloque pas l'ecran. */
+  const approach = useQuery({
+    queryKey: ["approaches", workspaceId, "latest"],
+    queryFn: () => getLatestWorkspaceApproach(workspaceId),
     enabled: Boolean(workspaceId),
   })
   const cycle = details.data ? toCycle(details.data.stage) : "en_cours"
@@ -219,6 +235,40 @@ export function FrameworkPillarsScreen({
         </div>
       ) : (
         <>
+          {approach.data ? (
+            <section className="mt-7 flex gap-4 rounded-xl border border-border bg-muted/30 p-4">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border bg-background">
+                <Workflow className="size-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {t("evaluation.framework.methodsBanner.title")}
+                    </p>
+                    <p className="mt-0.5 text-[12px] text-muted-foreground">
+                      {t("evaluation.framework.methodsBanner.meta", {
+                        version: approach.data.version,
+                        cycle: t(`approach.cycles.${approach.data.cycle}`),
+                      })}
+                    </p>
+                  </div>
+                  <Link
+                    className="inline-flex items-center gap-1 text-[12px] font-medium underline-offset-4 hover:underline"
+                    to={`/workspaces/${workspaceId}/framework/brief`}
+                  >
+                    {t("evaluation.framework.methodsBanner.link")}
+                    <ArrowRight className="size-3.5" />
+                  </Link>
+                </div>
+                <RecommendedMethodsInline
+                  className="mt-3"
+                  cycle={approach.data.cycle}
+                  methods={approach.data.recommended_methods}
+                />
+              </div>
+            </section>
+          ) : null}
           {(generated.data?.length ?? 0) === 0 ? (
             <div className="mt-7 flex gap-3 rounded-xl border border-border p-4 text-[13px] text-muted-foreground">
               <AlertCircle className="mt-0.5 size-4 shrink-0" />

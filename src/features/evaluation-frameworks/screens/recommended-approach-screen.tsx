@@ -9,11 +9,15 @@ import {
   RefreshCw,
   Scale,
 } from "lucide-react"
-import { useMemo, useState } from "react"
+import { type ReactNode, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router-dom"
 import { toast } from "sonner"
 
+import {
+  RecommendedMethods,
+  RecommendedMethodsSummary,
+} from "@/features/evaluation-frameworks/components/recommended-methods"
 import {
   type ApproachFingerprint,
   type ApproachQuestionnaire,
@@ -281,7 +285,23 @@ export function RecommendedApproachScreen() {
     (total, criterion) => total + criterion.weight,
     0
   )
-  const cards = [
+  const methodLabel = (method: string) =>
+    t(`approach.methods.${method}`, { defaultValue: humanize(method) })
+  const methodsBody = (
+    <RecommendedMethodsSummary
+      className="mt-4"
+      cycle={approach.cycle}
+      methods={approach.recommendedMethods}
+    />
+  )
+  const cards: {
+    key: string
+    label: string
+    value: string
+    detail: string
+    rationale: string
+    body?: ReactNode
+  }[] = [
     {
       key: "framework",
       label: t("approach.cards.framework"),
@@ -334,17 +354,9 @@ export function RecommendedApproachScreen() {
     {
       key: "method",
       label: t("approach.cards.method"),
-      value: approach.recommendedMethods.engine
-        .map((method) =>
-          t(`approach.methods.${method}`, { defaultValue: humanize(method) })
-        )
-        .join(", "),
-      detail:
-        approach.recommendedMethods.off_engine.length > 0
-          ? t("approach.externalMethods", {
-              count: approach.recommendedMethods.off_engine.length,
-            })
-          : t("approach.engineOnly"),
+      value: approach.recommendedMethods.engine.map(methodLabel).join(", "),
+      detail: "",
+      body: methodsBody,
       rationale: t("approach.rationales.method", {
         complexity: t(
           `approach.complexity.${approach.complexityClass}`
@@ -549,12 +561,16 @@ export function RecommendedApproachScreen() {
                     : t("approach.recommended")}
                 </span>
               </span>
-              <span className="mt-4 block text-base font-semibold first-letter:uppercase">
-                {card.value}
-              </span>
-              <span className="mt-1 block text-[11px] text-muted-foreground">
-                {card.detail}
-              </span>
+              {card.body ?? (
+                <>
+                  <span className="mt-4 block text-base font-semibold first-letter:uppercase">
+                    {card.value}
+                  </span>
+                  <span className="mt-1 block text-[11px] text-muted-foreground">
+                    {card.detail}
+                  </span>
+                </>
+              )}
               <span className="mt-auto block border-t border-border pt-4 text-xs leading-5 text-muted-foreground">
                 {card.rationale}
               </span>
@@ -606,6 +622,15 @@ export function RecommendedApproachScreen() {
                 </div>
               ) : null}
             </div>
+
+            {selectedJustification === "method" ? (
+              <div className="border-b border-border py-6">
+                <RecommendedMethods
+                  cycle={approach.cycle}
+                  methods={approach.recommendedMethods}
+                />
+              </div>
+            ) : null}
 
             <div className="py-6">
               <p className="text-xs font-semibold">
