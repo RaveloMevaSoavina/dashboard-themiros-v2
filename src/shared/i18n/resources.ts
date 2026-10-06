@@ -72,7 +72,6 @@ export const resources = {
           exports: "Exports",
           settings: "Paramètres",
           fingerprint: "Empreinte sémantique",
-          versions: "Versions du programme",
         },
       },
       personas: {
@@ -1240,7 +1239,6 @@ export const resources = {
           exports: "Exports",
           settings: "Settings",
           fingerprint: "Semantic fingerprint",
-          versions: "Programme versions",
         },
       },
       personas: {

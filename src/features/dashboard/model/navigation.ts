@@ -189,11 +189,6 @@ export const navSections: readonly NavSection[] = [
             labelKey: "fingerprint",
             personas: withoutDecideur,
           },
-          {
-            segment: "versions",
-            labelKey: "versions",
-            personas: withoutDecideur,
-          },
         ],
       },
     ],
