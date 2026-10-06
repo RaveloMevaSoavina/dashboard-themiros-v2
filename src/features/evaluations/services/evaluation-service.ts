@@ -36,7 +36,6 @@ type CriterionRow = {
   sub_questions: {
     id: string
     text: string
-    layer: "A" | "B" | "A_B"
     expected_evidence: string | null
     status: "active" | "inactive"
     origin: "referential" | "user"
@@ -189,7 +188,7 @@ export async function getWorkspaceCriteria(
   const { data, error } = await supabase
     .from("criteria")
     .select(
-      "id, code, name, definition, applicability, weight, sub_questions(id, text, layer, expected_evidence, status, origin, ref_question_id)"
+      "id, code, name, definition, applicability, weight, sub_questions(id, text, expected_evidence, status, origin, ref_question_id)"
     )
     .eq("framework_id", framework.id)
   if (error) {
@@ -207,7 +206,6 @@ export async function getWorkspaceCriteria(
       id: question.id,
       code: question.ref_question_id ?? question.id,
       text: question.text,
-      layer: question.layer,
       expectedEvidence: question.expected_evidence,
       active: question.status === "active",
       origin: question.origin,

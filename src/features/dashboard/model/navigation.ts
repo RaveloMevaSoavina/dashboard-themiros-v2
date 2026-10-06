@@ -112,19 +112,19 @@ export const navSections: readonly NavSection[] = [
             labelKey: "overview",
             personas: allPersonas,
           },
-          /* Ecran 15 — couche A */
+          /* Ecran 15 */
           {
             segment: "pillars",
             labelKey: "layerA",
             personas: allPersonas,
           },
-          /* Ecran 16 — couche B */
+          /* Ecran 16 */
           {
             segment: "criteria",
             labelKey: "layerB",
             personas: withoutDecideur,
           },
-          /* Ecran 17 — couche C */
+          /* Ecran 17 */
           {
             segment: "alerts",
             labelKey: "layerC",

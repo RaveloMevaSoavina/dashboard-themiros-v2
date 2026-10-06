@@ -143,7 +143,6 @@ export function LayerBScreen() {
       <div className="mt-7">
         <LayerBanner
           description={t("evaluation.layerB.bannerDescription")}
-          layer="B"
           title={t("evaluation.layerB.bannerTitle")}
         />
       </div>

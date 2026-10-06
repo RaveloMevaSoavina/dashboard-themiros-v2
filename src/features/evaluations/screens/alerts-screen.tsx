@@ -59,7 +59,6 @@ export function AlertsScreen() {
       <div className="mt-7">
         <LayerBanner
           description={t("evaluation.alerts.bannerDescription")}
-          layer="C"
           title={t("evaluation.alerts.bannerTitle")}
         />
       </div>

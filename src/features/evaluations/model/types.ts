@@ -27,7 +27,6 @@ export type EvaluationQuestion = {
   id: string
   code: string
   text: string
-  layer: "A" | "B" | "A_B"
   expectedEvidence: string | null
   active: boolean
   origin: "referential" | "user"

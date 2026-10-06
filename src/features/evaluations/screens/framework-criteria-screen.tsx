@@ -97,12 +97,9 @@ export function FrameworkCriteriaScreen() {
                         className="grid gap-3 py-4 sm:grid-cols-[90px_1fr_180px]"
                         key={question.id}
                       >
-                        <div className="flex gap-1.5">
-                          <Badge variant="secondary">{question.layer}</Badge>
-                          <span className="text-[11px] text-muted-foreground">
-                            {question.code.slice(0, 8)}
-                          </span>
-                        </div>
+                        <span className="text-[11px] text-muted-foreground">
+                          {question.code.slice(0, 8)}
+                        </span>
                         <p className="text-[13px]">{question.text}</p>
                         <p className="text-[12px] text-muted-foreground">
                           {question.expectedEvidence ??

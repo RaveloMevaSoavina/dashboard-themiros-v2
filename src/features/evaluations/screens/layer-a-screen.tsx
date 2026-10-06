@@ -68,7 +68,6 @@ export function LayerAScreen() {
         />
         <LayerBanner
           description={t("evaluation.layerA.bannerDescription")}
-          layer="A"
           title={t("evaluation.layerA.bannerTitle")}
         />
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -121,7 +120,6 @@ export function LayerAScreen() {
       <div className="mt-7">
         <LayerBanner
           description={t("evaluation.layerA.bannerDescription")}
-          layer="A"
           title={t("evaluation.layerA.bannerTitle")}
         />
       </div>

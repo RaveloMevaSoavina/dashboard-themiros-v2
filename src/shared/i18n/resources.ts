@@ -61,9 +61,9 @@ export const resources = {
           criteria: "Critères et questions",
           analysis: "Analyse",
           overview: "Comparatif général",
-          layerA: "Couche A · Piliers",
-          layerB: "Couche B · Critères",
-          layerC: "Couche C · Alertes",
+          layerA: "Piliers",
+          layerB: "Critères",
+          layerC: "Alertes",
           plan: "Restitution",
           synthesis: "Synthèse",
           actions: "Plan d'action",
@@ -1049,7 +1049,7 @@ export const resources = {
           scoreDescription: "Score objectivé sur 100",
           concludedCriteria: "Critères conclus B",
           criteriaDescription: "Critères disposant de preuves suffisantes",
-          pendingAlerts: "Alertes C à instruire",
+          pendingAlerts: "Alertes à instruire",
           alertsDescription: "Contradictions restant à examiner",
           traceability: "Traçabilité par preuve",
           traceabilityDescription: "Sorties reliées à des extraits sources",
@@ -1057,9 +1057,9 @@ export const resources = {
           steps: {
             classification: "Classification des segments",
             variables: "Calcul des variables intermédiaires",
-            layerA: "Couche A · scores objectivés",
-            layerB: "Couche B · appréciations évaluatives",
-            layerC: "Couche C · alertes de cohérence",
+            layerA: "Scores objectivés",
+            layerB: "Appréciations évaluatives",
+            layerC: "Alertes de cohérence",
             reporting: "Restitution et journalisation",
           },
         },
@@ -1069,9 +1069,9 @@ export const resources = {
           affaibli: "Affaibli",
         },
         layerA: {
-          title: "Couche A · Piliers",
+          title: "Piliers",
           description: "Scores factuels par pilier et variables observables.",
-          bannerTitle: "Couche A · Objectivée",
+          bannerTitle: "Analyse objectivée",
           bannerDescription:
             "Ce qui a factuellement changé, mesuré sur éléments observables. Aucun jugement.",
           objectiveScore: "Score objectivé",
@@ -1085,10 +1085,10 @@ export const resources = {
           non_renseigne: "Non renseigné",
         },
         layerB: {
-          title: "Couche B · Critères",
+          title: "Critères",
           description:
             "Notes encadrées par les critères et la couverture documentaire des sous-questions.",
-          bannerTitle: "Couche B · Évaluative",
+          bannerTitle: "Analyse évaluative",
           bannerDescription:
             "Appréciation encadrée par critères et sous-questions. Jamais une opinion libre.",
           documented: "documenté",
@@ -1104,7 +1104,7 @@ export const resources = {
           title: "Alertes de cohérence",
           description:
             "Écarts détectés entre les constats factuels et les appréciations évaluatives.",
-          bannerTitle: "Couche C · Cohérence",
+          bannerTitle: "Contrôle de cohérence",
           bannerDescription:
             "Les alertes signalent les contradictions à instruire. Elles ne modifient jamais les scores.",
           comment: "Commentaire d'instruction",
@@ -1196,9 +1196,9 @@ export const resources = {
           criteria: "Criteria and questions",
           analysis: "Analysis",
           overview: "General comparison",
-          layerA: "Layer A · Pillars",
-          layerB: "Layer B · Criteria",
-          layerC: "Layer C · Alerts",
+          layerA: "Pillars",
+          layerB: "Criteria",
+          layerC: "Alerts",
           plan: "Reporting",
           synthesis: "Synthesis",
           actions: "Action plan",
@@ -2160,7 +2160,7 @@ export const resources = {
           scoreDescription: "Objective score out of 100",
           concludedCriteria: "Concluded B criteria",
           criteriaDescription: "Criteria supported by sufficient evidence",
-          pendingAlerts: "C alerts to review",
+          pendingAlerts: "Alerts to review",
           alertsDescription: "Contradictions still requiring review",
           traceability: "Evidence traceability",
           traceabilityDescription: "Outputs linked to source excerpts",
@@ -2168,9 +2168,9 @@ export const resources = {
           steps: {
             classification: "Segment classification",
             variables: "Intermediate variable calculation",
-            layerA: "Layer A · objective scores",
-            layerB: "Layer B · evaluative findings",
-            layerC: "Layer C · consistency alerts",
+            layerA: "Objective scores",
+            layerB: "Evaluative findings",
+            layerC: "Consistency alerts",
             reporting: "Reporting and audit logging",
           },
         },
@@ -2180,9 +2180,9 @@ export const resources = {
           affaibli: "Weakened",
         },
         layerA: {
-          title: "Layer A · Pillars",
+          title: "Pillars",
           description: "Factual scores by pillar and observable variables.",
-          bannerTitle: "Layer A · Objective",
+          bannerTitle: "Objective analysis",
           bannerDescription:
             "What factually changed, measured through observable elements. No judgement.",
           objectiveScore: "Objective score",
@@ -2196,10 +2196,10 @@ export const resources = {
           non_renseigne: "Not documented",
         },
         layerB: {
-          title: "Layer B · Criteria",
+          title: "Criteria",
           description:
             "Criterion-based ratings and documentary coverage of sub-questions.",
-          bannerTitle: "Layer B · Evaluative",
+          bannerTitle: "Evaluative analysis",
           bannerDescription:
             "Assessment framed by criteria and sub-questions. Never an unrestricted opinion.",
           documented: "documented",
@@ -2214,7 +2214,7 @@ export const resources = {
           title: "Consistency alerts",
           description:
             "Gaps detected between factual findings and evaluative assessments.",
-          bannerTitle: "Layer C · Consistency",
+          bannerTitle: "Consistency check",
           bannerDescription:
             "Alerts flag contradictions for review. They never alter scores.",
           comment: "Review comment",

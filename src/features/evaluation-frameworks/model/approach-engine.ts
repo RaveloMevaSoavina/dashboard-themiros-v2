@@ -425,7 +425,7 @@ export function computeMethods(
   } else if (complexity === "complexe") {
     engine.push("outcome_harvesting")
 
-    /* Execute par la question I-11 (couche B), applicable en finale et
+    /* Execute par la question I-11, applicable en finale et
        ex-post seulement ; sans temoignages au corpus, elle reste non
        documentee. */
     if (cycle === "finale" || cycle === "ex_post") {
