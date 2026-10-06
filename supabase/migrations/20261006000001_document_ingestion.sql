@@ -245,7 +245,7 @@ create table if not exists public.semantic_fingerprints (
   stage text not null,
   start_year integer not null,
   end_year integer not null,
-  embedding vector(1536),
+  embedding vector(768),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -347,9 +347,11 @@ create policy "segments_members" on public.segments
   for select to authenticated
   using (public.is_workspace_member(workspace_id));
 
+-- 768 dimensions : paraphrase-multilingual-mpnet-base-v2, calculé localement
+-- par le worker (fastembed). Changer de modèle impose de réindexer.
 create table if not exists public.segment_embeddings (
   segment_id uuid primary key references public.segments (id) on delete cascade,
-  embedding vector(1536) not null,
+  embedding vector(768) not null,
   model text not null,
   created_at timestamptz not null default now()
 );
