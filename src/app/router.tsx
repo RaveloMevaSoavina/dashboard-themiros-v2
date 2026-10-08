@@ -22,6 +22,7 @@ import { FrameworkCriteriaScreen } from "@/features/evaluations/screens/framewor
 import { FrameworkPillarsScreen } from "@/features/evaluations/screens/framework-pillars-screen"
 import { LayerAScreen } from "@/features/evaluations/screens/layer-a-screen"
 import { LayerBScreen } from "@/features/evaluations/screens/layer-b-screen"
+import { PillarDetailScreen } from "@/features/evaluations/screens/pillar-detail-screen"
 import { CreateWorkspaceScreen } from "@/features/workspaces/screens/create-workspace-screen"
 import { WorkspaceAccessLayout } from "@/features/workspaces/screens/workspace-access-layout"
 import { WorkspaceProviderLayout } from "@/features/workspaces/screens/workspace-provider-layout"
@@ -55,9 +56,7 @@ const workspaceRoutes = navSections.flatMap((section) =>
       ...(item.children ?? []).map((child) => ({
         path: child.segment,
         element:
-          item.segment === "corpus" && child.segment === "import" ? (
-            <ImportDocumentsScreen />
-          ) : item.segment === "corpus" && child.segment === "documents" ? (
+          item.segment === "corpus" && child.segment === "documents" ? (
             <DocumentsReviewScreen />
           ) : item.segment === "framework" && child.segment === "brief" ? (
             <FrameworkBriefScreen />
@@ -81,6 +80,11 @@ const workspaceRoutes = navSections.flatMap((section) =>
       })),
       ...(item.segment === "corpus"
         ? [
+            /* Ecran 8 : hors menu, ouvert depuis la revue documentaire. */
+            {
+              path: "import",
+              element: <ImportDocumentsScreen />,
+            },
             {
               path: "documents/:documentId",
               element: <DocumentDetailScreen />,
@@ -91,7 +95,7 @@ const workspaceRoutes = navSections.flatMap((section) =>
         ? [
             {
               path: "pillars/:pillarId",
-              element: <LayerAScreen />,
+              element: <PillarDetailScreen />,
             },
           ]
         : []),

@@ -1,3 +1,7 @@
+import {
+  scoreFillClass,
+  scoreLevel,
+} from "@/features/evaluations/model/score-level"
 import { cn } from "@/shared/lib/utils"
 
 export function ProgressMeter({
@@ -5,11 +9,14 @@ export function ProgressMeter({
   max,
   className,
   label,
+  tone = "neutral",
 }: {
   value: number
   max: number
   className?: string
   label?: string
+  /** `level` : barre de score, coloree selon le niveau atteint. */
+  tone?: "neutral" | "level"
 }) {
   const percentage =
     max <= 0 ? 0 : Math.min(100, Math.max(0, (value / max) * 100))
@@ -23,7 +30,12 @@ export function ProgressMeter({
       role="progressbar"
     >
       <div
-        className="h-full rounded-full bg-foreground transition-[width]"
+        className={cn(
+          "h-full rounded-full transition-[width]",
+          tone === "level"
+            ? scoreFillClass[scoreLevel(percentage)]
+            : "bg-foreground"
+        )}
         style={{ width: `${percentage}%` }}
       />
     </div>

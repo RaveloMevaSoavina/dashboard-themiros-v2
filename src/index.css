@@ -23,6 +23,9 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-score-low: var(--score-low);
+  --color-score-mid: var(--score-mid);
+  --color-score-high: var(--score-high);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -96,6 +99,12 @@
 
   /* Le seul vert du produit : le point de la marque. */
   --brand-dot: #55a930;
+
+  /* Exception a la charte, limitee aux jauges de score : le niveau se lit
+     a la couleur (faible < 40, moyen < 70, eleve >= 70). */
+  --score-low: #f04438;
+  --score-mid: #f5a524;
+  --score-high: #55a930;
 }
 
 .dark {
@@ -159,6 +168,10 @@
   --sidebar-accent-foreground: #111111;
   --sidebar-border: rgb(0 0 0 / 0.13);
   --sidebar-ring: rgb(0 0 0 / 0.3);
+  /* Teintes plus soutenues pour rester lisibles sur fond blanc. */
+  --score-low: #d92d20;
+  --score-mid: #c27803;
+  --score-high: #3f8a1f;
 }
 
 @layer base {

@@ -10,6 +10,17 @@ import type {
   LayerCAlert,
   SubAnswer,
 } from "@/features/evaluations/model/types"
+import {
+  demoFixturePillars,
+  getDemoResults,
+  instructDemoAlert,
+  isDemoId,
+  isEvaluationDemo,
+  listDemoAlertEvidences,
+  listDemoEvidences,
+  listDemoSubAnswers,
+  listDemoVariables,
+} from "@/features/evaluations/services/evaluation-demo"
 import { supabase } from "@/shared/lib/supabase"
 
 type PillarRow = {
@@ -128,6 +139,16 @@ function isMissingRelation(error: { code?: string; message?: string }) {
 }
 
 export async function getWorkspacePillars(
+  workspaceId: string
+): Promise<EvaluationPillar[]> {
+  const pillars = await fetchWorkspacePillars(workspaceId)
+  /* Demonstration sans cadre : les cartes gardent un nom et une description. */
+  return isEvaluationDemo && pillars.length === 0
+    ? demoFixturePillars()
+    : pillars
+}
+
+async function fetchWorkspacePillars(
   workspaceId: string
 ): Promise<EvaluationPillar[]> {
   const { data: framework, error: frameworkError } = await supabase
@@ -376,6 +397,13 @@ export async function getLatestRun(
 export async function getEvaluationResults(
   workspaceId: string
 ): Promise<EvaluationResults> {
+  if (isEvaluationDemo) {
+    const [pillars, criteria] = await Promise.all([
+      fetchWorkspacePillars(workspaceId).catch(() => []),
+      getWorkspaceCriteria(workspaceId).catch(() => []),
+    ])
+    return getDemoResults(workspaceId, pillars, criteria)
+  }
   const run = await getLatestRun(workspaceId)
   if (!run)
     return { run: null, layerA: [], layerB: [], alerts: [], traceability: 0 }
@@ -480,6 +508,7 @@ export async function listIntermediateVariables(
   runId: string,
   pillarId: string
 ): Promise<IntermediateVariable[]> {
+  if (isDemoId(runId)) return listDemoVariables(runId, pillarId)
   const { data, error } = await supabase
     .from("intermediate_variables")
     .select(
@@ -513,6 +542,7 @@ export async function listSubAnswers(
   runId: string,
   criterionId: string
 ): Promise<SubAnswer[]> {
+  if (isDemoId(runId)) return listDemoSubAnswers(runId, criterionId)
   const { data, error } = await supabase
     .from("layer_b_sub_answers")
     .select(
@@ -538,6 +568,7 @@ export async function listEvidences(filters: {
   criterionId?: string
   variableCode?: string
 }): Promise<Evidence[]> {
+  if (isDemoId(filters.runId)) return listDemoEvidences(filters)
   let query = supabase
     .from("evidences")
     .select(
@@ -568,6 +599,7 @@ export async function listEvidences(filters: {
 }
 
 export async function listAlertEvidences(alertId: string): Promise<Evidence[]> {
+  if (isDemoId(alertId)) return listDemoAlertEvidences(alertId)
   const { data, error } = await supabase
     .from("alert_evidences")
     .select(
@@ -601,6 +633,7 @@ export async function listAlertEvidences(alertId: string): Promise<Evidence[]> {
 }
 
 export async function instructAlert(alertId: string, comment: string) {
+  if (isDemoId(alertId)) return instructDemoAlert(alertId, comment)
   const { data } = await supabase.auth.getUser()
   const { error } = await supabase
     .from("layer_c_alerts")

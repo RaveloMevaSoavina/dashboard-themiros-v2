@@ -55,12 +55,6 @@ export const navSections: readonly NavSection[] = [
         icon: FolderOpen,
         personas: withoutDecideur,
         children: [
-          /* Ecran 8 */
-          {
-            segment: "import",
-            labelKey: "import",
-            personas: withoutDecideur,
-          },
           /* Ecran 9 */
           {
             segment: "documents",

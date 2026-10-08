@@ -24,6 +24,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/ui/base/dropdown-menu"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/shared/ui/base/table"
 
 const selectClassName =
   "h-8 rounded-lg border border-input bg-background px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
@@ -90,12 +98,12 @@ export function DocumentsTable({
     documents.every((document) => selectedIds.has(document.id))
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-border">
-      <table className="w-full min-w-[960px] border-collapse text-left text-[13px]">
-        <thead className="bg-muted/50 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
-          <tr>
+    <div className="overflow-hidden rounded-xl border border-border">
+      <Table className="min-w-[960px] text-[13px]">
+        <TableHeader className="bg-muted/50 text-[11px] uppercase tracking-[0.08em]">
+          <TableRow className="hover:bg-transparent">
             {selectable ? (
-              <th className="w-10 px-3 py-3">
+              <TableHead className="w-10 px-3 text-muted-foreground">
                 <input
                   aria-label={t("corpus.review.selectAll")}
                   checked={allSelected}
@@ -109,28 +117,42 @@ export function DocumentsTable({
                   }
                   type="checkbox"
                 />
-              </th>
+              </TableHead>
             ) : null}
-            <th className="px-4 py-3">{t("corpus.table.name")}</th>
-            <th className="px-3 py-3">{t("corpus.table.category")}</th>
-            <th className="px-3 py-3">{t("corpus.table.language")}</th>
-            <th className="px-3 py-3">{t("corpus.table.country")}</th>
-            <th className="px-3 py-3">{t("corpus.table.version")}</th>
-            <th className="px-3 py-3">{t("corpus.table.score")}</th>
-            <th className="px-3 py-3">{t("corpus.table.status")}</th>
-            <th className="px-3 py-3 text-right">
+            <TableHead className="px-4 text-muted-foreground">
+              {t("corpus.table.name")}
+            </TableHead>
+            <TableHead className="px-3 text-muted-foreground">
+              {t("corpus.table.category")}
+            </TableHead>
+            <TableHead className="px-3 text-muted-foreground">
+              {t("corpus.table.language")}
+            </TableHead>
+            <TableHead className="px-3 text-muted-foreground">
+              {t("corpus.table.country")}
+            </TableHead>
+            <TableHead className="px-3 text-muted-foreground">
+              {t("corpus.table.version")}
+            </TableHead>
+            <TableHead className="px-3 text-muted-foreground">
+              {t("corpus.table.score")}
+            </TableHead>
+            <TableHead className="px-3 text-muted-foreground">
+              {t("corpus.table.status")}
+            </TableHead>
+            <TableHead className="px-3 text-right text-muted-foreground">
               {t("corpus.table.actions")}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {documents.map((document) => (
-            <tr
-              className="border-t border-border align-middle"
+            <TableRow
+              data-state={selectedIds.has(document.id) ? "selected" : undefined}
               key={document.id}
             >
               {selectable ? (
-                <td className="px-3 py-3">
+                <TableCell className="px-3 py-3">
                   <input
                     aria-label={t("corpus.review.selectDocument", {
                       name: document.filename,
@@ -145,9 +167,9 @@ export function DocumentsTable({
                     }}
                     type="checkbox"
                   />
-                </td>
+                </TableCell>
               ) : null}
-              <td className="max-w-[260px] px-4 py-3">
+              <TableCell className="max-w-[260px] px-4 py-3">
                 <button
                   className="block max-w-full truncate font-medium hover:underline"
                   onClick={() =>
@@ -162,8 +184,8 @@ export function DocumentsTable({
                 <span className="mt-0.5 block text-[11px] text-muted-foreground">
                   {formatSize(document.fileSize, locale)}
                 </span>
-              </td>
-              <td className="px-3 py-3">
+              </TableCell>
+              <TableCell className="px-3 py-3">
                 {editable ? (
                   <select
                     aria-label={t("corpus.table.category")}
@@ -188,8 +210,8 @@ export function DocumentsTable({
                 ) : (
                   t(`corpus.category.${document.category}`)
                 )}
-              </td>
-              <td className="px-3 py-3 text-muted-foreground">
+              </TableCell>
+              <TableCell className="px-3 py-3 text-muted-foreground">
                 <span className="uppercase">{document.language ?? "—"}</span>
                 {document.languageToConfirm ? (
                   <span className="mt-0.5 block text-[11px] normal-case">
@@ -200,22 +222,22 @@ export function DocumentsTable({
                     {t("corpus.table.languageUnexpected")}
                   </span>
                 ) : null}
-              </td>
-              <td className="px-3 py-3 text-muted-foreground">
+              </TableCell>
+              <TableCell className="px-3 py-3 text-muted-foreground">
                 {document.country ?? "—"}
-              </td>
-              <td className="px-3 py-3 text-muted-foreground">
+              </TableCell>
+              <TableCell className="px-3 py-3 text-muted-foreground">
                 {document.version?.label ?? "—"}
-              </td>
-              <td className="px-3 py-3 tabular-nums">
+              </TableCell>
+              <TableCell className="px-3 py-3 tabular-nums">
                 {document.relevanceScore === null
                   ? "—"
                   : `${document.relevanceScore}/100`}
-              </td>
-              <td className="px-3 py-3">
+              </TableCell>
+              <TableCell className="px-3 py-3">
                 <DocumentStatusBadge status={document.status} />
-              </td>
-              <td className="px-3 py-3 text-right">
+              </TableCell>
+              <TableCell className="px-3 py-3 text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -279,11 +301,11 @@ export function DocumentsTable({
                     ) : null}
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
       <DeleteDocumentsDialog
         documents={deleting}
         onClose={() => setDeleting(null)}

@@ -50,7 +50,6 @@ export const resources = {
         items: {
           workspaces: "Espaces de travail",
           corpus: "Corpus",
-          import: "Import documentaire",
           documents: "Revue documentaire",
           framework: "Cadre d'évaluation",
           approach: "Approche d'évaluation",
@@ -952,9 +951,53 @@ export const resources = {
         eyebrow: "Cadre et évaluation",
         loadError: "Impossible de charger les données d'évaluation.",
         back: "Retour aux piliers",
-        openPillar: "Ouvrir le pilier",
         viewEvidence: "Voir la preuve",
         nonConcluded: "Non conclu",
+        demo: {
+          title: "Données de démonstration.",
+          description:
+            "Ces résultats sont fictifs (VITE_EVALUATION_DEMO) et ne proviennent d'aucun run réel.",
+        },
+        criterionNote: "Note {{note}}/3",
+        pillar: {
+          open: "Ouvrir le détail de {{name}}",
+          evolution: "Évolution",
+          version: "Version",
+          allEvidence: "Toutes les preuves",
+          criteriaTitle: "Critères du pilier",
+          criteriaDescription:
+            "Notes évaluatives des critères rattachés à ce pilier. Sélectionnez un critère pour lire ses preuves.",
+          noCriteria: "Aucun critère noté n'est rattaché à ce pilier.",
+          questionsDocumented:
+            "{{documented}}/{{total}} sous-questions documentées",
+          ambiguous: "Preuves contradictoires",
+          concludedHint: "Note conclue sur la base des preuves reliées.",
+          nonConcludedHint:
+            "Critère non conclu : moins de la moitié des sous-questions sont documentées.",
+          openCriterion: "Voir dans Critères",
+          subQuestions: "Sous-questions",
+          noSubQuestions: "Aucune réponse aux sous-questions pour ce run.",
+          criterionEvidence: "Preuves du critère",
+          evidenceCount_one: "{{count}} preuve",
+          evidenceCount_other: "{{count}} preuves",
+          noEvidence: "Aucune preuve reliée à ce critère.",
+          documentsTitle: "Documents utilisés",
+          documentsDescription_one:
+            "{{count}} document a fourni des preuves à ce pilier.",
+          documentsDescription_other:
+            "{{count}} documents ont fourni des preuves à ce pilier.",
+          noDocuments: "Aucun document utilisé pour ce pilier.",
+          usages_one: "{{count}} preuve",
+          usages_other: "{{count}} preuves",
+          alertsTitle: "Alertes du pilier",
+          noAlerts: "Aucune alerte de cohérence sur ce pilier.",
+          seeAlerts: "Voir les alertes",
+          variablesDescription:
+            "État de chaque variable observable et documents mobilisés.",
+          notFound: "Pilier non évalué",
+          notFoundDescription:
+            "Ce pilier n'a pas de score dans le dernier run.",
+        },
         brief: {
           title: "Brief du cadre",
           description:
@@ -1042,6 +1085,7 @@ export const resources = {
           noRunDescription:
             "Un run pourra être lancé lorsque le cadre sera validé et que le corpus aura atteint la masse minimale.",
           launch: "Lancer l'analyse",
+          launchSoon: "Le lancement de l'analyse sera bientôt disponible.",
           running: "Analyse en cours",
           runningDescription:
             "Le moteur poursuit le traitement en arrière-plan. Vous pouvez quitter cet écran.",
@@ -1054,6 +1098,24 @@ export const resources = {
           traceability: "Traçabilité par preuve",
           traceabilityDescription: "Sorties reliées à des extraits sources",
           runReference: "Run {{id}} · {{date}}",
+          notScored: "Pas encore évalué",
+          pillarsDescription:
+            "Score objectivé sur 100 par pilier. Ouvrez une carte pour lire son détail.",
+          priorities: {
+            title: "Piliers à prioriser",
+            description: "Les trois piliers au score objectivé le plus faible.",
+            criteria: "Critères : {{criteria}}",
+          },
+          coverage: {
+            title: "Couverture des critères",
+            description:
+              "Vue transversale des notes évaluatives, tous piliers confondus.",
+          },
+          layout: {
+            label: "Affichage des piliers",
+            vertical: "Blocs",
+            horizontal: "Horizontal",
+          },
           steps: {
             classification: "Classification des segments",
             variables: "Calcul des variables intermédiaires",
@@ -1077,6 +1139,9 @@ export const resources = {
           objectiveScore: "Score objectivé",
           variables: "Variables observables",
           noVariables: "Aucune variable calculée pour ce pilier.",
+          listTitle: "Piliers évalués",
+          summary_one: "{{count}} pilier noté par le dernier run.",
+          summary_other: "{{count}} piliers notés par le dernier run.",
         },
         variableState: {
           present: "Présent",
@@ -1095,6 +1160,14 @@ export const resources = {
           ambiguous:
             "Preuves contradictoires — ouvrir pour examiner les deux bords",
           empty: "Aucune note évaluative n'est disponible pour ce run.",
+          listTitle: "Critères évalués",
+          summary_one: "{{count}} critère · {{concluded}} conclu",
+          summary_other: "{{count}} critères · {{concluded}} conclus",
+          note: "Note évaluative",
+          subQuestionsCoverage: "Sous-questions documentées",
+          pillars: "Piliers :",
+          filtered: "Critère affiché : {{name}}",
+          showAll: "Voir tous les critères",
         },
         answerStatus: {
           documentee: "Documentée",
@@ -1112,6 +1185,13 @@ export const resources = {
           saved: "L'alerte a été instruite et commentée.",
           saveError: "Impossible d'enregistrer l'instruction.",
           empty: "Aucune alerte de cohérence pour ce run.",
+          pendingTitle: "À instruire ({{count}})",
+          pendingDescription:
+            "Alertes majeures en tête. Instruisez chaque alerte avec un commentaire.",
+          nonePending: "Toutes les alertes ont été instruites.",
+          instructedTitle: "Instruites ({{count}})",
+          filtered: "Alertes du pilier {{name}}",
+          showAll: "Voir toutes les alertes",
         },
         severity: { mineure: "Mineure", majeure: "Majeure" },
         alertStatus: {
@@ -1131,6 +1211,13 @@ export const resources = {
           previous: "Précédente",
           next: "Suivante",
           openDocument: "Ouvrir dans le document",
+          showForPillar: "Voir les preuves de {{name}}",
+          pillarSummary_one:
+            "{{count}} preuve · note {{score}}/100 · confiance {{confidence}} %",
+          pillarSummary_other:
+            "{{count}} preuves · note {{score}}/100 · confiance {{confidence}} %",
+          noneForScore: "Aucune preuve rattachée à cette note.",
+          loadError: "Impossible de charger les preuves.",
         },
       },
       placeholder: {
@@ -1185,7 +1272,6 @@ export const resources = {
         items: {
           workspaces: "Workspaces",
           corpus: "Corpus",
-          import: "Document import",
           documents: "Document review",
           framework: "Evaluation framework",
           approach: "Evaluation approach",
@@ -2063,9 +2149,52 @@ export const resources = {
         eyebrow: "Framework and evaluation",
         loadError: "Unable to load evaluation data.",
         back: "Back to pillars",
-        openPillar: "Open pillar",
         viewEvidence: "View evidence",
         nonConcluded: "Not concluded",
+        demo: {
+          title: "Demo data.",
+          description:
+            "These results are fictitious (VITE_EVALUATION_DEMO) and do not come from a real run.",
+        },
+        criterionNote: "Rating {{note}}/3",
+        pillar: {
+          open: "Open {{name}} details",
+          evolution: "Change",
+          version: "Version",
+          allEvidence: "All evidence",
+          criteriaTitle: "Pillar criteria",
+          criteriaDescription:
+            "Evaluative ratings of the criteria linked to this pillar. Select a criterion to read its evidence.",
+          noCriteria: "No rated criterion is linked to this pillar.",
+          questionsDocumented:
+            "{{documented}}/{{total}} sub-questions documented",
+          ambiguous: "Conflicting evidence",
+          concludedHint: "Rating concluded from the linked evidence.",
+          nonConcludedHint:
+            "Criterion not concluded: fewer than half of the sub-questions are documented.",
+          openCriterion: "View in Criteria",
+          subQuestions: "Sub-questions",
+          noSubQuestions: "No sub-question answers for this run.",
+          criterionEvidence: "Criterion evidence",
+          evidenceCount_one: "{{count}} piece of evidence",
+          evidenceCount_other: "{{count}} pieces of evidence",
+          noEvidence: "No evidence linked to this criterion.",
+          documentsTitle: "Documents used",
+          documentsDescription_one:
+            "{{count}} document provided evidence for this pillar.",
+          documentsDescription_other:
+            "{{count}} documents provided evidence for this pillar.",
+          noDocuments: "No document used for this pillar.",
+          usages_one: "{{count}} piece of evidence",
+          usages_other: "{{count}} pieces of evidence",
+          alertsTitle: "Pillar alerts",
+          noAlerts: "No consistency alert on this pillar.",
+          seeAlerts: "View alerts",
+          variablesDescription:
+            "State of each observable variable and documents used.",
+          notFound: "Pillar not assessed",
+          notFoundDescription: "This pillar has no score in the latest run.",
+        },
         brief: {
           title: "Framework brief",
           description:
@@ -2153,6 +2282,7 @@ export const resources = {
           noRunDescription:
             "A run can start once the framework is validated and the corpus reaches the minimum mass.",
           launch: "Start analysis",
+          launchSoon: "Starting an analysis will be available soon.",
           running: "Analysis in progress",
           runningDescription:
             "Processing continues in the background. You may leave this screen.",
@@ -2165,6 +2295,23 @@ export const resources = {
           traceability: "Evidence traceability",
           traceabilityDescription: "Outputs linked to source excerpts",
           runReference: "Run {{id}} · {{date}}",
+          notScored: "Not evaluated yet",
+          pillarsDescription:
+            "Objective score out of 100 per pillar. Open a card to read its details.",
+          priorities: {
+            title: "Pillars to prioritise",
+            description: "The three pillars with the lowest objective score.",
+            criteria: "Criteria: {{criteria}}",
+          },
+          coverage: {
+            title: "Criteria coverage",
+            description: "Cross-pillar view of evaluative ratings.",
+          },
+          layout: {
+            label: "Pillar display",
+            vertical: "Cards",
+            horizontal: "Horizontal",
+          },
           steps: {
             classification: "Segment classification",
             variables: "Intermediate variable calculation",
@@ -2188,6 +2335,9 @@ export const resources = {
           objectiveScore: "Objective score",
           variables: "Observable variables",
           noVariables: "No variables were calculated for this pillar.",
+          listTitle: "Assessed pillars",
+          summary_one: "{{count}} pillar scored by the latest run.",
+          summary_other: "{{count}} pillars scored by the latest run.",
         },
         variableState: {
           present: "Present",
@@ -2205,6 +2355,14 @@ export const resources = {
           documented: "documented",
           ambiguous: "Conflicting evidence — open to review both sides",
           empty: "No evaluative rating is available for this run.",
+          listTitle: "Assessed criteria",
+          summary_one: "{{count}} criterion · {{concluded}} concluded",
+          summary_other: "{{count}} criteria · {{concluded}} concluded",
+          note: "Evaluative rating",
+          subQuestionsCoverage: "Documented sub-questions",
+          pillars: "Pillars:",
+          filtered: "Showing criterion: {{name}}",
+          showAll: "Show all criteria",
         },
         answerStatus: {
           documentee: "Documented",
@@ -2222,6 +2380,13 @@ export const resources = {
           saved: "The alert was reviewed and commented.",
           saveError: "Unable to save the review.",
           empty: "No consistency alerts for this run.",
+          pendingTitle: "To review ({{count}})",
+          pendingDescription:
+            "Major alerts first. Review each alert with a comment.",
+          nonePending: "All alerts have been reviewed.",
+          instructedTitle: "Reviewed ({{count}})",
+          filtered: "Alerts for pillar {{name}}",
+          showAll: "Show all alerts",
         },
         severity: { mineure: "Minor", majeure: "Major" },
         alertStatus: {
@@ -2241,6 +2406,13 @@ export const resources = {
           previous: "Previous",
           next: "Next",
           openDocument: "Open in document",
+          showForPillar: "View evidence for {{name}}",
+          pillarSummary_one:
+            "{{count}} piece of evidence · score {{score}}/100 · confidence {{confidence}}%",
+          pillarSummary_other:
+            "{{count}} pieces of evidence · score {{score}}/100 · confidence {{confidence}}%",
+          noneForScore: "No evidence linked to this score.",
+          loadError: "Unable to load evidence.",
         },
       },
       placeholder: {
