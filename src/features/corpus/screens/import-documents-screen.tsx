@@ -352,7 +352,7 @@ export function ImportDocumentsScreen() {
           </div>
           <Button
             onClick={() =>
-              void navigate(`/workspaces/${workspaceId}/framework/pillars`)
+              void navigate(`/workspaces/${workspaceId}/settings/pillars`)
             }
             size="sm"
             variant="outline"

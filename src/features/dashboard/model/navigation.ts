@@ -69,32 +69,6 @@ export const navSections: readonly NavSection[] = [
     titleKey: "evaluation",
     items: [
       {
-        segment: "framework",
-        labelKey: "framework",
-        icon: ClipboardList,
-        personas: withoutDecideur,
-        children: [
-          /* Brief de l'approche retenue (ecran 5 en lecture) */
-          {
-            segment: "brief",
-            labelKey: "brief",
-            personas: withoutDecideur,
-          },
-          /* Ecran 6 */
-          {
-            segment: "pillars",
-            labelKey: "pillars",
-            personas: withoutDecideur,
-          },
-          /* Ecran 7 */
-          {
-            segment: "criteria",
-            labelKey: "criteria",
-            personas: withoutDecideur,
-          },
-        ],
-      },
-      {
         segment: "analysis",
         labelKey: "analysis",
         icon: BarChart3,
@@ -175,6 +149,25 @@ export const navSections: readonly NavSection[] = [
           {
             segment: "general",
             labelKey: "fingerprint",
+            personas: withoutDecideur,
+          },
+          /* Cadre d'evaluation, regroupe sous les parametres de l'espace. */
+          /* Brief de l'approche retenue (ecran 5 en lecture) */
+          {
+            segment: "brief",
+            labelKey: "brief",
+            personas: withoutDecideur,
+          },
+          /* Ecran 6 */
+          {
+            segment: "pillars",
+            labelKey: "pillars",
+            personas: withoutDecideur,
+          },
+          /* Ecran 7 */
+          {
+            segment: "criteria",
+            labelKey: "criteria",
             personas: withoutDecideur,
           },
         ],

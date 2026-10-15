@@ -29,6 +29,7 @@ import { WorkspaceAccessLayout } from "@/features/workspaces/screens/workspace-a
 import { WorkspaceProviderLayout } from "@/features/workspaces/screens/workspace-provider-layout"
 import {
   FirstWorkspaceRedirect,
+  LegacyFrameworkRedirect,
   WorkspaceRedirect,
 } from "@/features/workspaces/screens/workspace-redirect"
 import { WorkspaceSettingsScreen } from "@/features/workspaces/screens/workspace-settings-screen"
@@ -46,8 +47,6 @@ const workspaceRoutes = navSections.flatMap((section) =>
         element:
           item.segment === "corpus" ? (
             <Navigate replace to="documents" />
-          ) : item.segment === "framework" ? (
-            <FrameworkPillarsScreen />
           ) : item.segment === "analysis" ? (
             <AnalysisOverviewScreen />
           ) : item.segment === "settings" ? (
@@ -61,12 +60,6 @@ const workspaceRoutes = navSections.flatMap((section) =>
         element:
           item.segment === "corpus" && child.segment === "documents" ? (
             <DocumentsReviewScreen />
-          ) : item.segment === "framework" && child.segment === "brief" ? (
-            <FrameworkBriefScreen />
-          ) : item.segment === "framework" && child.segment === "pillars" ? (
-            <FrameworkPillarsScreen />
-          ) : item.segment === "framework" && child.segment === "criteria" ? (
-            <FrameworkCriteriaScreen />
           ) : item.segment === "analysis" && child.segment === "overview" ? (
             <AnalysisOverviewScreen />
           ) : item.segment === "analysis" && child.segment === "pillars" ? (
@@ -77,6 +70,12 @@ const workspaceRoutes = navSections.flatMap((section) =>
             <AlertsScreen />
           ) : item.segment === "settings" && child.segment === "general" ? (
             <WorkspaceSettingsScreen />
+          ) : item.segment === "settings" && child.segment === "brief" ? (
+            <FrameworkBriefScreen />
+          ) : item.segment === "settings" && child.segment === "pillars" ? (
+            <FrameworkPillarsScreen />
+          ) : item.segment === "settings" && child.segment === "criteria" ? (
+            <FrameworkCriteriaScreen />
           ) : (
             <PlaceholderScreen labelKey={child.labelKey} />
           ),
@@ -173,6 +172,11 @@ export const appRouter = createBrowserRouter([
                         children: [
                           { index: true, element: <WorkspaceRedirect /> },
                           ...workspaceRoutes,
+                          /* Anciennes URL du cadre, deplace sous Parametres. */
+                          {
+                            path: "framework/:section?",
+                            element: <LegacyFrameworkRedirect />,
+                          },
                         ],
                       },
                       {

@@ -28,3 +28,18 @@ export function FirstWorkspaceRedirect() {
     />
   )
 }
+
+/**
+ * Le cadre d'evaluation vit desormais sous Parametres : les anciens liens
+ * `/framework/...` (favoris, historique) y sont rediriges.
+ */
+export function LegacyFrameworkRedirect() {
+  const { workspaceId, section = "pillars" } = useParams<{
+    workspaceId: string
+    section?: string
+  }>()
+
+  return (
+    <Navigate replace to={`/workspaces/${workspaceId}/settings/${section}`} />
+  )
+}

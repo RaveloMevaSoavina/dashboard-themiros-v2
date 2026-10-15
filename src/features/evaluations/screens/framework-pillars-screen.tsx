@@ -255,7 +255,7 @@ export function FrameworkPillarsScreen({
                   </div>
                   <Link
                     className="inline-flex items-center gap-1 text-[12px] font-medium underline-offset-4 hover:underline"
-                    to={`/workspaces/${workspaceId}/framework/brief`}
+                    to={`/workspaces/${workspaceId}/settings/brief`}
                   >
                     {t("evaluation.framework.methodsBanner.link")}
                     <ArrowRight className="size-3.5" />

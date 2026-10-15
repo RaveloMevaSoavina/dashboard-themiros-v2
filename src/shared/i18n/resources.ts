@@ -1080,6 +1080,12 @@ export const resources = {
           emptyDescription:
             "Les critères et sous-questions apparaîtront après la génération puis la validation du cadre.",
           noExpectedEvidence: "Preuve attendue non précisée",
+          summary:
+            "{{criteria}} critères · {{questions}} sous-questions retenues",
+          weight: "Pondération",
+          question: "Sous-question",
+          expectedEvidence: "Preuve attendue",
+          noActiveQuestions: "Aucune sous-question retenue pour ce critère.",
           inactive: "Non retenues ({{count}})",
           noneInactive: "Aucune question désactivée.",
           confirm: "Confirmer les critères",
@@ -2290,6 +2296,12 @@ export const resources = {
           emptyDescription:
             "Criteria and sub-questions will appear after the framework is generated and validated.",
           noExpectedEvidence: "Expected evidence not specified",
+          summary:
+            "{{criteria}} criteria · {{questions}} selected sub-questions",
+          weight: "Weight",
+          question: "Sub-question",
+          expectedEvidence: "Expected evidence",
+          noActiveQuestions: "No sub-question selected for this criterion.",
           inactive: "Not selected ({{count}})",
           noneInactive: "No disabled questions.",
           confirm: "Confirm criteria",
