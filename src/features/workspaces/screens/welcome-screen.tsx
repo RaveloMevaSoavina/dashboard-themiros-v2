@@ -61,16 +61,16 @@ export function WelcomeScreen() {
         </div>
       </header>
 
-      <section className="flex flex-1 items-center justify-center px-4 py-16 sm:px-6 sm:py-24">
+      <section className="flex flex-1 items-center justify-center px-4 pt-12 pb-24 sm:px-6 sm:pt-12 sm:pb-36">
         <div className="flex w-full max-w-3xl flex-col items-center text-center">
-          <div className={`relative -mt-6 ${reveal}`}>
+          <div className={`relative ${reveal}`}>
             <div className="absolute inset-[-14px] rounded-[1.6rem] border border-border animate-[loader-orbit_3.2s_ease-in-out_infinite] motion-reduce:animate-none" />
             <div className="absolute inset-[-28px] rounded-[2.1rem] border border-border animate-[loader-orbit_3.2s_ease-in-out_infinite] [animation-delay:320ms] motion-reduce:animate-none" />
             <BrandMark className="relative z-10" size={64} />
           </div>
 
           <p
-            className={`mt-20 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground ${reveal} [animation-delay:120ms]`}
+            className={`mt-14 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground ${reveal} [animation-delay:120ms]`}
           >
             {t("workspaces.welcome.eyebrow")}
           </p>
