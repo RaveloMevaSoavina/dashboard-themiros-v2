@@ -244,7 +244,7 @@ export function CreateWorkspaceScreen() {
       <header className="flex h-[62px] items-center justify-between border-b border-border px-4 sm:px-6 lg:px-8">
         <Link
           className="flex items-center gap-2.5 rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-          to={isFirstWorkspace ? "/workspaces/new" : "/workspaces"}
+          to={isFirstWorkspace ? "/welcome" : "/workspaces"}
         >
           <BrandMark size={30} />
           <span className="text-sm font-semibold tracking-tight">

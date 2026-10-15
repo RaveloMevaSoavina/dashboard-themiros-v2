@@ -6,6 +6,9 @@ import { useWorkspaces } from "@/features/workspaces/model/workspace-provider"
 import { Button } from "@/shared/ui/base/button"
 import { GlobalLoader } from "@/shared/ui/global-loader"
 
+/** Routes accessibles a un compte qui n'a encore aucun espace. */
+const onboardingPaths = ["/welcome", "/workspaces/new"]
+
 export function WorkspaceAccessLayout() {
   const { t } = useTranslation()
   const location = useLocation()
@@ -40,8 +43,13 @@ export function WorkspaceAccessLayout() {
     )
   }
 
-  if (workspaces.length === 0 && location.pathname !== "/workspaces/new") {
-    return <Navigate replace to="/workspaces/new" />
+  if (workspaces.length === 0 && !onboardingPaths.includes(location.pathname)) {
+    return <Navigate replace to="/welcome" />
+  }
+
+  // L'accueil n'a de sens que tant qu'aucun espace n'existe.
+  if (workspaces.length > 0 && location.pathname === "/welcome") {
+    return <Navigate replace to="/workspaces" />
   }
 
   return <Outlet />

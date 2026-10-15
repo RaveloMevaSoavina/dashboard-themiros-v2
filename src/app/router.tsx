@@ -24,6 +24,7 @@ import { LayerAScreen } from "@/features/evaluations/screens/layer-a-screen"
 import { LayerBScreen } from "@/features/evaluations/screens/layer-b-screen"
 import { PillarDetailScreen } from "@/features/evaluations/screens/pillar-detail-screen"
 import { CreateWorkspaceScreen } from "@/features/workspaces/screens/create-workspace-screen"
+import { WelcomeScreen } from "@/features/workspaces/screens/welcome-screen"
 import { WorkspaceAccessLayout } from "@/features/workspaces/screens/workspace-access-layout"
 import { WorkspaceProviderLayout } from "@/features/workspaces/screens/workspace-provider-layout"
 import { WorkspaceRedirect } from "@/features/workspaces/screens/workspace-redirect"
@@ -129,6 +130,10 @@ export const appRouter = createBrowserRouter([
               {
                 element: <WorkspaceAccessLayout />,
                 children: [
+                  {
+                    path: "/welcome",
+                    element: <WelcomeScreen />,
+                  },
                   {
                     path: "/workspaces/new",
                     element: <CreateWorkspaceScreen />,

@@ -118,6 +118,19 @@ export const resources = {
           description: "Créez un espace pour lancer votre première évaluation.",
           action: "Créer votre premier espace",
         },
+        welcome: {
+          eyebrow: "Premiers pas",
+          title: "Bienvenue sur {{brand}}",
+          description:
+            "Créez votre premier espace de travail pour commencer à analyser vos programmes, projets et politiques publiques.",
+          action: "Créer mon espace de travail",
+          hint: "3 étapes · modifiable à tout moment dans les paramètres",
+          steps: {
+            1: "Nommez l'évaluation, rattachée à votre organisation.",
+            2: "Pays, financeurs, thématiques et langues attendues.",
+            3: "Stade du programme, années et versions à évaluer.",
+          },
+        },
         access: {
           loadingEyebrow: "Espaces de travail",
           loadingTitle: "Vérification de vos espaces...",
@@ -1339,6 +1352,19 @@ export const resources = {
           title: "No workspace yet",
           description: "Create a workspace to start your first evaluation.",
           action: "Create your first workspace",
+        },
+        welcome: {
+          eyebrow: "Getting started",
+          title: "Welcome to {{brand}}",
+          description:
+            "Create your first workspace to start analysing your programmes, projects and public policies.",
+          action: "Create my workspace",
+          hint: "3 steps · editable anytime in settings",
+          steps: {
+            1: "Name the evaluation, linked to your organization.",
+            2: "Country, funders, themes and expected languages.",
+            3: "Programme stage, years and versions to evaluate.",
+          },
         },
         access: {
           loadingEyebrow: "Workspaces",
