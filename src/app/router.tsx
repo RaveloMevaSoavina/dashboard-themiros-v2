@@ -27,9 +27,11 @@ import { CreateWorkspaceScreen } from "@/features/workspaces/screens/create-work
 import { WelcomeScreen } from "@/features/workspaces/screens/welcome-screen"
 import { WorkspaceAccessLayout } from "@/features/workspaces/screens/workspace-access-layout"
 import { WorkspaceProviderLayout } from "@/features/workspaces/screens/workspace-provider-layout"
-import { WorkspaceRedirect } from "@/features/workspaces/screens/workspace-redirect"
+import {
+  FirstWorkspaceRedirect,
+  WorkspaceRedirect,
+} from "@/features/workspaces/screens/workspace-redirect"
 import { WorkspaceSettingsScreen } from "@/features/workspaces/screens/workspace-settings-screen"
-import { WorkspacesScreen } from "@/features/workspaces/screens/workspaces-screen"
 
 /**
  * Les routes d'espace derivent du meme modele que la barre laterale : une
@@ -139,6 +141,10 @@ export const appRouter = createBrowserRouter([
                     element: <CreateWorkspaceScreen />,
                   },
                   {
+                    path: "/workspaces",
+                    element: <FirstWorkspaceRedirect />,
+                  },
+                  {
                     element: <ApproachFlowLayout />,
                     children: [
                       {
@@ -158,10 +164,6 @@ export const appRouter = createBrowserRouter([
                   {
                     element: <DashboardLayout />,
                     children: [
-                      {
-                        path: "/workspaces",
-                        element: <WorkspacesScreen />,
-                      },
                       {
                         path: "/profile",
                         element: <ProfileScreen />,

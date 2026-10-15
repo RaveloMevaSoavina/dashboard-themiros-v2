@@ -61,6 +61,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [queryClient])
 
+  // Le cache des requetes n'est pas cloisonne par compte : sans cette purge,
+  // la connexion suivante relirait les donnees du compte precedent (par
+  // exemple une liste d'espaces vide qui renvoie vers /welcome). L'effet
+  // s'execute apres le demontage des ecrans proteges : aucune requete n'est
+  // relancee sans jeton.
+  const userId = session?.user.id ?? null
+
+  useEffect(() => {
+    if (!userId) {
+      queryClient.removeQueries({
+        predicate: (query) => query.queryKey[0] !== "auth",
+      })
+    }
+  }, [queryClient, userId])
+
   const signOutMutation = useMutation({
     mutationFn: signOut,
     onSuccess: async () => {

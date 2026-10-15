@@ -47,9 +47,12 @@ export function WorkspaceAccessLayout() {
     return <Navigate replace to="/welcome" />
   }
 
-  // L'accueil n'a de sens que tant qu'aucun espace n'existe.
-  if (workspaces.length > 0 && location.pathname === "/welcome") {
-    return <Navigate replace to="/workspaces" />
+  // L'accueil n'a de sens que tant qu'aucun espace n'existe : un compte qui
+  // en possede deja ouvre directement le premier.
+  const firstWorkspace = workspaces.at(0)
+
+  if (firstWorkspace && location.pathname === "/welcome") {
+    return <Navigate replace to={`/workspaces/${firstWorkspace.id}`} />
   }
 
   return <Outlet />
