@@ -4,16 +4,15 @@ import {
   ArrowRight,
   BriefcaseBusiness,
   Check,
+  ChevronDown,
   CircleAlert,
-  CirclePlus,
   Landmark,
   Layers2,
   LoaderCircle,
   LogOut,
   Pencil,
-  Trash2,
 } from "lucide-react"
-import { useMemo, useState } from "react"
+import { type ComponentProps, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
@@ -67,14 +66,23 @@ const moduleIcons = {
   policy: Landmark,
 } satisfies Record<ObjectType, typeof Layers2>
 
-type EditableVersion = {
-  id: string
-  label: string
-  year: string
-}
+const programPhases = ["I", "II", "III", "IV"] as const
+type ProgramPhase = (typeof programPhases)[number]
 
 const selectClassName =
-  "h-10 w-full rounded-lg border border-input bg-background px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+  "h-10 w-full appearance-none rounded-lg border border-input bg-background pr-9 pl-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+
+function NativeSelect(props: ComponentProps<"select">) {
+  return (
+    <div className="relative w-full">
+      <select className={selectClassName} {...props} />
+      <ChevronDown
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground"
+      />
+    </div>
+  )
+}
 
 export function CreateWorkspaceScreen() {
   const { i18n, t } = useTranslation()
@@ -97,9 +105,7 @@ export function CreateWorkspaceScreen() {
   const [stage, setStage] = useState<WorkspaceStage>("implementation")
   const [startYear, setStartYear] = useState(String(currentYear))
   const [endYear, setEndYear] = useState(String(currentYear))
-  const [versions, setVersions] = useState<EditableVersion[]>([
-    { id: "version-1", label: "", year: String(currentYear) },
-  ])
+  const [phase, setPhase] = useState<ProgramPhase>(programPhases[0])
   const countryOptions = useMemo(() => {
     const locale = i18n.resolvedLanguage ?? i18n.language
     const displayNames = new Intl.DisplayNames([locale], { type: "region" })
@@ -139,10 +145,7 @@ export function CreateWorkspaceScreen() {
           stage,
           startYear: Number(startYear),
           endYear: Number(endYear),
-          versions: versions.map((version) => ({
-            label: version.label,
-            year: Number(version.year),
-          })),
+          versions: [{ label: phase, year: Number(startYear) }],
         },
         session.user.id
       )
@@ -183,18 +186,13 @@ export function CreateWorkspaceScreen() {
 
     const start = Number(startYear)
     const end = Number(endYear)
-    const invalidVersions = versions.some(
-      (version) => !version.label.trim() || !Number(version.year)
-    )
 
     if (
       targetStep === 3 &&
       (!start ||
         !end ||
         end < start ||
-        (stage === "post_closure" && end >= currentYear) ||
-        versions.length === 0 ||
-        invalidVersions)
+        (stage === "post_closure" && end >= currentYear))
     ) {
       return t("workspaces.creation.validation.timeline")
     }
@@ -229,14 +227,6 @@ export function CreateWorkspaceScreen() {
 
   function launchGeneration() {
     creation.mutate()
-  }
-
-  function updateVersion(id: string, field: "label" | "year", value: string) {
-    setVersions((current) =>
-      current.map((version) =>
-        version.id === id ? { ...version, [field]: value } : version
-      )
-    )
   }
 
   return (
@@ -289,7 +279,7 @@ export function CreateWorkspaceScreen() {
             startYear={startYear}
             targetCountry={targetCountry}
             themes={themes}
-            versions={versions}
+            phase={phase}
           />
         ) : (
           <>
@@ -475,8 +465,7 @@ export function CreateWorkspaceScreen() {
                         id="workspace-country"
                         label={t("workspaces.creation.countryLabel")}
                       >
-                        <select
-                          className={selectClassName}
+                        <NativeSelect
                           id="workspace-country"
                           onChange={(event) =>
                             setTargetCountry(event.target.value)
@@ -491,7 +480,7 @@ export function CreateWorkspaceScreen() {
                               {country.label}
                             </option>
                           ))}
-                        </select>
+                        </NativeSelect>
                       </Field>
 
                       <WorkspaceFinanciersField
@@ -542,9 +531,8 @@ export function CreateWorkspaceScreen() {
                         id="workspace-stage"
                         label={t("workspaces.creation.stageLabel")}
                       >
-                        <select
+                        <NativeSelect
                           aria-describedby="workspace-stage-description"
-                          className={selectClassName}
                           id="workspace-stage"
                           onChange={(event) =>
                             setStage(event.target.value as WorkspaceStage)
@@ -556,7 +544,7 @@ export function CreateWorkspaceScreen() {
                               {t(`workspaces.creation.stages.${option}`)}
                             </option>
                           ))}
-                        </select>
+                        </NativeSelect>
                         <p
                           className="mt-2 text-[12px] leading-5 text-muted-foreground"
                           id="workspace-stage-description"
@@ -607,83 +595,25 @@ export function CreateWorkspaceScreen() {
                         <p className="mt-1.5 text-[12px] text-muted-foreground">
                           {t("workspaces.creation.versionsHelp")}
                         </p>
-                        <div className="mt-3 space-y-3">
-                          {versions.map((version) => (
-                            <div
-                              className="grid grid-cols-[1fr_100px_auto] gap-2"
-                              key={version.id}
+                        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                          {programPhases.map((option) => (
+                            <label
+                              className="flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2.5 text-[12px]"
+                              key={option}
                             >
-                              <Input
-                                className="h-10"
-                                onChange={(event) =>
-                                  updateVersion(
-                                    version.id,
-                                    "label",
-                                    event.target.value
-                                  )
-                                }
-                                placeholder={t(
-                                  "workspaces.creation.versionPlaceholder"
-                                )}
-                                value={version.label}
+                              <input
+                                checked={phase === option}
+                                className="size-4 accent-foreground"
+                                name="workspace-program-phase"
+                                onChange={() => setPhase(option)}
+                                type="radio"
                               />
-                              <Input
-                                aria-label={t(
-                                  "workspaces.creation.versionYear"
-                                )}
-                                className="h-10"
-                                max={2100}
-                                min={1900}
-                                onChange={(event) =>
-                                  updateVersion(
-                                    version.id,
-                                    "year",
-                                    event.target.value
-                                  )
-                                }
-                                type="number"
-                                value={version.year}
-                              />
-                              {versions.length > 1 ? (
-                                <Button
-                                  aria-label={t("workspaces.creation.remove")}
-                                  onClick={() =>
-                                    setVersions((current) =>
-                                      current.filter(
-                                        (item) => item.id !== version.id
-                                      )
-                                    )
-                                  }
-                                  size="icon-lg"
-                                  type="button"
-                                  variant="ghost"
-                                >
-                                  <Trash2 />
-                                </Button>
-                              ) : (
-                                <span className="size-9" />
-                              )}
-                            </div>
+                              {t("workspaces.creation.phaseOption", {
+                                phase: option,
+                              })}
+                            </label>
                           ))}
                         </div>
-                        <Button
-                          className="mt-3"
-                          onClick={() =>
-                            setVersions((current) => [
-                              ...current,
-                              {
-                                id: crypto.randomUUID(),
-                                label: "",
-                                year: String(currentYear),
-                              },
-                            ])
-                          }
-                          type="button"
-                          variant="outline"
-                        >
-                          <CirclePlus />
-                          {t("workspaces.creation.addVersion")}
-                        </Button>
                       </fieldset>
                     </div>
                   ) : null}
@@ -775,7 +705,7 @@ type GenerationReviewProps = {
   startYear: string
   targetCountry: string
   themes: string[]
-  versions: EditableVersion[]
+  phase: ProgramPhase
 }
 
 function GenerationReview({
@@ -795,7 +725,7 @@ function GenerationReview({
   startYear,
   targetCountry,
   themes,
-  versions,
+  phase,
 }: GenerationReviewProps) {
   const { i18n, t } = useTranslation()
   const isComplete = generationStatus === "completed"
@@ -995,9 +925,7 @@ function GenerationReview({
           </div>
           <div className="mt-6">
             <SummaryList
-              items={versions.map(
-                (version) => `${version.label} · ${version.year}`
-              )}
+              items={[t("workspaces.creation.phaseOption", { phase })]}
               label={t("workspaces.creation.versionsLabel")}
             />
           </div>

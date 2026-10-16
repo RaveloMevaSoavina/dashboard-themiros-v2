@@ -173,16 +173,16 @@ export const resources = {
               },
             },
             3: {
-              label: "Cycle et versions",
+              label: "Cycle et phase",
               title: "Précisez le calendrier",
               description:
-                "Le stade, les années et les versions permettent d'adapter l'approche d'évaluation.",
+                "Le stade et les années permettent d'adapter l'approche d'évaluation. La phase situe la tranche du programme évaluée.",
               whyTitle: "Quel impact sur l'évaluation ?",
               why: "Le cycle du programme détermine les questions pertinentes et évite d'évaluer un programme en conception comme un programme déjà clôturé.",
               points: {
                 1: "Le stade et les années alimentent l'approche recommandée.",
-                2: "Chaque version peut être rattachée aux documents correspondants.",
-                3: "Deux versions ou plus activent automatiquement le mode comparatif.",
+                2: "La phase précise quelle tranche du programme est évaluée (I à IV).",
+                3: "Une seule phase est retenue par espace de travail.",
               },
             },
           },
@@ -261,7 +261,7 @@ export const resources = {
             pt: "Portugais",
             es: "Espagnol",
           },
-          stageLabel: "Phase du cycle",
+          stageLabel: "Stade du cycle",
           stages: {
             design: "Conception",
             pre_launch: "Avant lancement",
@@ -284,16 +284,14 @@ export const resources = {
             post_closure:
               "Évaluation ex-post, évaluation d'impact ou évaluation de la durabilité.",
             cross_cutting:
-              "Évaluation transversale couvrant plusieurs phases du cycle.",
+              "Évaluation transversale couvrant plusieurs stades du cycle.",
           },
           startYearLabel: "Année de début",
           endYearLabel: "Année de fin",
-          versionsLabel: "Versions du programme",
+          versionsLabel: "Phase du programme",
           versionsHelp:
-            "Ajoutez au moins une version. Deux versions activent le mode comparatif.",
-          versionPlaceholder: "Ex. ProDoc initial",
-          versionYear: "Année de la version",
-          addVersion: "Ajouter une version",
+            "Sélectionnez la phase du programme concernée par l'évaluation.",
+          phaseOption: "Phase {{phase}}",
           previous: "Précédent",
           next: "Continuer",
           validation: {
@@ -302,8 +300,7 @@ export const resources = {
               "Votre compte doit être rattaché à une organisation avant de créer un espace.",
             fingerprint:
               "Renseignez le pays, les financeurs, une thématique et une langue au minimum.",
-            timeline:
-              "Vérifiez le stade, les années et chaque version du programme.",
+            timeline: "Vérifiez le stade et les années du programme.",
           },
           summary: {
             eyebrow: "Récapitulatif",
@@ -338,9 +335,9 @@ export const resources = {
                   "Le pays, les financeurs, les thématiques et les langues sont renseignés.",
               },
               timeline: {
-                title: "Cycle et versions",
+                title: "Cycle et phase",
                 description:
-                  "La phase, la période et les versions du programme sont précisées.",
+                  "Le stade, la période et les phases du programme sont précisés.",
               },
               workspace: {
                 title: "Création de l'espace",
@@ -431,7 +428,7 @@ export const resources = {
           framework:
             "Le financeur principal sélectionne le référentiel actif le plus récent qui lui correspond. Si aucun référentiel n'est reconnu, le référentiel Themiros est utilisé.",
           cycle:
-            "La phase déclarée détermine d'abord le cycle d'évaluation. Pour une évaluation transversale, la progression entre les années de début et de fin départage en cours, mi-parcours et finale.",
+            "Le stade déclaré détermine d'abord le cycle d'évaluation. Pour une évaluation transversale, la progression entre les années de début et de fin départage en cours, mi-parcours et finale.",
           instrument:
             "Le type d'objet, l'échelle géographique, le nombre d'acteurs et le nombre de thématiques déterminent le module et le sous-type d'instrument.",
           complexity:
@@ -442,6 +439,9 @@ export const resources = {
             "Le moteur exécute toujours le socle : analyse de contribution, traçage de processus et contrôle de cohérence. La classe de complexité, le cycle, la finalité, la disponibilité d'une situation de référence, d'un groupe de comparaison et de données de suivi, l'échelle et le budget ajoutent des méthodes exécutées ou recommandées hors moteur.",
         },
         inputsUsed: "Éléments pris en compte",
+        overridden: "Valeur ajustée manuellement par rapport au calcul",
+        justificationUnavailable:
+          "Le détail du calcul n'a pas été enregistré pour cette version de l'approche.",
         contextFilter: "Questions de cadrage",
         questionnaireStep: "Étape 2",
         questionnaireTitle: "Questions de cadrage",
@@ -521,7 +521,7 @@ export const resources = {
         rationales: {
           framework:
             "Cadre retenu à partir du financeur principal : {{financier}}.",
-          cycle: "Phase {{stage}} et période {{startYear}}–{{endYear}}.",
+          cycle: "Stade {{stage}} et période {{startYear}}–{{endYear}}.",
           instrument:
             "Échelle {{scale}}, {{actors}} et {{count}} thématique(s).",
           complexity:
@@ -532,7 +532,7 @@ export const resources = {
         },
         inputLabels: {
           financierCode: "Financeur principal",
-          stage: "Phase déclarée",
+          stage: "Stade déclaré",
           startYear: "Année de début",
           endYear: "Année de fin",
           currentYear: "Année courante",
@@ -1414,16 +1414,16 @@ export const resources = {
               },
             },
             3: {
-              label: "Cycle and versions",
+              label: "Cycle and phase",
               title: "Set the timeline",
               description:
-                "The stage, years and versions help tailor the evaluation approach.",
+                "The stage and years help tailor the evaluation approach. The phase identifies which part of the programme is evaluated.",
               whyTitle: "How does this affect the evaluation?",
               why: "The programme cycle determines which questions are relevant and prevents a programme in design from being assessed like a closed programme.",
               points: {
                 1: "The stage and years inform the recommended approach.",
-                2: "Each version can be linked to its corresponding documents.",
-                3: "Two or more versions automatically enable comparison mode.",
+                2: "The phase specifies which part of the programme is evaluated (I to IV).",
+                3: "A single phase is selected per workspace.",
               },
             },
           },
@@ -1501,7 +1501,7 @@ export const resources = {
             pt: "Portuguese",
             es: "Spanish",
           },
-          stageLabel: "Cycle phase",
+          stageLabel: "Cycle stage",
           stages: {
             design: "Design",
             pre_launch: "Before launch",
@@ -1522,16 +1522,13 @@ export const resources = {
               "Final evaluation or completion report, such as a World Bank ICR.",
             post_closure: "Ex-post, impact or sustainability evaluation.",
             cross_cutting:
-              "Cross-cutting evaluation spanning several phases of the cycle.",
+              "Cross-cutting evaluation spanning several stages of the cycle.",
           },
           startYearLabel: "Start year",
           endYearLabel: "End year",
-          versionsLabel: "Programme versions",
-          versionsHelp:
-            "Add at least one version. Two versions enable comparison mode.",
-          versionPlaceholder: "E.g. Initial programme document",
-          versionYear: "Version year",
-          addVersion: "Add a version",
+          versionsLabel: "Programme phase",
+          versionsHelp: "Select the programme phase covered by the evaluation.",
+          phaseOption: "Phase {{phase}}",
           previous: "Previous",
           next: "Continue",
           validation: {
@@ -1540,7 +1537,7 @@ export const resources = {
               "Your account must be linked to an organization before creating a workspace.",
             fingerprint:
               "Enter the country, funders, at least one theme and one language.",
-            timeline: "Check the stage, years and every programme version.",
+            timeline: "Check the programme stage and years.",
           },
           summary: {
             eyebrow: "Summary",
@@ -1574,9 +1571,9 @@ export const resources = {
                   "The country, funders, themes and languages are provided.",
               },
               timeline: {
-                title: "Cycle and versions",
+                title: "Cycle and phase",
                 description:
-                  "The programme phase, period and versions are specified.",
+                  "The stage, period and programme phases are specified.",
               },
               workspace: {
                 title: "Workspace creation",
@@ -1663,7 +1660,7 @@ export const resources = {
           framework:
             "The main funder selects the latest active framework that matches it. If no framework is recognized, the Themiros framework is used.",
           cycle:
-            "The declared phase determines the evaluation cycle first. For a cross-cutting evaluation, progress between the start and end years determines ongoing, mid-term or final.",
+            "The declared stage determines the evaluation cycle first. For a cross-cutting evaluation, progress between the start and end years determines ongoing, mid-term or final.",
           instrument:
             "The object type, geographic scale, number of actors and number of themes determine the instrument module and subtype.",
           complexity:
@@ -1674,6 +1671,9 @@ export const resources = {
             "The engine always runs the core: contribution analysis, process tracing and coherence check. The complexity class, cycle, purpose, availability of a baseline, comparison group and monitoring data, scale and budget add methods run by the engine or recommended outside it.",
         },
         inputsUsed: "Inputs used",
+        overridden: "Value manually adjusted from the calculation",
+        justificationUnavailable:
+          "The calculation details were not saved for this version of the approach.",
         contextFilter: "Scoping questions",
         questionnaireStep: "Step 2",
         questionnaireTitle: "Scoping questions",
@@ -1751,7 +1751,7 @@ export const resources = {
         },
         rationales: {
           framework: "Framework selected from the main funder: {{financier}}.",
-          cycle: "{{stage}} phase and {{startYear}}–{{endYear}} period.",
+          cycle: "{{stage}} stage and {{startYear}}–{{endYear}} period.",
           instrument: "{{scale}} scale, {{actors}} and {{count}} theme(s).",
           complexity:
             "Score of {{score}}/10 based on scale, actors, themes, object type and budget.",
@@ -1762,7 +1762,7 @@ export const resources = {
         },
         inputLabels: {
           financierCode: "Main funder",
-          stage: "Declared phase",
+          stage: "Declared stage",
           startYear: "Start year",
           endYear: "End year",
           currentYear: "Current year",

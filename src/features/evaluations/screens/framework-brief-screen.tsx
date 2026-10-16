@@ -1,9 +1,14 @@
 import { useQuery } from "@tanstack/react-query"
 import { AlertCircle, ArrowRight, FileText, RefreshCw } from "lucide-react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router-dom"
 
 import { CorpusPageHeader } from "@/features/corpus/components/corpus-page-header"
+import {
+  ApproachJustificationSheet,
+  readApproachJustification,
+} from "@/features/evaluation-frameworks/components/approach-justification-sheet"
 import { RecommendedMethodsSummary } from "@/features/evaluation-frameworks/components/recommended-methods"
 import type { ReferenceLocale } from "@/features/evaluation-frameworks/model/types"
 import {
@@ -15,6 +20,7 @@ import {
   listReferenceFrameworks,
 } from "@/features/evaluation-frameworks/services/reference-service"
 import { ProgressMeter } from "@/features/evaluations/components/progress-meter"
+import { cn } from "@/shared/lib/utils"
 import { Badge } from "@/shared/ui/base/badge"
 import { Button } from "@/shared/ui/base/button"
 import { Skeleton } from "@/shared/ui/base/skeleton"
@@ -37,10 +43,13 @@ function humanize(value: string) {
 /**
  * Brief du cadre : relecture de l'approche retenue pour l'espace (derniere
  * version enregistree), avec les criteres et ponderations qui en decoulent.
+ * Chaque dimension ouvre un drawer qui rejoue la justification enregistree.
  */
 export function FrameworkBriefScreen() {
   const { i18n, t } = useTranslation()
   const { workspaceId = "" } = useParams<{ workspaceId: string }>()
+  const [selectedDimension, setSelectedDimension] = useState("framework")
+  const [isWhyOpen, setIsWhyOpen] = useState(false)
   const locale = (
     ["fr", "en", "pt", "es"].includes(i18n.resolvedLanguage ?? "fr")
       ? i18n.resolvedLanguage
@@ -176,15 +185,49 @@ export function FrameworkBriefScreen() {
     .sort((first, second) => Number(second.weight) - Number(first.weight))
   const dateFormatter = new Intl.DateTimeFormat(locale, { dateStyle: "long" })
 
-  const cards = [
+  const justifications = Object.fromEntries(
+    Object.entries(approach.justifications).map(([key, value]) => [
+      key,
+      readApproachJustification(value),
+    ])
+  )
+  const answer = (key: string, field: string) => {
+    const value =
+      justifications[key]?.inputs[field] ??
+      approach.questionnaire_answers[field]
+    return typeof value === "string" ? t(`approach.options.${value}`) : ""
+  }
+  const cycleInputs = justifications.cycle?.inputs ?? {}
+  const cards: {
+    key: string
+    value: string
+    detail?: string
+    rationale: string
+  }[] = [
     {
       key: "framework",
       value: framework?.label ?? humanize(approach.ref_framework_id),
       detail: framework?.version,
+      rationale: t("approach.rationales.framework", {
+        financier: String(
+          justifications.framework?.inputs.financierCode ??
+            framework?.financier_code ??
+            "OTHER"
+        ),
+      }),
     },
     {
       key: "cycle",
       value: t(`approach.cycles.${approach.cycle}`),
+      detail:
+        typeof cycleInputs.progression === "number"
+          ? `${Math.round(cycleInputs.progression * 100)} %`
+          : undefined,
+      rationale: t("approach.rationales.cycle", {
+        stage: t(`workspaces.creation.stages.${String(cycleInputs.stage)}`),
+        startYear: cycleInputs.startYear,
+        endYear: cycleInputs.endYear,
+      }),
     },
     {
       key: "instrument",
@@ -192,17 +235,54 @@ export function FrameworkBriefScreen() {
         defaultValue: humanize(approach.instrument_subtype),
       }),
       detail: approach.instrument_module,
+      rationale: t("approach.rationales.instrument", {
+        scale: answer("instrument", "scale"),
+        actors: answer("instrument", "actors"),
+        count: Number(justifications.instrument?.inputs.themeCount ?? 0),
+      }),
     },
     {
       key: "complexity",
       value: t(`approach.complexity.${approach.complexity_class}`),
       detail: `${approach.complexity_score}/10`,
+      rationale: t("approach.rationales.complexity", {
+        score: approach.complexity_score,
+      }),
     },
     {
       key: "nature",
       value: t(`approach.nature.${approach.evaluation_nature}`),
+      rationale: t("approach.rationales.nature", {
+        relation: answer("nature", "relation"),
+      }),
     },
   ]
+  const methodRationale = t("approach.rationales.method", {
+    complexity: t(
+      `approach.complexity.${approach.complexity_class}`
+    ).toLocaleLowerCase(),
+    cycle: t(`approach.cycles.${approach.cycle}`).toLocaleLowerCase(),
+  })
+  const selectedRationale =
+    selectedDimension === "method"
+      ? methodRationale
+      : cards.find((card) => card.key === selectedDimension)?.rationale
+  const dimensionButtonClassName = (key: string) =>
+    cn(
+      "group flex flex-col rounded-xl border p-5 text-left transition-colors hover:bg-muted/40",
+      isWhyOpen && selectedDimension === key
+        ? "border-foreground bg-muted/30"
+        : "border-border"
+    )
+  const openDimension = (key: string) => {
+    setSelectedDimension(key)
+    setIsWhyOpen(true)
+  }
+  const seeWhy = (
+    <span className="mt-auto pt-4 text-[11px] font-medium underline-offset-4 group-hover:underline">
+      {t("approach.seeWhy")}
+    </span>
+  )
   const answers = questionnaireFields.filter(
     (field) => typeof approach.questionnaire_answers[field] === "string"
   )
@@ -227,9 +307,12 @@ export function FrameworkBriefScreen() {
         </h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map((card) => (
-            <article
-              className="flex flex-col rounded-xl border border-border p-5"
+            <button
+              aria-pressed={isWhyOpen && selectedDimension === card.key}
+              className={dimensionButtonClassName(card.key)}
               key={card.key}
+              onClick={() => openDimension(card.key)}
+              type="button"
             >
               <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 {t(`approach.cards.${card.key}`)}
@@ -242,9 +325,15 @@ export function FrameworkBriefScreen() {
                   {card.detail}
                 </span>
               ) : null}
-            </article>
+              {seeWhy}
+            </button>
           ))}
-          <article className="flex flex-col rounded-xl border border-border p-5">
+          <button
+            aria-pressed={isWhyOpen && selectedDimension === "method"}
+            className={dimensionButtonClassName("method")}
+            onClick={() => openDimension("method")}
+            type="button"
+          >
             <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
               {t("approach.cards.method")}
             </span>
@@ -253,9 +342,21 @@ export function FrameworkBriefScreen() {
               cycle={approach.cycle}
               methods={approach.recommended_methods}
             />
-          </article>
+            {seeWhy}
+          </button>
         </div>
       </section>
+
+      <ApproachJustificationSheet
+        cycle={approach.cycle}
+        dimension={selectedDimension}
+        justification={justifications[selectedDimension]}
+        label={t(`approach.cards.${selectedDimension}`)}
+        methods={approach.recommended_methods}
+        onOpenChange={setIsWhyOpen}
+        open={isWhyOpen}
+        rationale={selectedRationale}
+      />
 
       {answers.length > 0 ? (
         <section className="mt-8 rounded-xl border border-border p-5">
