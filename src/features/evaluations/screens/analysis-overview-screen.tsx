@@ -33,15 +33,16 @@ import { Button } from "@/shared/ui/base/button"
 import { Skeleton } from "@/shared/ui/base/skeleton"
 
 export function AnalysisOverviewScreen() {
-  const { t } = useTranslation()
+  const { i18n, t } = useTranslation()
   const navigate = useNavigate()
   const { workspaceId = "" } = useParams<{ workspaceId: string }>()
   const [evidenceOpen, setEvidenceOpen] = useState(false)
   const [layout, changeLayout] = usePillarLayout()
   const analysisPath = `/workspaces/${workspaceId}/analysis`
   const results = useQuery({
-    queryKey: ["evaluation", workspaceId, "results"],
-    queryFn: () => getEvaluationResults(workspaceId),
+    queryKey: ["evaluation", workspaceId, "results", i18n.resolvedLanguage],
+    queryFn: () =>
+      getEvaluationResults(workspaceId, i18n.resolvedLanguage ?? "fr"),
     enabled: Boolean(workspaceId),
     refetchInterval: (query) =>
       ["pending", "running"].includes(query.state.data?.run?.status ?? "")

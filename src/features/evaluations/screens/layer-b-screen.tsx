@@ -38,10 +38,17 @@ function CriterionResultCard({
   onEvidence: (note: LayerBNote) => void
   onPillar: (pillarId: string) => void
 }) {
-  const { t } = useTranslation()
+  const { i18n, t } = useTranslation()
   const answers = useQuery({
-    queryKey: ["evaluation", runId, "answers", note.criterionId],
-    queryFn: () => listSubAnswers(runId, note.criterionId),
+    queryKey: [
+      "evaluation",
+      runId,
+      "answers",
+      note.criterionId,
+      i18n.resolvedLanguage,
+    ],
+    queryFn: () =>
+      listSubAnswers(runId, note.criterionId, i18n.resolvedLanguage ?? "fr"),
   })
   const percentage =
     note.total === 0 ? 0 : Math.round((note.documented / note.total) * 100)
@@ -149,15 +156,16 @@ function CriterionResultCard({
 }
 
 export function LayerBScreen() {
-  const { t } = useTranslation()
+  const { i18n, t } = useTranslation()
   const navigate = useNavigate()
   const { workspaceId = "" } = useParams<{ workspaceId: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
   const filterId = searchParams.get("criterion")
   const [selected, setSelected] = useState<LayerBNote | null>(null)
   const results = useQuery({
-    queryKey: ["evaluation", workspaceId, "results"],
-    queryFn: () => getEvaluationResults(workspaceId),
+    queryKey: ["evaluation", workspaceId, "results", i18n.resolvedLanguage],
+    queryFn: () =>
+      getEvaluationResults(workspaceId, i18n.resolvedLanguage ?? "fr"),
     enabled: Boolean(workspaceId),
   })
   const evidences = useQuery({

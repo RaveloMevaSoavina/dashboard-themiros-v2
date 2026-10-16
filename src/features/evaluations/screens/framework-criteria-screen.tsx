@@ -101,11 +101,12 @@ function CriterionCard({ criterion }: { criterion: EvaluationCriterion }) {
 }
 
 export function FrameworkCriteriaScreen() {
-  const { t } = useTranslation()
+  const { i18n, t } = useTranslation()
   const { workspaceId = "" } = useParams<{ workspaceId: string }>()
   const criteria = useQuery({
-    queryKey: ["evaluation", workspaceId, "criteria"],
-    queryFn: () => getWorkspaceCriteria(workspaceId),
+    queryKey: ["evaluation", workspaceId, "criteria", i18n.resolvedLanguage],
+    queryFn: () =>
+      getWorkspaceCriteria(workspaceId, i18n.resolvedLanguage ?? "fr"),
     enabled: Boolean(workspaceId),
   })
   const activeCount =

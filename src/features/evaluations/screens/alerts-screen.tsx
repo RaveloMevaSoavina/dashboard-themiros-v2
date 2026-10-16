@@ -23,7 +23,7 @@ import { Input } from "@/shared/ui/base/input"
 import { Skeleton } from "@/shared/ui/base/skeleton"
 
 export function AlertsScreen() {
-  const { t } = useTranslation()
+  const { i18n, t } = useTranslation()
   const navigate = useNavigate()
   const { workspaceId = "" } = useParams<{ workspaceId: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -34,8 +34,9 @@ export function AlertsScreen() {
     {}
   )
   const results = useQuery({
-    queryKey: ["evaluation", workspaceId, "results"],
-    queryFn: () => getEvaluationResults(workspaceId),
+    queryKey: ["evaluation", workspaceId, "results", i18n.resolvedLanguage],
+    queryFn: () =>
+      getEvaluationResults(workspaceId, i18n.resolvedLanguage ?? "fr"),
     enabled: Boolean(workspaceId),
   })
   const evidences = useQuery({

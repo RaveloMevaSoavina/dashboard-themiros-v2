@@ -216,10 +216,17 @@ function CriterionDetail({
   runId: string
   onOpenCriterion: () => void
 }) {
-  const { t } = useTranslation()
+  const { i18n, t } = useTranslation()
   const answers = useQuery({
-    queryKey: ["evaluation", runId, "answers", note.criterionId],
-    queryFn: () => listSubAnswers(runId, note.criterionId),
+    queryKey: [
+      "evaluation",
+      runId,
+      "answers",
+      note.criterionId,
+      i18n.resolvedLanguage,
+    ],
+    queryFn: () =>
+      listSubAnswers(runId, note.criterionId, i18n.resolvedLanguage ?? "fr"),
   })
   const evidences = useQuery({
     queryKey: ["evaluation", runId, "criterion-evidences", note.criterionId],
@@ -495,7 +502,7 @@ function DocumentsSection({
  * colonne laterale.
  */
 export function PillarDetailScreen() {
-  const { t } = useTranslation()
+  const { i18n, t } = useTranslation()
   const navigate = useNavigate()
   const { workspaceId = "", pillarId = "" } = useParams<{
     workspaceId: string
@@ -508,8 +515,9 @@ export function PillarDetailScreen() {
   const analysisPath = `/workspaces/${workspaceId}/analysis`
 
   const results = useQuery({
-    queryKey: ["evaluation", workspaceId, "results"],
-    queryFn: () => getEvaluationResults(workspaceId),
+    queryKey: ["evaluation", workspaceId, "results", i18n.resolvedLanguage],
+    queryFn: () =>
+      getEvaluationResults(workspaceId, i18n.resolvedLanguage ?? "fr"),
     enabled: Boolean(workspaceId),
   })
   const pillars = useQuery({

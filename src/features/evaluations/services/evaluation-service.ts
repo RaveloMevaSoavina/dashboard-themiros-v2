@@ -37,6 +37,15 @@ type PillarRow = {
   }[]
 }
 
+type RefQuestionRow = {
+  code: string
+  ref_question_translations: {
+    locale: string
+    text: string
+    expected_evidence: string | null
+  }[]
+} | null
+
 type CriterionRow = {
   id: string
   code: string
@@ -51,6 +60,7 @@ type CriterionRow = {
     status: "active" | "inactive"
     origin: "referential" | "user"
     ref_question_id: string | null
+    ref_questions: RefQuestionRow
   }[]
 }
 
@@ -109,7 +119,11 @@ type AnswerRow = {
   id: string
   sub_question_id: string
   status: SubAnswer["status"]
-  sub_questions: { text: string } | null
+  sub_questions: {
+    text: string
+    origin: "referential" | "user"
+    ref_questions: RefQuestionRow
+  } | null
 }
 
 type EvidenceRow = {
@@ -191,8 +205,43 @@ async function fetchWorkspacePillars(
   }))
 }
 
+const refQuestionSelect =
+  "ref_questions(code, ref_question_translations(locale, text, expected_evidence))"
+
+/*
+ * Le texte d'une sous-question est copie a la generation du cadre, dans la
+ * langue de l'approche. Une question du referentiel est relue dans la langue
+ * de l'interface, avec le meme repli que la derivation (anglais, puis
+ * francais) ; a defaut, et pour les questions propres, le texte copie fait foi.
+ */
+function localizeSubQuestion(
+  question: {
+    text: string
+    expected_evidence?: string | null
+    origin: "referential" | "user"
+    ref_questions: RefQuestionRow
+  },
+  locale: string
+) {
+  const translations =
+    question.origin === "referential"
+      ? (question.ref_questions?.ref_question_translations ?? [])
+      : []
+  const translation = [locale, "en", "fr"]
+    .map((candidate) => translations.find((item) => item.locale === candidate))
+    .find((item) => item !== undefined)
+
+  return {
+    text: translation?.text ?? question.text,
+    expectedEvidence: translation
+      ? translation.expected_evidence
+      : (question.expected_evidence ?? null),
+  }
+}
+
 export async function getWorkspaceCriteria(
-  workspaceId: string
+  workspaceId: string,
+  locale: string
 ): Promise<EvaluationCriterion[]> {
   const { data: framework, error: frameworkError } = await supabase
     .from("frameworks")
@@ -209,7 +258,7 @@ export async function getWorkspaceCriteria(
   const { data, error } = await supabase
     .from("criteria")
     .select(
-      "id, code, name, definition, applicability, weight, sub_questions(id, text, expected_evidence, status, origin, ref_question_id)"
+      `id, code, name, definition, applicability, weight, sub_questions(id, text, expected_evidence, status, origin, ref_question_id, ${refQuestionSelect})`
     )
     .eq("framework_id", framework.id)
   if (error) {
@@ -225,9 +274,8 @@ export async function getWorkspaceCriteria(
     weight: Number(row.weight),
     questions: (row.sub_questions ?? []).map((question) => ({
       id: question.id,
-      code: question.ref_question_id ?? question.id,
-      text: question.text,
-      expectedEvidence: question.expected_evidence,
+      code: question.ref_questions?.code ?? question.id,
+      ...localizeSubQuestion(question, locale),
       active: question.status === "active",
       origin: question.origin,
     })),
@@ -395,12 +443,13 @@ export async function getLatestRun(
 }
 
 export async function getEvaluationResults(
-  workspaceId: string
+  workspaceId: string,
+  locale: string
 ): Promise<EvaluationResults> {
   if (isEvaluationDemo) {
     const [pillars, criteria] = await Promise.all([
       fetchWorkspacePillars(workspaceId).catch(() => []),
-      getWorkspaceCriteria(workspaceId).catch(() => []),
+      getWorkspaceCriteria(workspaceId, locale).catch(() => []),
     ])
     return getDemoResults(workspaceId, pillars, criteria)
   }
@@ -540,13 +589,14 @@ export async function listIntermediateVariables(
 
 export async function listSubAnswers(
   runId: string,
-  criterionId: string
+  criterionId: string,
+  locale: string
 ): Promise<SubAnswer[]> {
   if (isDemoId(runId)) return listDemoSubAnswers(runId, criterionId)
   const { data, error } = await supabase
     .from("layer_b_sub_answers")
     .select(
-      "id, sub_question_id, status, sub_questions!inner(text, criterion_id)"
+      `id, sub_question_id, status, sub_questions!inner(text, criterion_id, origin, ${refQuestionSelect})`
     )
     .eq("run_id", runId)
     .eq("sub_questions.criterion_id", criterionId)
@@ -557,7 +607,9 @@ export async function listSubAnswers(
   return ((data ?? []) as unknown as AnswerRow[]).map((row) => ({
     id: row.id,
     questionId: row.sub_question_id,
-    text: row.sub_questions?.text ?? "—",
+    text: row.sub_questions
+      ? localizeSubQuestion(row.sub_questions, locale).text
+      : "—",
     status: row.status,
   }))
 }
