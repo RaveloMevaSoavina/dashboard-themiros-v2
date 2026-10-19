@@ -33,6 +33,8 @@ export type ObservableVariable = {
   code: string
   label: string
   description: string
+  /** Langue du libelle affiche ; absente pour le referentiel, deja localise. */
+  locale?: string
 }
 
 export type ReferencePillar = {

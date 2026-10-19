@@ -229,8 +229,18 @@ function CriterionDetail({
       listSubAnswers(runId, note.criterionId, i18n.resolvedLanguage ?? "fr"),
   })
   const evidences = useQuery({
-    queryKey: ["evaluation", runId, "criterion-evidences", note.criterionId],
-    queryFn: () => listEvidences({ runId, criterionId: note.criterionId }),
+    queryKey: [
+      "evaluation",
+      runId,
+      "criterion-evidences",
+      note.criterionId,
+      i18n.resolvedLanguage,
+    ],
+    queryFn: () =>
+      listEvidences(
+        { runId, criterionId: note.criterionId },
+        i18n.resolvedLanguage ?? "fr"
+      ),
   })
 
   return (
@@ -521,29 +531,54 @@ export function PillarDetailScreen() {
     enabled: Boolean(workspaceId),
   })
   const pillars = useQuery({
-    queryKey: ["evaluation", workspaceId, "pillars"],
-    queryFn: () => getWorkspacePillars(workspaceId),
+    queryKey: ["evaluation", workspaceId, "pillars", i18n.resolvedLanguage],
+    queryFn: () =>
+      getWorkspacePillars(workspaceId, i18n.resolvedLanguage ?? "fr"),
     enabled: Boolean(workspaceId),
   })
   const runId = results.data?.run?.id ?? ""
   const variables = useQuery({
-    queryKey: ["evaluation", runId, "variables", pillarId],
-    queryFn: () => listIntermediateVariables(runId, pillarId),
+    queryKey: [
+      "evaluation",
+      runId,
+      "variables",
+      pillarId,
+      i18n.resolvedLanguage,
+    ],
+    queryFn: () =>
+      listIntermediateVariables(runId, pillarId, i18n.resolvedLanguage ?? "fr"),
     enabled: Boolean(runId && pillarId),
   })
   const pillarEvidences = useQuery({
-    queryKey: ["evaluation", workspaceId, "evidences", runId, pillarId],
-    queryFn: () => listEvidences({ runId, pillarId }),
+    queryKey: [
+      "evaluation",
+      workspaceId,
+      "evidences",
+      runId,
+      pillarId,
+      i18n.resolvedLanguage,
+    ],
+    queryFn: () =>
+      listEvidences({ runId, pillarId }, i18n.resolvedLanguage ?? "fr"),
     enabled: Boolean(runId && pillarId),
   })
   const variableEvidences = useQuery({
-    queryKey: ["evaluation", runId, "evidences", selectedVariable?.id],
+    queryKey: [
+      "evaluation",
+      runId,
+      "evidences",
+      selectedVariable?.id,
+      i18n.resolvedLanguage,
+    ],
     queryFn: () =>
-      listEvidences({
-        runId,
-        pillarId,
-        variableCode: selectedVariable?.code,
-      }),
+      listEvidences(
+        {
+          runId,
+          pillarId,
+          variableCode: selectedVariable?.code,
+        },
+        i18n.resolvedLanguage ?? "fr"
+      ),
     enabled: Boolean(selectedVariable && runId),
   })
 

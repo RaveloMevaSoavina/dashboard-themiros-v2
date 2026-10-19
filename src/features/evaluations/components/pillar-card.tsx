@@ -23,7 +23,11 @@ export function PillarCard({
   onChange?: (pillar: EvaluationPillar) => void
   onRemove?: () => void
 }) {
-  const { t } = useTranslation()
+  const { i18n, t } = useTranslation()
+  const language = i18n.resolvedLanguage ?? "fr"
+  const untranslated = [pillar, ...pillar.variables].some(
+    (item) => item.locale !== undefined && item.locale !== language
+  )
   return (
     <article className="flex h-full rounded-xl border border-border p-5">
       <div className="flex h-full w-full items-start gap-3">
@@ -46,9 +50,25 @@ export function PillarCard({
                 {pillar.name}
               </h2>
             )}
-            {pillar.origin === "new" ? (
-              <Badge variant="outline">{t("evaluation.framework.new")}</Badge>
-            ) : null}
+            <div className="flex shrink-0 gap-1.5">
+              {untranslated ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline">
+                      {t("evaluation.framework.notTranslated")}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" sideOffset={6}>
+                    <p className="max-w-64">
+                      {t("evaluation.framework.notTranslatedHelp")}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : null}
+              {pillar.origin === "new" ? (
+                <Badge variant="outline">{t("evaluation.framework.new")}</Badge>
+              ) : null}
+            </div>
           </div>
           <p className="mt-3 line-clamp-2 h-10 text-[13px] leading-5 text-muted-foreground">
             {pillar.description}

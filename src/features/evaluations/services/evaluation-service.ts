@@ -1,3 +1,4 @@
+import type { ObservableVariable } from "@/features/evaluation-frameworks/model/types"
 import type {
   AnalysisRun,
   EvaluationCriterion,
@@ -23,18 +24,35 @@ import {
 } from "@/features/evaluations/services/evaluation-demo"
 import { supabase } from "@/shared/lib/supabase"
 
-type PillarRow = {
-  id: string
+type PillarTextRow = {
   name: string
   description: string
-  weight: number
-  origin: "referential" | "new"
-  pillar_criteria: { criteria: { code: string } | null }[]
-  pillar_variables: {
-    code: string
+  source_locale: string
+  pillar_translations: {
+    locale: string
+    name: string
+    description: string
+  }[]
+}
+
+type VariableTextRow = {
+  code: string
+  label: string
+  description: string | null
+  source_locale: string
+  pillar_variable_translations: {
+    locale: string
     label: string
     description: string | null
   }[]
+}
+
+type PillarRow = PillarTextRow & {
+  id: string
+  weight: number
+  origin: "referential" | "new"
+  pillar_criteria: { criteria: { code: string } | null }[]
+  pillar_variables: VariableTextRow[]
 }
 
 type RefQuestionRow = {
@@ -72,10 +90,11 @@ type ScoreRow = {
   evolution_label: LayerAScore["evolution"]
   corpus_confidence: number
   documents_count: number
-  pillars: {
-    name: string
-    pillar_criteria: { criterion_id: string }[]
-  } | null
+  pillars:
+    | (PillarTextRow & {
+        pillar_criteria: { criterion_id: string }[]
+      })
+    | null
   program_versions: { label: string } | null
 }
 
@@ -100,7 +119,7 @@ type AlertRow = {
   instruction_comment: string | null
   pillar_id: string | null
   criterion_id: string | null
-  pillars: { name: string } | null
+  pillars: PillarTextRow | null
   criteria: { name: string } | null
 }
 
@@ -112,7 +131,7 @@ type VariableRow = {
   documents_count: number
   corpus_confidence: number | null
   program_versions: { label: string } | null
-  pillars: { pillar_variables: { code: string; label: string }[] } | null
+  pillars: { pillar_variables: VariableTextRow[] } | null
 }
 
 type AnswerRow = {
@@ -134,7 +153,7 @@ type EvidenceRow = {
   excerpt: string
   variable_code: string | null
   documents: { original_filename: string; storage_path: string } | null
-  pillars: { name: string } | null
+  pillars: PillarTextRow | null
   criteria: { name: string } | null
 }
 
@@ -152,10 +171,59 @@ function isMissingRelation(error: { code?: string; message?: string }) {
   )
 }
 
+const pillarTextSelect =
+  "name, description, source_locale, pillar_translations(locale, name, description)"
+const variableTextSelect =
+  "code, label, description, source_locale, pillar_variable_translations(locale, label, description)"
+
+/*
+ * Un pilier et ses variables sont rediges dans leur langue source (celle de
+ * l'approche, ou celle de la derniere modification) ; les autres langues de
+ * l'interface viennent des traductions produites a la generation. Sans
+ * traduction, le texte source s'affiche, avec sa langue : l'ecran le signale.
+ */
+function localizePillar(row: PillarTextRow, locale: string) {
+  const translation =
+    row.source_locale === locale
+      ? undefined
+      : row.pillar_translations?.find((item) => item.locale === locale)
+  return translation
+    ? { name: translation.name, description: translation.description, locale }
+    : {
+        name: row.name,
+        description: row.description,
+        locale: row.source_locale,
+      }
+}
+
+function localizeVariable(
+  row: VariableTextRow,
+  locale: string
+): ObservableVariable {
+  const translation =
+    row.source_locale === locale
+      ? undefined
+      : row.pillar_variable_translations?.find((item) => item.locale === locale)
+  return translation
+    ? {
+        code: row.code,
+        label: translation.label,
+        description: translation.description ?? "",
+        locale,
+      }
+    : {
+        code: row.code,
+        label: row.label,
+        description: row.description ?? "",
+        locale: row.source_locale,
+      }
+}
+
 export async function getWorkspacePillars(
-  workspaceId: string
+  workspaceId: string,
+  locale: string
 ): Promise<EvaluationPillar[]> {
-  const pillars = await fetchWorkspacePillars(workspaceId)
+  const pillars = await fetchWorkspacePillars(workspaceId, locale)
   /* Demonstration sans cadre : les cartes gardent un nom et une description. */
   return isEvaluationDemo && pillars.length === 0
     ? demoFixturePillars()
@@ -163,7 +231,8 @@ export async function getWorkspacePillars(
 }
 
 async function fetchWorkspacePillars(
-  workspaceId: string
+  workspaceId: string,
+  locale: string
 ): Promise<EvaluationPillar[]> {
   const { data: framework, error: frameworkError } = await supabase
     .from("frameworks")
@@ -180,7 +249,7 @@ async function fetchWorkspacePillars(
   const { data, error } = await supabase
     .from("pillars")
     .select(
-      "id, name, description, weight, origin, pillar_variables(code, label, description), pillar_criteria(criteria(code))"
+      `id, ${pillarTextSelect}, weight, origin, pillar_variables(${variableTextSelect}), pillar_criteria(criteria(code))`
     )
     .eq("framework_id", framework.id)
     .order("order_index")
@@ -190,18 +259,15 @@ async function fetchWorkspacePillars(
   }
   return ((data ?? []) as unknown as PillarRow[]).map((row) => ({
     id: row.id,
-    name: row.name,
-    description: row.description,
+    ...localizePillar(row, locale),
     weight: Number(row.weight),
     origin: row.origin,
     criteria: (row.pillar_criteria ?? []).map(
       (item) => item.criteria?.code ?? "—"
     ),
-    variables: (row.pillar_variables ?? []).map((variable) => ({
-      code: variable.code,
-      label: variable.label,
-      description: variable.description ?? "",
-    })),
+    variables: (row.pillar_variables ?? []).map((variable) =>
+      localizeVariable(variable, locale)
+    ),
   }))
 }
 
@@ -285,8 +351,10 @@ export async function getWorkspaceCriteria(
 export async function saveFrameworkPillars(
   workspaceId: string,
   pillars: EvaluationPillar[],
-  originalIds: string[]
+  originals: EvaluationPillar[]
 ) {
+  const originalById = new Map(originals.map((pillar) => [pillar.id, pillar]))
+  const originalIds = [...originalById.keys()]
   const { data: framework, error: frameworkError } = await supabase
     .from("frameworks")
     .select("id")
@@ -299,17 +367,30 @@ export async function saveFrameworkPillars(
   const updateResults = await Promise.all(
     pillars
       .filter((pillar) => originalIds.includes(pillar.id))
-      .map((pillar, index) =>
-        supabase
+      .map((pillar, index) => {
+        /*
+         * Le nom affiche peut etre une traduction : le texte source n'est
+         * reecrit que si l'utilisateur l'a modifie. Le texte affiche devient
+         * alors le texte source, dans sa langue ; les traductions du pilier
+         * sont supprimees en base (« non traduit » dans les autres langues).
+         */
+        const renamed = pillar.name.trim() !== originalById.get(pillar.id)?.name
+        return supabase
           .from("pillars")
           .update({
-            name: pillar.name.trim(),
             weight: pillar.weight,
             order_index: index + 1,
+            ...(renamed
+              ? {
+                  name: pillar.name.trim(),
+                  description: pillar.description,
+                  ...(pillar.locale ? { source_locale: pillar.locale } : {}),
+                }
+              : {}),
           })
           .eq("id", pillar.id)
           .eq("framework_id", framework.id)
-      )
+      })
   )
   const updateError = updateResults.find((result) => result.error)?.error
   if (updateError) throw updateError
@@ -328,6 +409,7 @@ export async function saveFrameworkPillars(
         weight: pillar.weight,
         order_index: pillars.findIndex((item) => item.id === pillar.id) + 1,
         origin: "new" as const,
+        ...(pillar.locale ? { source_locale: pillar.locale } : {}),
       })),
       { onConflict: "id" }
     )
@@ -344,6 +426,7 @@ export async function saveFrameworkPillars(
         description: variable.description.trim() || null,
         weight: variableWeight,
         order_index: index + 1,
+        ...(pillar.locale ? { source_locale: pillar.locale } : {}),
       }))
     })
     if (variableRows.length > 0) {
@@ -448,7 +531,7 @@ export async function getEvaluationResults(
 ): Promise<EvaluationResults> {
   if (isEvaluationDemo) {
     const [pillars, criteria] = await Promise.all([
-      fetchWorkspacePillars(workspaceId).catch(() => []),
+      fetchWorkspacePillars(workspaceId, locale).catch(() => []),
       getWorkspaceCriteria(workspaceId, locale).catch(() => []),
     ])
     return getDemoResults(workspaceId, pillars, criteria)
@@ -462,7 +545,7 @@ export async function getEvaluationResults(
       supabase
         .from("layer_a_scores")
         .select(
-          "id, pillar_id, score, delta, evolution_label, corpus_confidence, documents_count, pillars(name, pillar_criteria(criterion_id)), program_versions(label)"
+          `id, pillar_id, score, delta, evolution_label, corpus_confidence, documents_count, pillars(${pillarTextSelect}, pillar_criteria(criterion_id)), program_versions(label)`
         )
         .eq("run_id", run.id),
       supabase
@@ -474,7 +557,7 @@ export async function getEvaluationResults(
       supabase
         .from("layer_c_alerts")
         .select(
-          "id, alert_type, severity, message, status, instruction_comment, pillar_id, criterion_id, pillars(name), criteria(name)"
+          `id, alert_type, severity, message, status, instruction_comment, pillar_id, criterion_id, pillars(${pillarTextSelect}), criteria(name)`
         )
         .eq("run_id", run.id),
       supabase
@@ -496,7 +579,7 @@ export async function getEvaluationResults(
   ).map((row) => ({
     id: row.id,
     pillarId: row.pillar_id,
-    pillarName: row.pillars?.name ?? "—",
+    pillarName: row.pillars ? localizePillar(row.pillars, locale).name : "—",
     criterionIds:
       row.pillars?.pillar_criteria.map((item) => item.criterion_id) ?? [],
     score: Number(row.score),
@@ -530,7 +613,7 @@ export async function getEvaluationResults(
     status: row.status,
     instructionComment: row.instruction_comment,
     pillarId: row.pillar_id,
-    pillarName: row.pillars?.name ?? null,
+    pillarName: row.pillars ? localizePillar(row.pillars, locale).name : null,
     criterionId: row.criterion_id,
     criterionName: row.criteria?.name ?? null,
   }))
@@ -555,13 +638,14 @@ export async function getEvaluationResults(
 
 export async function listIntermediateVariables(
   runId: string,
-  pillarId: string
+  pillarId: string,
+  locale: string
 ): Promise<IntermediateVariable[]> {
   if (isDemoId(runId)) return listDemoVariables(runId, pillarId)
   const { data, error } = await supabase
     .from("intermediate_variables")
     .select(
-      "id, pillar_id, variable_code, state, documents_count, corpus_confidence, program_versions(label), pillars(pillar_variables(code, label))"
+      `id, pillar_id, variable_code, state, documents_count, corpus_confidence, program_versions(label), pillars(pillar_variables(${variableTextSelect}))`
     )
     .eq("run_id", runId)
     .eq("pillar_id", pillarId)
@@ -570,14 +654,16 @@ export async function listIntermediateVariables(
     throw error
   }
   return ((data ?? []) as unknown as VariableRow[]).map((row) => {
-    const variables = row.pillars?.pillar_variables ?? []
+    const variable = row.pillars?.pillar_variables?.find(
+      (item) => item.code === row.variable_code
+    )
     return {
       id: row.id,
       pillarId: row.pillar_id,
       code: row.variable_code,
-      label:
-        variables.find((variable) => variable.code === row.variable_code)
-          ?.label ?? row.variable_code,
+      label: variable
+        ? localizeVariable(variable, locale).label
+        : row.variable_code,
       state: row.state,
       documentsCount: row.documents_count,
       confidence:
@@ -614,17 +700,20 @@ export async function listSubAnswers(
   }))
 }
 
-export async function listEvidences(filters: {
-  runId: string
-  pillarId?: string
-  criterionId?: string
-  variableCode?: string
-}): Promise<Evidence[]> {
+export async function listEvidences(
+  filters: {
+    runId: string
+    pillarId?: string
+    criterionId?: string
+    variableCode?: string
+  },
+  locale: string
+): Promise<Evidence[]> {
   if (isDemoId(filters.runId)) return listDemoEvidences(filters)
   let query = supabase
     .from("evidences")
     .select(
-      "id, document_id, page_number, section_title, excerpt, variable_code, documents(original_filename, storage_path), pillars(name), criteria(name)"
+      `id, document_id, page_number, section_title, excerpt, variable_code, documents(original_filename, storage_path), pillars(${pillarTextSelect}), criteria(name)`
     )
     .eq("run_id", filters.runId)
   if (filters.pillarId) query = query.eq("pillar_id", filters.pillarId)
@@ -644,18 +733,21 @@ export async function listEvidences(filters: {
     page: row.page_number,
     section: row.section_title,
     excerpt: row.excerpt,
-    pillarName: row.pillars?.name ?? null,
+    pillarName: row.pillars ? localizePillar(row.pillars, locale).name : null,
     criterionName: row.criteria?.name ?? null,
     variableCode: row.variable_code,
   }))
 }
 
-export async function listAlertEvidences(alertId: string): Promise<Evidence[]> {
+export async function listAlertEvidences(
+  alertId: string,
+  locale: string
+): Promise<Evidence[]> {
   if (isDemoId(alertId)) return listDemoAlertEvidences(alertId)
   const { data, error } = await supabase
     .from("alert_evidences")
     .select(
-      "evidences(id, document_id, page_number, section_title, excerpt, variable_code, documents(original_filename, storage_path), pillars(name), criteria(name))"
+      `evidences(id, document_id, page_number, section_title, excerpt, variable_code, documents(original_filename, storage_path), pillars(${pillarTextSelect}), criteria(name))`
     )
     .eq("alert_id", alertId)
   if (error) {
@@ -676,7 +768,9 @@ export async function listAlertEvidences(alertId: string): Promise<Evidence[]> {
         page: evidence.page_number,
         section: evidence.section_title,
         excerpt: evidence.excerpt,
-        pillarName: evidence.pillars?.name ?? null,
+        pillarName: evidence.pillars
+          ? localizePillar(evidence.pillars, locale).name
+          : null,
         criterionName: evidence.criteria?.name ?? null,
         variableCode: evidence.variable_code,
       },

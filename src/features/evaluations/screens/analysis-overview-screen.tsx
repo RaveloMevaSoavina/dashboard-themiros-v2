@@ -51,13 +51,24 @@ export function AnalysisOverviewScreen() {
   })
   /* Meme cle que l'ecran du cadre : les piliers sont partages en cache. */
   const pillars = useQuery({
-    queryKey: ["evaluation", workspaceId, "pillars"],
-    queryFn: () => getWorkspacePillars(workspaceId),
+    queryKey: ["evaluation", workspaceId, "pillars", i18n.resolvedLanguage],
+    queryFn: () =>
+      getWorkspacePillars(workspaceId, i18n.resolvedLanguage ?? "fr"),
     enabled: Boolean(workspaceId),
   })
   const evidences = useQuery({
-    queryKey: ["evaluation", workspaceId, "evidences", results.data?.run?.id],
-    queryFn: () => listEvidences({ runId: results.data?.run?.id ?? "" }),
+    queryKey: [
+      "evaluation",
+      workspaceId,
+      "evidences",
+      results.data?.run?.id,
+      i18n.resolvedLanguage,
+    ],
+    queryFn: () =>
+      listEvidences(
+        { runId: results.data?.run?.id ?? "" },
+        i18n.resolvedLanguage ?? "fr"
+      ),
     enabled: evidenceOpen && Boolean(results.data?.run?.id),
   })
 

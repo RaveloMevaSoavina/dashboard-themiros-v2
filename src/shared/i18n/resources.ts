@@ -1044,6 +1044,9 @@ export const resources = {
           pillarName: "Nom du pilier",
           referential: "Référentiel",
           new: "Nouveau",
+          notTranslated: "Non traduit",
+          notTranslatedHelp:
+            "Ce pilier n'a pas de traduction dans cette langue : il s'affiche dans la langue où il a été rédigé ou modifié.",
           variables: "Variables observables",
           otherCriteria: "+ {{count}} autres",
           weight: "Pondération",
@@ -2260,6 +2263,9 @@ export const resources = {
           pillarName: "Pillar name",
           referential: "Reference",
           new: "New",
+          notTranslated: "Not translated",
+          notTranslatedHelp:
+            "This pillar has no translation in this language: it is shown in the language it was written or edited in.",
           variables: "Observable variables",
           otherCriteria: "+ {{count}} more",
           weight: "Weight",

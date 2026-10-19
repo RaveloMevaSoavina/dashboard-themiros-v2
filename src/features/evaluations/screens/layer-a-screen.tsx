@@ -34,8 +34,9 @@ export function LayerAScreen() {
     enabled: Boolean(workspaceId),
   })
   const pillars = useQuery({
-    queryKey: ["evaluation", workspaceId, "pillars"],
-    queryFn: () => getWorkspacePillars(workspaceId),
+    queryKey: ["evaluation", workspaceId, "pillars", i18n.resolvedLanguage],
+    queryFn: () =>
+      getWorkspacePillars(workspaceId, i18n.resolvedLanguage ?? "fr"),
     enabled: Boolean(workspaceId),
   })
 

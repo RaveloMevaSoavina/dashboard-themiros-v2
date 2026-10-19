@@ -66,8 +66,9 @@ export function FrameworkPillarsScreen({
     enabled: Boolean(workspaceId),
   })
   const generated = useQuery({
-    queryKey: ["evaluation", workspaceId, "pillars"],
-    queryFn: () => getWorkspacePillars(workspaceId),
+    queryKey: ["evaluation", workspaceId, "pillars", i18n.resolvedLanguage],
+    queryFn: () =>
+      getWorkspacePillars(workspaceId, i18n.resolvedLanguage ?? "fr"),
     enabled: Boolean(workspaceId),
   })
   /* Bandeau informatif seulement : son chargement ne bloque pas l'ecran. */
@@ -148,10 +149,12 @@ export function FrameworkPillarsScreen({
         weight: newWeight,
         origin: "new",
         criteria: newCriteria,
+        locale: i18n.resolvedLanguage ?? "fr",
         variables: parsedVariables.map((label, index) => ({
           code: `manual_${codePrefix}_${index + 1}`,
           label,
           description: "",
+          locale: i18n.resolvedLanguage ?? "fr",
         })),
       },
     ])
@@ -191,11 +194,7 @@ export function FrameworkPillarsScreen({
   }
   const validation = useMutation({
     mutationFn: () =>
-      saveFrameworkPillars(
-        workspaceId,
-        pillars,
-        (generated.data ?? []).map((pillar) => pillar.id)
-      ),
+      saveFrameworkPillars(workspaceId, pillars, generated.data ?? []),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({

@@ -40,8 +40,14 @@ export function AlertsScreen() {
     enabled: Boolean(workspaceId),
   })
   const evidences = useQuery({
-    queryKey: ["evaluation", "alert-evidences", selected?.id],
-    queryFn: () => listAlertEvidences(selected?.id ?? ""),
+    queryKey: [
+      "evaluation",
+      "alert-evidences",
+      selected?.id,
+      i18n.resolvedLanguage,
+    ],
+    queryFn: () =>
+      listAlertEvidences(selected?.id ?? "", i18n.resolvedLanguage ?? "fr"),
     enabled: Boolean(selected),
   })
   const instruction = useMutation({

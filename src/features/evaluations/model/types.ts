@@ -11,6 +11,8 @@ export type EvaluationPillar = {
   origin: "referential" | "new"
   criteria: string[]
   variables: ObservableVariable[]
+  /** Langue du nom et de la description affiches. */
+  locale?: string
 }
 
 export type EvaluationCriterion = {

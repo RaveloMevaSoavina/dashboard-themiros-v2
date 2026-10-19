@@ -174,12 +174,16 @@ export function LayerBScreen() {
       results.data?.run?.id,
       "criterion-evidences",
       selected?.criterionId,
+      i18n.resolvedLanguage,
     ],
     queryFn: () =>
-      listEvidences({
-        runId: results.data?.run?.id ?? "",
-        criterionId: selected?.criterionId,
-      }),
+      listEvidences(
+        {
+          runId: results.data?.run?.id ?? "",
+          criterionId: selected?.criterionId,
+        },
+        i18n.resolvedLanguage ?? "fr"
+      ),
     enabled: Boolean(selected && results.data?.run?.id),
   })
   const notes = filterId
