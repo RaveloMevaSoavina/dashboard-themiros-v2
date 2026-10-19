@@ -38,7 +38,7 @@ export type AnalysisRun = {
   id: string
   status: "pending" | "running" | "completed" | "failed"
   corpusSize: number
-  corpusLevel: "exploratoire" | "standard" | "approfondie"
+  corpusLevel: "exploratoire" | "standard" | "defendable"
   createdAt: string
   completedAt: string | null
   errorMessage: string | null

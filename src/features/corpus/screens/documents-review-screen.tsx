@@ -6,6 +6,7 @@ import { useNavigate, useParams } from "react-router-dom"
 import { toast } from "sonner"
 
 import { CorpusPageHeader } from "@/features/corpus/components/corpus-page-header"
+import { CriticalMassCard } from "@/features/corpus/components/critical-mass-card"
 import { DeleteDocumentsDialog } from "@/features/corpus/components/delete-documents-dialog"
 import { DocumentsTable } from "@/features/corpus/components/documents-table"
 import { isAwaitingQualification } from "@/features/corpus/model/ingestion"
@@ -78,6 +79,13 @@ export function DocumentsReviewScreen() {
         eyebrow={t("corpus.eyebrow")}
         title={t("corpus.review.title")}
       />
+      {documents.data ? (
+        <CriticalMassCard
+          documents={documents.data}
+          onRemove={setDeleting}
+          workspaceId={workspaceId}
+        />
+      ) : null}
       <div className="mt-7 flex items-center justify-between gap-3">
         <p className="text-[13px] text-muted-foreground">
           {t("corpus.review.count", { count: filtered.length })}

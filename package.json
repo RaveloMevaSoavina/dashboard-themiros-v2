@@ -10,6 +10,7 @@
     "format": "biome format --write .",
     "check": "biome check .",
     "test:approach": "node --experimental-strip-types --test src/features/evaluation-frameworks/model/approach-engine.test.ts",
+    "test:critical-mass": "node --experimental-strip-types --test src/features/corpus/model/critical-mass.test.ts",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "api:dev": "cd ../api-themiros && .venv/bin/uvicorn app.main:app --reload",

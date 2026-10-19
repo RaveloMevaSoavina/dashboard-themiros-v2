@@ -83,7 +83,7 @@ export const resources = {
           description: "Pilotage complet de l'espace et du corpus.",
         },
         analyste: {
-          name: "Analyste M&E / IA",
+          name: "Analyste",
           description: "Tout le détail : critères, variables, journal.",
         },
       },
@@ -898,6 +898,68 @@ export const resources = {
             limits: "{{size}} max. par fichier · {{count}} fichiers par ajout",
           },
         },
+        criticalMass: {
+          title: "Masse critique documentaire",
+          counted_one: "{{count}} document conforme compté",
+          counted_other: "{{count}} documents conformes comptés",
+          blocked:
+            "Analyse impossible. Le corpus actuel contient {{count}} document(s), soit insuffisant pour produire des résultats fiables. Themiros requiert un minimum de {{minimum}} documents pour ce type d'analyse. Ajoutez des documents pour continuer.",
+          levelReached: "Niveau {{level}}",
+          exploratoryWarning:
+            "Le corpus contient {{count}} documents. Les résultats sont indicatifs et ne doivent pas être utilisés comme base de décision formelle.",
+          levels: {
+            exploratoire: "Exploratoire",
+            standard: "Standard",
+            defendable: "Défendable",
+          },
+          scope: {
+            exploratoire: "Résultats indicatifs",
+            standard: "Usage professionnel",
+            defendable: "Usage bailleur / audit",
+          },
+          coverage: {
+            no_framework:
+              "Validez le cadre d'analyse : les niveaux Standard et Défendable exigent une couverture de ses piliers.",
+            pending:
+              "Classification du corpus par pilier en cours : la couverture du cadre s'affichera dans quelques instants.",
+            failed:
+              "La classification du corpus a échoué à plusieurs reprises : la couverture du cadre ne peut pas être vérifiée. Contactez l'équipe Themiros.",
+            error: "La couverture du cadre n'a pas pu être chargée.",
+          },
+          gaps: {
+            title: "Pour passer en {{level}} :",
+            floor:
+              "{{required}} documents conformes (le corpus en compte {{counted}})",
+            sources_one: "{{count}} source",
+            sources_other: "{{count}} sources",
+            itemEmpty: "{{label}} ({{sources}})",
+            itemPartial: "{{label}} ({{sources}} - il en faut {{required}})",
+            variables_one:
+              "couvrir {{count}} variable de plus parmi : {{list}}",
+            variables_other:
+              "couvrir {{count}} variables de plus parmi : {{list}}",
+            moreVariables_one: " et {{count}} autre",
+            moreVariables_other: " et {{count}} autres",
+          },
+          warnings: {
+            corpus_volumineux: {
+              title: "Corpus volumineux : privilégier la pertinence au volume",
+              detail:
+                "{{count}} documents comptés, au-delà du plafond de {{cap}}. Trop de documents peu pertinents dégradent la fiabilité de l'analyse.",
+            },
+            pertinence_faible: {
+              title:
+                "Pertinence moyenne faible : privilégier la pertinence au volume",
+              detail:
+                "La pertinence moyenne du corpus est de {{mean}}/100, sous le seuil de {{minimum}}/100.",
+            },
+          },
+          candidates: "Documents les moins pertinents, proposés au retrait",
+          moreCandidates_one: "et {{count}} autre document",
+          moreCandidates_other: "et {{count}} autres documents",
+          remove_one: "Retirer ce document",
+          remove_other: "Retirer ces {{count}} documents",
+        },
         review: {
           title: "Revue documentaire",
           description:
@@ -1327,7 +1389,7 @@ export const resources = {
           description: "Full control of the workspace and corpus.",
         },
         analyste: {
-          name: "M&E / AI analyst",
+          name: "Analyst",
           description: "Full detail: criteria, variables, audit log.",
         },
       },
@@ -2119,6 +2181,65 @@ export const resources = {
             rejected: "Rejected with a reason, not included",
             limits: "{{size}} max. per file · {{count}} files per upload",
           },
+        },
+        criticalMass: {
+          title: "Critical document mass",
+          counted_one: "{{count}} compliant document counted",
+          counted_other: "{{count}} compliant documents counted",
+          blocked:
+            "Analysis not possible. The current corpus contains {{count}} document(s), which is not enough to produce reliable results. Themiros requires at least {{minimum}} documents for this type of analysis. Add documents to continue.",
+          levelReached: "{{level}} level",
+          exploratoryWarning:
+            "The corpus contains {{count}} documents. Results are indicative and must not be used as a basis for formal decisions.",
+          levels: {
+            exploratoire: "Exploratory",
+            standard: "Standard",
+            defendable: "Defensible",
+          },
+          scope: {
+            exploratoire: "Indicative results",
+            standard: "Professional use",
+            defendable: "Funder / audit use",
+          },
+          coverage: {
+            no_framework:
+              "Validate the analysis framework: the Standard and Defensible levels require its pillars to be covered.",
+            pending:
+              "Classifying the corpus by pillar: framework coverage will appear shortly.",
+            failed:
+              "Corpus classification failed several times: framework coverage cannot be checked. Contact the Themiros team.",
+            error: "Framework coverage could not be loaded.",
+          },
+          gaps: {
+            title: "To reach {{level}}:",
+            floor:
+              "{{required}} compliant documents (the corpus has {{counted}})",
+            sources_one: "{{count}} source",
+            sources_other: "{{count}} sources",
+            itemEmpty: "{{label}} ({{sources}})",
+            itemPartial: "{{label}} ({{sources}} - {{required}} needed)",
+            variables_one: "cover {{count}} more variable among: {{list}}",
+            variables_other: "cover {{count}} more variables among: {{list}}",
+            moreVariables_one: " and {{count}} other",
+            moreVariables_other: " and {{count}} others",
+          },
+          warnings: {
+            corpus_volumineux: {
+              title: "Large corpus: favour relevance over volume",
+              detail:
+                "{{count}} documents counted, above the cap of {{cap}}. Too many weakly relevant documents reduce the reliability of the analysis.",
+            },
+            pertinence_faible: {
+              title: "Low average relevance: favour relevance over volume",
+              detail:
+                "The corpus average relevance is {{mean}}/100, below the {{minimum}}/100 threshold.",
+            },
+          },
+          candidates: "Least relevant documents, suggested for removal",
+          moreCandidates_one: "and {{count}} other document",
+          moreCandidates_other: "and {{count}} other documents",
+          remove_one: "Remove this document",
+          remove_other: "Remove these {{count}} documents",
         },
         review: {
           title: "Document review",

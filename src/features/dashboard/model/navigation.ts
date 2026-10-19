@@ -38,7 +38,7 @@ export type NavSection = {
 const allPersonas = ["decideur", "pmu", "analyste"] as const
 /* Le Decideur ne voit qu'Analyse, Plan d'action et Exports (US-2.3). */
 const withoutDecideur = ["pmu", "analyste"] as const
-/* Le detail de verification est reserve a l'Analyste M&E (US-2.4). */
+/* Le detail de verification est reserve a l'Analyste (US-2.4). */
 const analysteOnly = ["analyste"] as const
 
 /**

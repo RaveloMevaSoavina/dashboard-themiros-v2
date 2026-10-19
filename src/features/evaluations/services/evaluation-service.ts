@@ -24,7 +24,7 @@ import {
 } from "@/features/evaluations/services/evaluation-demo"
 import { supabase } from "@/shared/lib/supabase"
 
-type PillarTextRow = {
+export type PillarTextRow = {
   name: string
   description: string
   source_locale: string
@@ -35,7 +35,7 @@ type PillarTextRow = {
   }[]
 }
 
-type VariableTextRow = {
+export type VariableTextRow = {
   code: string
   label: string
   description: string | null
@@ -171,9 +171,9 @@ function isMissingRelation(error: { code?: string; message?: string }) {
   )
 }
 
-const pillarTextSelect =
+export const pillarTextSelect =
   "name, description, source_locale, pillar_translations(locale, name, description)"
-const variableTextSelect =
+export const variableTextSelect =
   "code, label, description, source_locale, pillar_variable_translations(locale, label, description)"
 
 /*
@@ -182,7 +182,7 @@ const variableTextSelect =
  * l'interface viennent des traductions produites a la generation. Sans
  * traduction, le texte source s'affiche, avec sa langue : l'ecran le signale.
  */
-function localizePillar(row: PillarTextRow, locale: string) {
+export function localizePillar(row: PillarTextRow, locale: string) {
   const translation =
     row.source_locale === locale
       ? undefined
@@ -196,7 +196,7 @@ function localizePillar(row: PillarTextRow, locale: string) {
       }
 }
 
-function localizeVariable(
+export function localizeVariable(
   row: VariableTextRow,
   locale: string
 ): ObservableVariable {
