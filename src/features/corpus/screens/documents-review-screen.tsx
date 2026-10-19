@@ -64,7 +64,7 @@ export function DocumentsReviewScreen() {
   })
 
   return (
-    <div className="mx-auto w-full max-w-6xl">
+    <div className="mx-auto w-full max-w-6xl 2xl:max-w-[96rem]">
       <CorpusPageHeader
         action={
           <Button
@@ -79,130 +79,149 @@ export function DocumentsReviewScreen() {
         eyebrow={t("corpus.eyebrow")}
         title={t("corpus.review.title")}
       />
-      {documents.data ? (
-        <CriticalMassCard
-          documents={documents.data}
-          onRemove={setDeleting}
-          workspaceId={workspaceId}
-        />
-      ) : null}
-      <div className="mt-7 flex items-center justify-between gap-3">
-        <p className="text-[13px] text-muted-foreground">
-          {t("corpus.review.count", { count: filtered.length })}
-        </p>
-        <select
-          aria-label={t("corpus.review.filter")}
-          className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
-          onChange={(event) =>
-            setStatus(event.target.value as DocumentStatus | "all")
-          }
-          value={status}
-        >
-          <option value="all">{t("corpus.review.all")}</option>
-          {(
-            [
-              "conforme",
-              "a_verifier",
-              "rejete",
-              "integre_decision_humaine",
-              "non_classe",
-            ] as const
-          ).map((value) => (
-            <option key={value} value={value}>
-              {t(`corpus.status.${value}`)}
-            </option>
-          ))}
-        </select>
+      {/*
+       * La jauge accompagne la liste : colonne fixe à droite dès que la place
+       * le permet (table compacte, voir DocumentsTable), bandeau au-dessus de
+       * la liste sinon. Requête de conteneur : la barre latérale de
+       * l'application réduit la place, quelle que soit la fenêtre.
+       */}
+      <div className="@container/corpus mt-7">
+        <div className="grid grid-cols-1 items-start gap-6 @min-[66rem]/corpus:grid-cols-[minmax(0,1fr)_18rem] @min-[90rem]/corpus:grid-cols-[minmax(0,1fr)_22rem]">
+          <aside className="min-w-0 @min-[66rem]/corpus:sticky @min-[66rem]/corpus:top-20 @min-[66rem]/corpus:order-2 @min-[66rem]/corpus:max-h-[calc(100vh-6rem)] @min-[66rem]/corpus:overflow-y-auto">
+            {documents.data ? (
+              <CriticalMassCard
+                documents={documents.data}
+                onRemove={setDeleting}
+                workspaceId={workspaceId}
+              />
+            ) : documents.isPending ? (
+              <Skeleton className="h-56 rounded-xl" />
+            ) : null}
+          </aside>
+
+          <div className="min-w-0 @min-[66rem]/corpus:order-1">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[13px] text-muted-foreground">
+                {t("corpus.review.count", { count: filtered.length })}
+              </p>
+              <select
+                aria-label={t("corpus.review.filter")}
+                className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
+                onChange={(event) =>
+                  setStatus(event.target.value as DocumentStatus | "all")
+                }
+                value={status}
+              >
+                <option value="all">{t("corpus.review.all")}</option>
+                {(
+                  [
+                    "conforme",
+                    "a_verifier",
+                    "rejete",
+                    "integre_decision_humaine",
+                    "non_classe",
+                  ] as const
+                ).map((value) => (
+                  <option key={value} value={value}>
+                    {t(`corpus.status.${value}`)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedIds.size > 0 ? (
+              <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-border p-3">
+                <p className="mr-auto text-[13px]">
+                  {t("corpus.review.selected", { count: selectedIds.size })}
+                </p>
+                <select
+                  aria-label={t("corpus.table.category")}
+                  className="h-8 rounded-lg border border-input bg-background px-2 text-xs"
+                  onChange={(event) =>
+                    setBulkCategory(event.target.value as DocumentCategory)
+                  }
+                  value={bulkCategory}
+                >
+                  <option value="principal">
+                    {t("corpus.category.principal")}
+                  </option>
+                  <option value="complementaire">
+                    {t("corpus.category.complementaire")}
+                  </option>
+                  <option value="autre">{t("corpus.category.autre")}</option>
+                </select>
+                <Button
+                  disabled={bulkUpdate.isPending}
+                  onClick={() => bulkUpdate.mutate()}
+                  size="sm"
+                >
+                  {t("corpus.review.apply")}
+                </Button>
+                <Button
+                  disabled={bulkUpdate.isPending}
+                  onClick={() =>
+                    setDeleting(
+                      (documents.data ?? []).filter((document) =>
+                        selectedIds.has(document.id)
+                      )
+                    )
+                  }
+                  size="sm"
+                  variant="destructive"
+                >
+                  <Trash2 /> {t("corpus.delete.action")}
+                </Button>
+              </div>
+            ) : null}
+            <DeleteDocumentsDialog
+              documents={deleting}
+              onClose={() => setDeleting(null)}
+              onDeleted={(ids) =>
+                setSelectedIds((current) => {
+                  const next = new Set(current)
+                  for (const id of ids) next.delete(id)
+                  return next
+                })
+              }
+              workspaceId={workspaceId}
+            />
+
+            {documents.isPending ? (
+              <Skeleton className="mt-4 h-72 rounded-xl" />
+            ) : documents.isError ? (
+              <div className="mt-4 rounded-xl border border-border p-6">
+                <p className="text-sm">{t("corpus.errors.load")}</p>
+                <Button
+                  className="mt-4"
+                  onClick={() => void documents.refetch()}
+                  variant="outline"
+                >
+                  <RotateCcw /> {t("workspaces.error.retry")}
+                </Button>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="mt-4 flex flex-col items-center rounded-xl border border-border px-6 py-16 text-center">
+                <FileSearch className="size-6 text-muted-foreground" />
+                <p className="mt-4 text-sm font-semibold">
+                  {t("corpus.review.emptyTitle")}
+                </p>
+                <p className="mt-2 text-[13px] text-muted-foreground">
+                  {t("corpus.review.emptyDescription")}
+                </p>
+              </div>
+            ) : (
+              <div className="mt-4">
+                <DocumentsTable
+                  documents={filtered}
+                  onSelectionChange={setSelectedIds}
+                  selectedIds={selectedIds}
+                  workspaceId={workspaceId}
+                />
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-
-      {selectedIds.size > 0 ? (
-        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-border p-3">
-          <p className="mr-auto text-[13px]">
-            {t("corpus.review.selected", { count: selectedIds.size })}
-          </p>
-          <select
-            aria-label={t("corpus.table.category")}
-            className="h-8 rounded-lg border border-input bg-background px-2 text-xs"
-            onChange={(event) =>
-              setBulkCategory(event.target.value as DocumentCategory)
-            }
-            value={bulkCategory}
-          >
-            <option value="principal">{t("corpus.category.principal")}</option>
-            <option value="complementaire">
-              {t("corpus.category.complementaire")}
-            </option>
-            <option value="autre">{t("corpus.category.autre")}</option>
-          </select>
-          <Button
-            disabled={bulkUpdate.isPending}
-            onClick={() => bulkUpdate.mutate()}
-            size="sm"
-          >
-            {t("corpus.review.apply")}
-          </Button>
-          <Button
-            disabled={bulkUpdate.isPending}
-            onClick={() =>
-              setDeleting(
-                (documents.data ?? []).filter((document) =>
-                  selectedIds.has(document.id)
-                )
-              )
-            }
-            size="sm"
-            variant="destructive"
-          >
-            <Trash2 /> {t("corpus.delete.action")}
-          </Button>
-        </div>
-      ) : null}
-      <DeleteDocumentsDialog
-        documents={deleting}
-        onClose={() => setDeleting(null)}
-        onDeleted={(ids) =>
-          setSelectedIds((current) => {
-            const next = new Set(current)
-            for (const id of ids) next.delete(id)
-            return next
-          })
-        }
-        workspaceId={workspaceId}
-      />
-
-      {documents.isPending ? (
-        <Skeleton className="mt-4 h-72 rounded-xl" />
-      ) : documents.isError ? (
-        <div className="mt-4 rounded-xl border border-border p-6">
-          <p className="text-sm">{t("corpus.errors.load")}</p>
-          <Button
-            className="mt-4"
-            onClick={() => void documents.refetch()}
-            variant="outline"
-          >
-            <RotateCcw /> {t("workspaces.error.retry")}
-          </Button>
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="mt-4 flex flex-col items-center rounded-xl border border-border px-6 py-16 text-center">
-          <FileSearch className="size-6 text-muted-foreground" />
-          <p className="mt-4 text-sm font-semibold">
-            {t("corpus.review.emptyTitle")}
-          </p>
-          <p className="mt-2 text-[13px] text-muted-foreground">
-            {t("corpus.review.emptyDescription")}
-          </p>
-        </div>
-      ) : (
-        <div className="mt-4">
-          <DocumentsTable
-            documents={filtered}
-            onSelectionChange={setSelectedIds}
-            selectedIds={selectedIds}
-            workspaceId={workspaceId}
-          />
-        </div>
-      )}
     </div>
   )
 }

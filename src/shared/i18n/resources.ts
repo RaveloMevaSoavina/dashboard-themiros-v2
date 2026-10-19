@@ -680,6 +680,7 @@ export const resources = {
           score: "Pertinence",
           status: "Statut",
           languageToConfirm: "À confirmer",
+          scoreInline: "Pertinence {{score}}/100",
           languageUnexpected: "Langue non attendue",
           actions: "Actions",
         },
@@ -904,7 +905,21 @@ export const resources = {
           counted_other: "{{count}} documents conformes comptés",
           blocked:
             "Analyse impossible. Le corpus actuel contient {{count}} document(s), soit insuffisant pour produire des résultats fiables. Themiros requiert un minimum de {{minimum}} documents pour ce type d'analyse. Ajoutez des documents pour continuer.",
-          levelReached: "Niveau {{level}}",
+          blockedTitle: "Analyse impossible",
+          meanRelevance: "pertinence moyenne {{mean}}/100",
+          ladder: "Niveaux de masse critique",
+          reached: "atteint",
+          notReached: "non atteint",
+          complete: "Toutes les conditions du niveau Défendable sont réunies.",
+          conditions: {
+            floor_one: "{{count}} document conforme",
+            floor_other: "{{count}} documents conformes",
+            pillars_one: "Chaque pilier : {{count}} source",
+            pillars_other: "Chaque pilier : {{count}} sources",
+            variables_one: "{{pct}} % des variables : {{count}} source",
+            variables_other: "{{pct}} % des variables : {{count}} sources",
+            pending: "en attente",
+          },
           exploratoryWarning:
             "Le corpus contient {{count}} documents. Les résultats sont indicatifs et ne doivent pas être utilisés comme base de décision formelle.",
           levels: {
@@ -927,19 +942,16 @@ export const resources = {
             error: "La couverture du cadre n'a pas pu être chargée.",
           },
           gaps: {
-            title: "Pour passer en {{level}} :",
-            floor:
-              "{{required}} documents conformes (le corpus en compte {{counted}})",
-            sources_one: "{{count}} source",
-            sources_other: "{{count}} sources",
-            itemEmpty: "{{label}} ({{sources}})",
-            itemPartial: "{{label}} ({{sources}} - il en faut {{required}})",
-            variables_one:
-              "couvrir {{count}} variable de plus parmi : {{list}}",
-            variables_other:
-              "couvrir {{count}} variables de plus parmi : {{list}}",
-            moreVariables_one: " et {{count}} autre",
-            moreVariables_other: " et {{count}} autres",
+            title: "Pour passer en {{level}}",
+            floorLabel: "Documents conformes",
+            caption_one:
+              "Sources indépendantes (documents distincts) : {{count}} requise.",
+            caption_other:
+              "Sources indépendantes (documents distincts) : {{count}} requises.",
+            variables_one: "Couvrir {{count}} variable de plus parmi :",
+            variables_other: "Couvrir {{count}} variables de plus parmi :",
+            moreVariables_one: "et {{count}} autre variable",
+            moreVariables_other: "et {{count}} autres variables",
           },
           warnings: {
             corpus_volumineux: {
@@ -954,7 +966,8 @@ export const resources = {
                 "La pertinence moyenne du corpus est de {{mean}}/100, sous le seuil de {{minimum}}/100.",
             },
           },
-          candidates: "Documents les moins pertinents, proposés au retrait",
+          candidates_one: "{{count}} document proposé au retrait",
+          candidates_other: "{{count}} documents proposés au retrait",
           moreCandidates_one: "et {{count}} autre document",
           moreCandidates_other: "et {{count}} autres documents",
           remove_one: "Retirer ce document",
@@ -1975,6 +1988,7 @@ export const resources = {
           score: "Relevance",
           status: "Status",
           languageToConfirm: "To confirm",
+          scoreInline: "Relevance {{score}}/100",
           languageUnexpected: "Unexpected language",
           actions: "Actions",
         },
@@ -2188,7 +2202,21 @@ export const resources = {
           counted_other: "{{count}} compliant documents counted",
           blocked:
             "Analysis not possible. The current corpus contains {{count}} document(s), which is not enough to produce reliable results. Themiros requires at least {{minimum}} documents for this type of analysis. Add documents to continue.",
-          levelReached: "{{level}} level",
+          blockedTitle: "Analysis not possible",
+          meanRelevance: "average relevance {{mean}}/100",
+          ladder: "Critical mass levels",
+          reached: "reached",
+          notReached: "not reached",
+          complete: "All conditions for the Defensible level are met.",
+          conditions: {
+            floor_one: "{{count}} compliant document",
+            floor_other: "{{count}} compliant documents",
+            pillars_one: "Each pillar: {{count}} source",
+            pillars_other: "Each pillar: {{count}} sources",
+            variables_one: "{{pct}}% of variables: {{count}} source",
+            variables_other: "{{pct}}% of variables: {{count}} sources",
+            pending: "pending",
+          },
           exploratoryWarning:
             "The corpus contains {{count}} documents. Results are indicative and must not be used as a basis for formal decisions.",
           levels: {
@@ -2211,17 +2239,16 @@ export const resources = {
             error: "Framework coverage could not be loaded.",
           },
           gaps: {
-            title: "To reach {{level}}:",
-            floor:
-              "{{required}} compliant documents (the corpus has {{counted}})",
-            sources_one: "{{count}} source",
-            sources_other: "{{count}} sources",
-            itemEmpty: "{{label}} ({{sources}})",
-            itemPartial: "{{label}} ({{sources}} - {{required}} needed)",
-            variables_one: "cover {{count}} more variable among: {{list}}",
-            variables_other: "cover {{count}} more variables among: {{list}}",
-            moreVariables_one: " and {{count}} other",
-            moreVariables_other: " and {{count}} others",
+            title: "To reach {{level}}",
+            floorLabel: "Compliant documents",
+            caption_one:
+              "Independent sources (distinct documents): {{count}} required.",
+            caption_other:
+              "Independent sources (distinct documents): {{count}} required.",
+            variables_one: "Cover {{count}} more variable among:",
+            variables_other: "Cover {{count}} more variables among:",
+            moreVariables_one: "and {{count}} other variable",
+            moreVariables_other: "and {{count}} other variables",
           },
           warnings: {
             corpus_volumineux: {
@@ -2235,7 +2262,8 @@ export const resources = {
                 "The corpus average relevance is {{mean}}/100, below the {{minimum}}/100 threshold.",
             },
           },
-          candidates: "Least relevant documents, suggested for removal",
+          candidates_one: "{{count}} document suggested for removal",
+          candidates_other: "{{count}} documents suggested for removal",
           moreCandidates_one: "and {{count}} other document",
           moreCandidates_other: "and {{count}} other documents",
           remove_one: "Remove this document",

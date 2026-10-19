@@ -16,6 +16,7 @@ import {
   decideDocument,
   updateDocumentCategory,
 } from "@/features/corpus/services/corpus-service"
+import { cn } from "@/shared/lib/utils"
 import { Button } from "@/shared/ui/base/button"
 import {
   DropdownMenu,
@@ -33,8 +34,15 @@ import {
   TableRow,
 } from "@/shared/ui/base/table"
 
+/*
+ * Table compacte quand elle est étroite (à côté de la jauge de masse
+ * critique, ou sur petit écran) : langue, pays et version passent sous le
+ * nom du document au lieu d'occuper trois colonnes.
+ */
+const wideColumn = "hidden @min-[60rem]/docs:table-cell"
+
 const selectClassName =
-  "h-8 rounded-lg border border-input bg-background px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+  "h-8 w-full max-w-[11rem] rounded-lg border border-input bg-background px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
 
 function formatSize(value: number, locale: string) {
   return new Intl.NumberFormat(locale, {
@@ -98,8 +106,8 @@ export function DocumentsTable({
     documents.every((document) => selectedIds.has(document.id))
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border">
-      <Table className="min-w-[960px] text-[13px]">
+    <div className="@container/docs overflow-hidden rounded-xl border border-border">
+      <Table className="min-w-[38rem] text-[13px]">
         <TableHeader className="bg-muted/50 text-[11px] uppercase tracking-[0.08em]">
           <TableRow className="hover:bg-transparent">
             {selectable ? (
@@ -125,23 +133,25 @@ export function DocumentsTable({
             <TableHead className="px-3 text-muted-foreground">
               {t("corpus.table.category")}
             </TableHead>
-            <TableHead className="px-3 text-muted-foreground">
+            <TableHead className={cn("px-3 text-muted-foreground", wideColumn)}>
               {t("corpus.table.language")}
             </TableHead>
-            <TableHead className="px-3 text-muted-foreground">
+            <TableHead className={cn("px-3 text-muted-foreground", wideColumn)}>
               {t("corpus.table.country")}
             </TableHead>
-            <TableHead className="px-3 text-muted-foreground">
+            <TableHead className={cn("px-3 text-muted-foreground", wideColumn)}>
               {t("corpus.table.version")}
             </TableHead>
-            <TableHead className="px-3 text-muted-foreground">
+            <TableHead className={cn("px-3 text-muted-foreground", wideColumn)}>
               {t("corpus.table.score")}
             </TableHead>
             <TableHead className="px-3 text-muted-foreground">
               {t("corpus.table.status")}
             </TableHead>
-            <TableHead className="px-3 text-right text-muted-foreground">
-              {t("corpus.table.actions")}
+            <TableHead className="w-12 px-3 text-right text-muted-foreground">
+              <span className="@max-[60rem]/docs:sr-only">
+                {t("corpus.table.actions")}
+              </span>
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -183,6 +193,21 @@ export function DocumentsTable({
                 </button>
                 <span className="mt-0.5 block text-[11px] text-muted-foreground">
                   {formatSize(document.fileSize, locale)}
+                  <span className="@min-[60rem]/docs:hidden">
+                    {[
+                      document.language?.toUpperCase(),
+                      document.country,
+                      document.version?.label,
+                    ]
+                      .filter(Boolean)
+                      .map((value) => ` · ${value}`)
+                      .join("")}
+                    {document.languageToConfirm
+                      ? ` · ${t("corpus.table.languageToConfirm")}`
+                      : document.languageExpected === false
+                        ? ` · ${t("corpus.table.languageUnexpected")}`
+                        : null}
+                  </span>
                 </span>
               </TableCell>
               <TableCell className="px-3 py-3">
@@ -211,7 +236,9 @@ export function DocumentsTable({
                   t(`corpus.category.${document.category}`)
                 )}
               </TableCell>
-              <TableCell className="px-3 py-3 text-muted-foreground">
+              <TableCell
+                className={cn("px-3 py-3 text-muted-foreground", wideColumn)}
+              >
                 <span className="uppercase">{document.language ?? "—"}</span>
                 {document.languageToConfirm ? (
                   <span className="mt-0.5 block text-[11px] normal-case">
@@ -223,19 +250,30 @@ export function DocumentsTable({
                   </span>
                 ) : null}
               </TableCell>
-              <TableCell className="px-3 py-3 text-muted-foreground">
+              <TableCell
+                className={cn("px-3 py-3 text-muted-foreground", wideColumn)}
+              >
                 {document.country ?? "—"}
               </TableCell>
-              <TableCell className="px-3 py-3 text-muted-foreground">
+              <TableCell
+                className={cn("px-3 py-3 text-muted-foreground", wideColumn)}
+              >
                 {document.version?.label ?? "—"}
               </TableCell>
-              <TableCell className="px-3 py-3 tabular-nums">
+              <TableCell className={cn("px-3 py-3 tabular-nums", wideColumn)}>
                 {document.relevanceScore === null
                   ? "—"
                   : `${document.relevanceScore}/100`}
               </TableCell>
               <TableCell className="px-3 py-3">
                 <DocumentStatusBadge status={document.status} />
+                {document.relevanceScore === null ? null : (
+                  <span className="mt-1 block text-[11px] text-muted-foreground tabular-nums @min-[60rem]/docs:hidden">
+                    {t("corpus.table.scoreInline", {
+                      score: document.relevanceScore,
+                    })}
+                  </span>
+                )}
               </TableCell>
               <TableCell className="px-3 py-3 text-right">
                 <DropdownMenu>

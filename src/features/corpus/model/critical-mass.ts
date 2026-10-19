@@ -151,11 +151,31 @@ export type LevelGaps = {
   variables: CoverageItem[]
 }
 
+/** Où en est une condition de couverture d'un niveau. */
+export type CoverageCondition =
+  | { state: "unknown" }
+  | {
+      state: "known"
+      /** Piliers (Standard) ou variables (Défendable) assez couverts. */
+      covered: number
+      required: number
+      total: number
+      met: boolean
+    }
+
+/** Conditions d'un niveau, pour les afficher une à une sur la jauge. */
+export type LevelConditions = {
+  floor: { required: number; met: boolean }
+  /** `null` : aucune condition de couverture (Exploratoire). */
+  coverage: CoverageCondition | null
+}
+
 export type CriticalMassAssessment = {
   /** Niveau atteint : plancher ET condition de couverture. */
   level: CriticalMassLevel | null
   /** `null` au niveau Défendable, ou tant que la couverture est inconnue. */
   gaps: LevelGaps | null
+  conditions: Record<CriticalMassLevel, LevelConditions>
 }
 
 /**
@@ -175,8 +195,23 @@ export function assessCriticalMass(
     standard: settings.standardMinDocuments,
     defendable: settings.defensibleMinDocuments,
   }
-  if (counted < floors.exploratoire) return { level: null, gaps: null }
-  if (coverage.state !== "ready") return { level: "exploratoire", gaps: null }
+  const floor = (level: CriticalMassLevel) => ({
+    required: floors[level],
+    met: counted >= floors[level],
+  })
+
+  if (coverage.state !== "ready") {
+    const unknown = { state: "unknown" } as const
+    return {
+      level: counted >= floors.exploratoire ? "exploratoire" : null,
+      gaps: null,
+      conditions: {
+        exploratoire: { floor: floor("exploratoire"), coverage: null },
+        standard: { floor: floor("standard"), coverage: unknown },
+        defendable: { floor: floor("defendable"), coverage: unknown },
+      },
+    }
+  }
 
   const minimum = settings.minIndependentSources
   const weakPillars = coverage.pillars.filter((item) => item.sources < minimum)
@@ -188,22 +223,47 @@ export function assessCriticalMass(
   )
   const standardCoverage =
     coverage.pillars.length > 0 && weakPillars.length === 0
-  const defensibleCoverage =
-    standardCoverage &&
-    coverage.variables.length > 0 &&
-    coveredVariables >= requiredVariables
+  const variablesCoverage =
+    coverage.variables.length > 0 && coveredVariables >= requiredVariables
+  const conditions: Record<CriticalMassLevel, LevelConditions> = {
+    exploratoire: { floor: floor("exploratoire"), coverage: null },
+    standard: {
+      floor: floor("standard"),
+      coverage: {
+        state: "known",
+        covered: coverage.pillars.length - weakPillars.length,
+        required: coverage.pillars.length,
+        total: coverage.pillars.length,
+        met: standardCoverage,
+      },
+    },
+    defendable: {
+      floor: floor("defendable"),
+      coverage: {
+        state: "known",
+        covered: coveredVariables,
+        required: requiredVariables,
+        total: coverage.variables.length,
+        met: variablesCoverage,
+      },
+    },
+  }
 
+  if (counted < floors.exploratoire) {
+    return { level: null, gaps: null, conditions }
+  }
   const level: CriticalMassLevel =
-    counted >= floors.defendable && defensibleCoverage
+    counted >= floors.defendable && standardCoverage && variablesCoverage
       ? "defendable"
       : counted >= floors.standard && standardCoverage
         ? "standard"
         : "exploratoire"
-  if (level === "defendable") return { level, gaps: null }
+  if (level === "defendable") return { level, gaps: null, conditions }
 
   const target = level === "standard" ? "defendable" : "standard"
   return {
     level,
+    conditions,
     gaps: {
       target,
       floor:

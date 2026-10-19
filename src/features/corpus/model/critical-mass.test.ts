@@ -138,10 +138,14 @@ const variable = (id: string, sources: number) => ({
 
 test("sans couverture calculée, le niveau s'arrête à Exploratoire", () => {
   for (const state of ["no_framework", "pending", "failed"] as const) {
-    assert.deepEqual(
-      assessCriticalMass(25, { state }, defaultCriticalMassSettings),
-      { level: "exploratoire", gaps: null }
+    const result = assessCriticalMass(
+      25,
+      { state },
+      defaultCriticalMassSettings
     )
+    assert.equal(result.level, "exploratoire")
+    assert.equal(result.gaps, null)
+    assert.deepEqual(result.conditions.standard.coverage, { state: "unknown" })
   }
   assert.equal(
     assessCriticalMass(4, { state: "pending" }, defaultCriticalMassSettings)
@@ -236,7 +240,8 @@ test("Défendable exige 80 % des variables à 2 sources, en plus de Standard", (
     },
     defaultCriticalMassSettings
   )
-  assert.deepEqual(defensible, { level: "defendable", gaps: null })
+  assert.equal(defensible.level, "defendable")
+  assert.equal(defensible.gaps, null)
 })
 
 test("80 % des variables sans un pilier couvert ne donnent pas Défendable", () => {
@@ -253,4 +258,37 @@ test("80 % des variables sans un pilier couvert ne donnent pas Défendable", () 
   )
   assert.equal(result.level, "exploratoire")
   assert.equal(result.gaps?.target, "standard")
+})
+
+test("chaque niveau expose ses conditions pour la jauge", () => {
+  const result = assessCriticalMass(
+    12,
+    {
+      state: "ready",
+      pillars: [pillar("Budget", 2), pillar("Genre", 1), pillar("Suivi", 3)],
+      variables: [
+        ...Array.from({ length: 6 }, (_, index) => variable(`ok${index}`, 2)),
+        ...Array.from({ length: 4 }, (_, index) => variable(`ko${index}`, 0)),
+      ],
+    },
+    defaultCriticalMassSettings
+  )
+  assert.deepEqual(result.conditions.exploratoire, {
+    floor: { required: 5, met: true },
+    coverage: null,
+  })
+  assert.deepEqual(result.conditions.standard, {
+    floor: { required: 10, met: true },
+    coverage: { state: "known", covered: 2, required: 3, total: 3, met: false },
+  })
+  assert.deepEqual(result.conditions.defendable, {
+    floor: { required: 20, met: false },
+    coverage: {
+      state: "known",
+      covered: 6,
+      required: 8,
+      total: 10,
+      met: false,
+    },
+  })
 })
