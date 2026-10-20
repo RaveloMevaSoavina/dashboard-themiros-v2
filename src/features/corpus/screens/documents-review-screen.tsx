@@ -9,11 +9,13 @@ import { CorpusPageHeader } from "@/features/corpus/components/corpus-page-heade
 import { CriticalMassCard } from "@/features/corpus/components/critical-mass-card"
 import { DeleteDocumentsDialog } from "@/features/corpus/components/delete-documents-dialog"
 import { DocumentsTable } from "@/features/corpus/components/documents-table"
-import { isAwaitingQualification } from "@/features/corpus/model/ingestion"
+import {
+  displayedStatus,
+  isAwaitingQualification,
+} from "@/features/corpus/model/ingestion"
 import type {
   CorpusDocument,
   DocumentCategory,
-  DocumentStatus,
 } from "@/features/corpus/model/types"
 import {
   listDocuments,
@@ -27,7 +29,9 @@ export function DocumentsReviewScreen() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { workspaceId = "" } = useParams<{ workspaceId: string }>()
-  const [status, setStatus] = useState<DocumentStatus | "all">("all")
+  const [status, setStatus] = useState<
+    ReturnType<typeof displayedStatus> | "all"
+  >("all")
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkCategory, setBulkCategory] =
     useState<DocumentCategory>("principal")
@@ -44,7 +48,7 @@ export function DocumentsReviewScreen() {
       status === "all"
         ? (documents.data ?? [])
         : (documents.data ?? []).filter(
-            (document) => document.status === status
+            (document) => displayedStatus(document) === status
           ),
     [documents.data, status]
   )
@@ -108,7 +112,7 @@ export function DocumentsReviewScreen() {
                 aria-label={t("corpus.review.filter")}
                 className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
                 onChange={(event) =>
-                  setStatus(event.target.value as DocumentStatus | "all")
+                  setStatus(event.target.value as typeof status)
                 }
                 value={status}
               >
@@ -120,6 +124,8 @@ export function DocumentsReviewScreen() {
                     "rejete",
                     "integre_decision_humaine",
                     "non_classe",
+                    "processing",
+                    "failed",
                   ] as const
                 ).map((value) => (
                   <option key={value} value={value}>

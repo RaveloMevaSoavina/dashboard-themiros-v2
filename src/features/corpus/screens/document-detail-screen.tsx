@@ -116,7 +116,7 @@ export function DocumentDetailScreen() {
               {item.filename}
             </h1>
             <div className="mt-3">
-              <DocumentStatusBadge status={item.status} />
+              <DocumentStatusBadge document={item} />
             </div>
           </div>
         </div>

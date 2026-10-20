@@ -536,7 +536,7 @@ export function ImportDocumentsScreen() {
                                 })}
                               </span>
                             ) : null}
-                            <DocumentStatusBadge status={document.status} />
+                            <DocumentStatusBadge document={document} />
                           </div>
                         )}
                         <Button

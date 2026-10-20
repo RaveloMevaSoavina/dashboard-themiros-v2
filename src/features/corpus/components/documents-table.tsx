@@ -266,7 +266,7 @@ export function DocumentsTable({
                   : `${document.relevanceScore}/100`}
               </TableCell>
               <TableCell className="px-3 py-3">
-                <DocumentStatusBadge status={document.status} />
+                <DocumentStatusBadge document={document} />
                 {document.relevanceScore === null ? null : (
                   <span className="mt-1 block text-[11px] text-muted-foreground tabular-nums @min-[60rem]/docs:hidden">
                     {t("corpus.table.scoreInline", {

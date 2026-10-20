@@ -1,4 +1,7 @@
-import type { CorpusDocument } from "@/features/corpus/model/types"
+import type {
+  CorpusDocument,
+  DocumentStatus,
+} from "@/features/corpus/model/types"
 
 /** US-8.10 : chaque fichier montre sa progression jusqu'à la pertinence. */
 export const ingestionSteps = [
@@ -24,6 +27,18 @@ export function isQualificationPending(document: CorpusDocument) {
     isAwaitingQualification(document) &&
     document.processingState !== "indexation"
   )
+}
+
+/**
+ * Statut montré à l'utilisateur : tant que le contrôle n'a pas abouti,
+ * `status` vaut « à vérifier » par défaut et ne reflète aucune décision.
+ */
+export function displayedStatus(
+  document: CorpusDocument
+): DocumentStatus | "processing" | "failed" {
+  if (document.processingState === "failed") return "failed"
+  if (isQualificationPending(document)) return "processing"
+  return document.status
 }
 
 /** Étapes terminées et étape en cours, pour l'indicateur de progression. */

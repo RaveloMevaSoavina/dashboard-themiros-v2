@@ -670,6 +670,8 @@ export const resources = {
           rejete: "Rejeté",
           integre_decision_humaine: "Intégré sur décision humaine",
           non_classe: "Non classé",
+          processing: "Traitement en cours",
+          failed: "Échec du traitement",
         },
         table: {
           name: "Nom",
@@ -2037,6 +2039,8 @@ export const resources = {
           rejete: "Rejected",
           integre_decision_humaine: "Included by human decision",
           non_classe: "Unclassified",
+          processing: "Processing",
+          failed: "Processing failed",
         },
         table: {
           name: "Name",
