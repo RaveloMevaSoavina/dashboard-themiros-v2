@@ -1,11 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import {
-  averageScore,
-  latestVersionScores,
-  layerAvailable,
-  pillarVersionScores,
-} from "./layer-a.ts"
+import { averageScore, latestVersionScores, layerAvailable } from "./layer-a.ts"
 import type { LayerAScore, RunStep } from "./types.ts"
 
 function score(
@@ -39,13 +34,6 @@ test("la vue d'ensemble lit la version la plus récente de chaque pilier", () =>
   assert.deepEqual(
     latestVersionScores(scores).map((item) => item.id),
     ["budget-2", "genre-2"]
-  )
-})
-
-test("le détail d'un pilier liste ses versions dans l'ordre", () => {
-  assert.deepEqual(
-    pillarVersionScores(scores, "genre").map((item) => item.versionOrder),
-    [1, 2]
   )
 })
 

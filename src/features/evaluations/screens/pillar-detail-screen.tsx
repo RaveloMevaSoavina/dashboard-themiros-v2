@@ -32,10 +32,7 @@ import {
 } from "@/features/evaluations/components/pillar-evidence-drawer"
 import { RunNotices } from "@/features/evaluations/components/run-notices"
 import { ScoreGauge } from "@/features/evaluations/components/score-gauge"
-import {
-  latestVersionScores,
-  pillarVersionScores,
-} from "@/features/evaluations/model/layer-a"
+import { latestVersionScores } from "@/features/evaluations/model/layer-a"
 import type {
   Evidence,
   IntermediateVariable,
@@ -86,18 +83,7 @@ function PillarScoreSummary({
         max={100}
         value={score.score}
       />
-      <dl className="grid flex-1 grid-cols-2 gap-x-6 gap-y-4 lg:grid-cols-4">
-        <StatItem label={t("evaluation.pillar.evolution")}>
-          {score.evolution ? (
-            <span className="tabular-nums">
-              {t(`evaluation.evolution.${score.evolution}`)} ·{" "}
-              {score.delta !== null && score.delta > 0 ? "+" : ""}
-              {score.delta ?? 0}
-            </span>
-          ) : (
-            "—"
-          )}
-        </StatItem>
+      <dl className="grid flex-1 grid-cols-2 gap-x-6 gap-y-4 lg:grid-cols-3">
         <StatItem label={t("evaluation.evidence.confidence")}>
           <span className="flex items-center gap-1.5 tabular-nums">
             <ShieldCheck className="size-4 shrink-0" />
@@ -119,45 +105,6 @@ function PillarScoreSummary({
         </StatItem>
       </dl>
     </section>
-  )
-}
-
-/** Mode comparatif : le score du pilier pour chaque version du programme. */
-function VersionScores({ scores }: { scores: LayerAScore[] }) {
-  const { t } = useTranslation()
-  return (
-    <PageSection
-      description={t("evaluation.pillar.versionsDescription")}
-      title={t("evaluation.pillar.versionsTitle")}
-    >
-      <div className={listPanelClassName}>
-        {scores.map((score) => (
-          <div
-            className="grid items-center gap-3 p-4 text-[13px] sm:grid-cols-[minmax(0,1fr)_90px_minmax(0,1fr)_minmax(0,1fr)]"
-            key={score.id}
-          >
-            <p className="min-w-0 truncate font-medium">{score.versionLabel}</p>
-            <span className="tabular-nums">
-              {score.score === null
-                ? t("evaluation.analysis.notComputed")
-                : `${Math.round(score.score)}/100`}
-            </span>
-            <span className="tabular-nums text-muted-foreground">
-              {score.evolution
-                ? `${t(`evaluation.evolution.${score.evolution}`)} · ${
-                    score.delta !== null && score.delta > 0 ? "+" : ""
-                  }${score.delta ?? 0}`
-                : "—"}
-            </span>
-            <span className="flex items-center gap-1.5 tabular-nums text-muted-foreground">
-              <ShieldCheck className="size-4 shrink-0" />
-              {Math.round(score.confidence * 100)}% · {score.documentsCount}{" "}
-              docs
-            </span>
-          </div>
-        ))}
-      </div>
-    </PageSection>
   )
 }
 
@@ -676,7 +623,6 @@ export function PillarDetailScreen() {
   const score = latestVersionScores(data?.layerA ?? []).find(
     (item) => item.pillarId === pillarId
   )
-  const versions = pillarVersionScores(data?.layerA ?? [], pillarId)
   const pillar = pillars.data?.find((item) => item.id === pillarId)
   if (!data || !score) {
     return (
@@ -749,8 +695,6 @@ export function PillarDetailScreen() {
         }
         score={score}
       />
-
-      {versions.length > 1 ? <VersionScores scores={versions} /> : null}
 
       <PageSection
         description={t("evaluation.pillar.criteriaDescription")}

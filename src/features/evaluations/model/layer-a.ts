@@ -16,16 +16,6 @@ export function latestVersionScores(scores: readonly LayerAScore[]) {
   return [...latest.values()]
 }
 
-/** Scores d'un pilier, de la version la plus ancienne à la plus récente. */
-export function pillarVersionScores(
-  scores: readonly LayerAScore[],
-  pillarId: string
-) {
-  return scores
-    .filter((score) => score.pillarId === pillarId)
-    .sort((left, right) => left.versionOrder - right.versionOrder)
-}
-
 /** Moyenne des scores calculés ; `null` si aucun pilier n'a de score. */
 export function averageScore(scores: readonly LayerAScore[]) {
   const values = scores.flatMap((score) =>

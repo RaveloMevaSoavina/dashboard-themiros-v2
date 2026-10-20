@@ -1051,7 +1051,6 @@ export const resources = {
         criterionNote: "Note {{note}}/3",
         pillar: {
           open: "Ouvrir le détail de {{name}}",
-          evolution: "Évolution",
           version: "Version",
           allEvidence: "Toutes les preuves",
           criteriaTitle: "Critères du pilier",
@@ -1080,9 +1079,6 @@ export const resources = {
             "{{count}} document sur les {{total}} du corpus analysé a fourni des preuves à ce pilier.",
           documentsUsage_other:
             "{{count}} documents sur les {{total}} du corpus analysé ont fourni des preuves à ce pilier.",
-          versionsTitle: "Score par version",
-          versionsDescription:
-            "Le même pilier mesuré sur chaque version du programme, avec son évolution.",
           notReportedHint:
             "Aucune preuve textuelle trouvée : la variable n'est ni présente ni absente, elle n'est pas documentée.",
           noDocuments: "Aucun document utilisé pour ce pilier.",
@@ -1282,11 +1278,6 @@ export const resources = {
             failed: "Échec",
             skipped: "—",
           },
-        },
-        evolution: {
-          renforce: "Renforcé",
-          maintenu: "Maintenu",
-          affaibli: "Affaibli",
         },
         layerA: {
           title: "Piliers",
@@ -2406,7 +2397,6 @@ export const resources = {
         criterionNote: "Rating {{note}}/3",
         pillar: {
           open: "Open {{name}} details",
-          evolution: "Change",
           version: "Version",
           allEvidence: "All evidence",
           criteriaTitle: "Pillar criteria",
@@ -2435,9 +2425,6 @@ export const resources = {
             "{{count}} of the {{total}} documents in the analysed corpus provided evidence for this pillar.",
           documentsUsage_other:
             "{{count}} of the {{total}} documents in the analysed corpus provided evidence for this pillar.",
-          versionsTitle: "Score by version",
-          versionsDescription:
-            "The same pillar measured on each programme version, with its change.",
           notReportedHint:
             "No textual evidence found: the variable is neither present nor absent, it is undocumented.",
           noDocuments: "No document used for this pillar.",
@@ -2634,11 +2621,6 @@ export const resources = {
             failed: "Failed",
             skipped: "—",
           },
-        },
-        evolution: {
-          renforce: "Strengthened",
-          maintenu: "Maintained",
-          affaibli: "Weakened",
         },
         layerA: {
           title: "Pillars",

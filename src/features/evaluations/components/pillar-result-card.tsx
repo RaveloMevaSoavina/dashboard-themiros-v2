@@ -84,21 +84,12 @@ export function PillarResultCard({
   onAlerts: () => void
 }) {
   const { t } = useTranslation()
-  const evolution = (
-    <span className="text-[12px] tabular-nums text-muted-foreground">
-      {score.score === null ? (
-        t("evaluation.analysis.notComputed")
-      ) : score.evolution ? (
-        <>
-          {t(`evaluation.evolution.${score.evolution}`)} ·{" "}
-          {score.delta !== null && score.delta > 0 ? "+" : ""}
-          {score.delta ?? 0}
-        </>
-      ) : (
-        "—"
-      )}
-    </span>
-  )
+  const notComputed =
+    score.score === null ? (
+      <span className="text-[12px] text-muted-foreground">
+        {t("evaluation.analysis.notComputed")}
+      </span>
+    ) : null
   const header = (
     <PillarHeading
       description={description}
@@ -164,7 +155,7 @@ export function PillarResultCard({
         />
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           {header}
-          {evolution}
+          {notComputed}
           {criteriaBadges}
           {stats}
         </div>
@@ -178,7 +169,7 @@ export function PillarResultCard({
       {header}
       <div className="mt-5 flex flex-col items-center gap-3">
         <ScoreGauge label={score.pillarName} max={100} value={score.score} />
-        {evolution}
+        {notComputed}
       </div>
       {criteriaBadges ? <div className="mt-5">{criteriaBadges}</div> : null}
       <div className="mt-auto pt-5">
