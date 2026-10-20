@@ -41,7 +41,48 @@ export type AnalysisRun = {
   corpusLevel: "exploratoire" | "standard" | "defendable"
   createdAt: string
   completedAt: string | null
+  errorCode: string | null
   errorMessage: string | null
+}
+
+/** Étapes nommées du pipeline (US-13.1), dans l'ordre d'exécution. */
+export const runStepNames = [
+  "classification",
+  "variables",
+  "layer_a",
+  "layer_b",
+  "layer_c",
+  "restitution",
+] as const
+
+export type RunStepName = (typeof runStepNames)[number]
+
+export type RunStep = {
+  name: RunStepName
+  /** `skipped` : étape non disponible dans ce moteur, ou non atteinte. */
+  status: "pending" | "running" | "completed" | "failed" | "skipped"
+  summary: Record<string, unknown> | null
+  errorMessage: string | null
+}
+
+/** Raisons pour lesquelles une analyse ne peut pas être lancée (US-12.2). */
+export const launchBlockers = [
+  "FRAMEWORK_NOT_VALIDATED",
+  "CRITERIA_NOT_CONFIRMED",
+  "RUN_ALREADY_ACTIVE",
+  "INSUFFICIENT_CORPUS",
+  "CORPUS_NOT_READY",
+] as const
+
+export type LaunchBlocker = (typeof launchBlockers)[number]
+
+export type LaunchCheck = {
+  /** `null` : le lancement est possible. */
+  blocker: LaunchBlocker | null
+  detail: string | null
+  corpusSize: number
+  minimumDocuments: number
+  corpusLevel: AnalysisRun["corpusLevel"] | null
 }
 
 export type LayerAScore = {
@@ -49,12 +90,15 @@ export type LayerAScore = {
   pillarId: string
   pillarName: string
   criterionIds: string[]
-  score: number
+  /** `null` : aucune variable renseignée pour ce pilier et cette version. */
+  score: number | null
   delta: number | null
   evolution: "renforce" | "maintenu" | "affaibli" | null
   confidence: number
   documentsCount: number
   versionLabel: string
+  /** Rang de la version de programme : la plus récente a le plus grand. */
+  versionOrder: number
 }
 
 export type IntermediateVariable = {
@@ -66,6 +110,7 @@ export type IntermediateVariable = {
   documentsCount: number
   confidence: number | null
   versionLabel: string
+  versionOrder: number
 }
 
 export type LayerBNote = {
@@ -115,9 +160,16 @@ export type Evidence = {
 }
 
 export type EvaluationResults = {
+  /** Dernier run terminé : ses résultats sont ceux affichés. */
   run: AnalysisRun | null
+  /** Run le plus récent, quel que soit son statut (en cours, échoué…). */
+  latestRun: AnalysisRun | null
   layerA: LayerAScore[]
   layerB: LayerBNote[]
   alerts: LayerCAlert[]
   traceability: number
+  /** Couches calculées par le moteur du run (B et C : sprints suivants). */
+  layers: { b: boolean; c: boolean }
+  /** Un document est entré au corpus ou en est sorti depuis le run (CA-6.2). */
+  corpusChanged: boolean
 }

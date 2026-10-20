@@ -1,4 +1,5 @@
 import type {
+  AnalysisRun,
   EvaluationCriterion,
   EvaluationPillar,
   EvaluationResults,
@@ -219,6 +220,20 @@ type DemoDataset = {
 
 const datasets = new Map<string, DemoDataset>()
 
+/** Run fictif de l'espace, terminé depuis peu. */
+export function demoRun(workspaceId: string): AnalysisRun {
+  return {
+    id: `${demoRunPrefix}${workspaceId}`,
+    status: "completed",
+    corpusSize: 14,
+    corpusLevel: "standard",
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    completedAt: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
+    errorCode: null,
+    errorMessage: null,
+  }
+}
+
 function buildDataset(
   workspaceId: string,
   sourcePillars: EvaluationPillar[],
@@ -228,7 +243,7 @@ function buildDataset(
   const pillars = useFixture ? fixturePillars : sourcePillars
   const criteria = useFixture ? fixtureCriteria : sourceCriteria
   const criterionByCode = new Map(criteria.map((item) => [item.code, item]))
-  const runId = `${demoRunPrefix}${workspaceId}`
+  const run = demoRun(workspaceId)
 
   /* Couche B : une note par critere rattache a au moins un pilier. */
   const linkedCodes = [...new Set(pillars.flatMap((pillar) => pillar.criteria))]
@@ -293,6 +308,7 @@ function buildDataset(
       confidence: 0.62 + ((index * 7) % 30) / 100,
       documentsCount: 4 + ((index * 3) % 7),
       versionLabel: "Version 2025 · référence",
+      versionOrder: 1,
     }
   })
 
@@ -316,6 +332,7 @@ function buildDataset(
             state === "non_renseigne" ? 0 : 1 + ((variableIndex + 1) % 4),
           confidence: state === "non_renseigne" ? null : score.confidence,
           versionLabel: score.versionLabel,
+          versionOrder: score.versionOrder,
         }
       })
     )
@@ -364,7 +381,9 @@ function buildDataset(
   })
 
   /* Couche C : alertes sur le pilier le plus faible et un critere ambigu. */
-  const byScore = [...layerA].sort((left, right) => left.score - right.score)
+  const byScore = [...layerA].sort(
+    (left, right) => (left.score ?? 0) - (right.score ?? 0)
+  )
   const weakest = byScore[0]
   const secondWeakest = byScore[1] ?? weakest
   const strongest = byScore[byScore.length - 1]
@@ -443,19 +462,14 @@ function buildDataset(
 
   return {
     results: {
-      run: {
-        id: runId,
-        status: "completed",
-        corpusSize: 14,
-        corpusLevel: "standard",
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        completedAt: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
-        errorMessage: null,
-      },
+      run,
+      latestRun: run,
       layerA,
       layerB,
       alerts,
       traceability: 87,
+      layers: { b: true, c: true },
+      corpusChanged: false,
     },
     variables,
     answers,

@@ -196,7 +196,9 @@ export function AlertsScreen() {
         <Skeleton className="h-80 rounded-xl" />
       ) : alerts.length === 0 ? (
         <div className="rounded-xl border border-border p-16 text-center text-[13px] text-muted-foreground">
-          {t("evaluation.alerts.empty")}
+          {results.data?.run && !results.data.layers.c
+            ? t("evaluation.run.layerCComingSoon")
+            : t("evaluation.alerts.empty")}
         </div>
       ) : (
         <>

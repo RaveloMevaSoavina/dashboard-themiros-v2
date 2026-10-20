@@ -1074,6 +1074,15 @@ export const resources = {
             "{{count}} document a fourni des preuves à ce pilier.",
           documentsDescription_other:
             "{{count}} documents ont fourni des preuves à ce pilier.",
+          documentsUsage_one:
+            "{{count}} document sur les {{total}} du corpus analysé a fourni des preuves à ce pilier.",
+          documentsUsage_other:
+            "{{count}} documents sur les {{total}} du corpus analysé ont fourni des preuves à ce pilier.",
+          versionsTitle: "Score par version",
+          versionsDescription:
+            "Le même pilier mesuré sur chaque version du programme, avec son évolution.",
+          notReportedHint:
+            "Aucune preuve textuelle trouvée : la variable n'est ni présente ni absente, elle n'est pas documentée.",
           noDocuments: "Aucun document utilisé pour ce pilier.",
           usages_one: "{{count}} preuve",
           usages_other: "{{count}} preuves",
@@ -1182,7 +1191,6 @@ export const resources = {
           noRunDescription:
             "Un run pourra être lancé lorsque le cadre sera validé et que le corpus aura atteint la masse minimale.",
           launch: "Lancer l'analyse",
-          launchSoon: "Le lancement de l'analyse sera bientôt disponible.",
           running: "Analyse en cours",
           runningDescription:
             "Le moteur poursuit le traitement en arrière-plan. Vous pouvez quitter cet écran.",
@@ -1196,6 +1204,7 @@ export const resources = {
           traceabilityDescription: "Sorties reliées à des extraits sources",
           runReference: "Run {{id}} · {{date}}",
           notScored: "Pas encore évalué",
+          notComputed: "Non calculé : aucune variable renseignée",
           pillarsDescription:
             "Score objectivé sur 100 par pilier. Ouvrez une carte pour lire son détail.",
           priorities: {
@@ -1220,6 +1229,56 @@ export const resources = {
             layerB: "Appréciations évaluatives",
             layerC: "Alertes de cohérence",
             reporting: "Restitution et journalisation",
+          },
+        },
+        launch: {
+          demo: "Mode démonstration : les résultats affichés sont fictifs.",
+          checkError:
+            "Les conditions de lancement n'ont pas pu être vérifiées. Réessayez.",
+          blockers: {
+            FRAMEWORK_NOT_VALIDATED:
+              "Validez le cadre d'analyse pour lancer une analyse.",
+            CRITERIA_NOT_CONFIRMED:
+              "Confirmez l'approche et les critères avant de lancer une analyse.",
+            CRITERIA_NOT_CONFIRMED_detail:
+              "Chaque critère obligatoire doit compter au moins 3 sous-questions actives : {{detail}}.",
+            RUN_ALREADY_ACTIVE: "Une analyse est déjà en cours.",
+            INSUFFICIENT_CORPUS:
+              "Corpus insuffisant : {{count}} document(s) conforme(s), {{minimum}} requis au minimum.",
+            CORPUS_NOT_READY:
+              "{{detail}} document(s) du corpus en cours d'indexation : patientez avant de lancer l'analyse.",
+          },
+        },
+        run: {
+          launched: "Analyse lancée. Vous pouvez quitter cet écran.",
+          launchError: "L'analyse n'a pas pu être lancée. Réessayez.",
+          relaunch: "Relancer l'analyse",
+          completedToast: "L'analyse est terminée.",
+          failedToast: "L'analyse a échoué.",
+          open: "Voir les résultats",
+          failedTitle: "La dernière analyse a échoué",
+          failedDescription: "Le calcul n'a pas abouti.",
+          previousResults:
+            "Les résultats affichés sont ceux de la dernière analyse réussie.",
+          corpusChangedTitle: "Le corpus a changé depuis ce calcul",
+          corpusChanged:
+            "Des documents ont été ajoutés ou retirés : relancez l'analyse pour actualiser les résultats.",
+          exploratoryTitle: "Niveau exploratoire",
+          comingSoon: "Disponible dans une prochaine version",
+          layerBComingSoon:
+            "Les appréciations évaluatives (couche B) seront calculées dans une prochaine version du moteur.",
+          layerCComingSoon:
+            "Les alertes de cohérence (couche C) seront calculées dans une prochaine version du moteur.",
+          waitingClassification:
+            "En attente de la classification du corpus par le cadre validé.",
+          stepNotAvailable: "Non disponible dans cette version du moteur",
+          stepNotReached: "Étape non atteinte",
+          stepStatus: {
+            pending: "En attente",
+            running: "En cours",
+            completed: "Terminée",
+            failed: "Échec",
+            skipped: "—",
           },
         },
         evolution: {
@@ -2368,6 +2427,15 @@ export const resources = {
             "{{count}} document provided evidence for this pillar.",
           documentsDescription_other:
             "{{count}} documents provided evidence for this pillar.",
+          documentsUsage_one:
+            "{{count}} of the {{total}} documents in the analysed corpus provided evidence for this pillar.",
+          documentsUsage_other:
+            "{{count}} of the {{total}} documents in the analysed corpus provided evidence for this pillar.",
+          versionsTitle: "Score by version",
+          versionsDescription:
+            "The same pillar measured on each programme version, with its change.",
+          notReportedHint:
+            "No textual evidence found: the variable is neither present nor absent, it is undocumented.",
           noDocuments: "No document used for this pillar.",
           usages_one: "{{count}} piece of evidence",
           usages_other: "{{count}} pieces of evidence",
@@ -2475,7 +2543,6 @@ export const resources = {
           noRunDescription:
             "A run can start once the framework is validated and the corpus reaches the minimum mass.",
           launch: "Start analysis",
-          launchSoon: "Starting an analysis will be available soon.",
           running: "Analysis in progress",
           runningDescription:
             "Processing continues in the background. You may leave this screen.",
@@ -2489,6 +2556,7 @@ export const resources = {
           traceabilityDescription: "Outputs linked to source excerpts",
           runReference: "Run {{id}} · {{date}}",
           notScored: "Not evaluated yet",
+          notComputed: "Not computed: no variable reported",
           pillarsDescription:
             "Objective score out of 100 per pillar. Open a card to read its details.",
           priorities: {
@@ -2512,6 +2580,55 @@ export const resources = {
             layerB: "Evaluative findings",
             layerC: "Consistency alerts",
             reporting: "Reporting and audit logging",
+          },
+        },
+        launch: {
+          demo: "Demo mode: the results shown are fictitious.",
+          checkError: "The launch conditions could not be checked. Try again.",
+          blockers: {
+            FRAMEWORK_NOT_VALIDATED:
+              "Validate the analysis framework to start an analysis.",
+            CRITERIA_NOT_CONFIRMED:
+              "Confirm the approach and the criteria before starting an analysis.",
+            CRITERIA_NOT_CONFIRMED_detail:
+              "Each mandatory criterion needs at least 3 active sub-questions: {{detail}}.",
+            RUN_ALREADY_ACTIVE: "An analysis is already running.",
+            INSUFFICIENT_CORPUS:
+              "Insufficient corpus: {{count}} compliant document(s), at least {{minimum}} required.",
+            CORPUS_NOT_READY:
+              "{{detail}} corpus document(s) still being indexed: wait before starting the analysis.",
+          },
+        },
+        run: {
+          launched: "Analysis started. You can leave this screen.",
+          launchError: "The analysis could not be started. Try again.",
+          relaunch: "Run the analysis again",
+          completedToast: "The analysis is complete.",
+          failedToast: "The analysis failed.",
+          open: "See the results",
+          failedTitle: "The last analysis failed",
+          failedDescription: "The computation did not complete.",
+          previousResults:
+            "The results shown are from the last successful analysis.",
+          corpusChangedTitle: "The corpus has changed since this computation",
+          corpusChanged:
+            "Documents were added or removed: run the analysis again to refresh the results.",
+          exploratoryTitle: "Exploratory level",
+          comingSoon: "Available in a future version",
+          layerBComingSoon:
+            "Evaluative assessments (layer B) will be computed in a future version of the engine.",
+          layerCComingSoon:
+            "Consistency alerts (layer C) will be computed in a future version of the engine.",
+          waitingClassification:
+            "Waiting for the corpus to be classified with the validated framework.",
+          stepNotAvailable: "Not available in this engine version",
+          stepNotReached: "Step not reached",
+          stepStatus: {
+            pending: "Pending",
+            running: "Running",
+            completed: "Done",
+            failed: "Failed",
+            skipped: "—",
           },
         },
         evolution: {

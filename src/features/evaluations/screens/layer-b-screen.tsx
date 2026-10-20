@@ -256,7 +256,9 @@ export function LayerBScreen() {
             ))}
             {notes.length === 0 ? (
               <div className="rounded-xl border border-border p-12 text-center text-[13px] text-muted-foreground">
-                {t("evaluation.layerB.empty")}
+                {results.data?.run && !results.data.layers.b
+                  ? t("evaluation.run.layerBComingSoon")
+                  : t("evaluation.layerB.empty")}
               </div>
             ) : null}
           </div>

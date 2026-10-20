@@ -3,7 +3,6 @@ import { AlertTriangle, BarChart3, FileSearch, ListChecks } from "lucide-react"
 import { type ReactNode, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router-dom"
-import { toast } from "sonner"
 
 import {
   CriteriaCoveragePanel,
@@ -14,6 +13,7 @@ import {
   PageSection,
 } from "@/features/evaluations/components/analysis-layout"
 import { EvidenceDrawer } from "@/features/evaluations/components/evidence-drawer"
+import { LaunchAnalysisButton } from "@/features/evaluations/components/launch-analysis-button"
 import {
   PillarLayoutToggle,
   pillarGridClassName,
@@ -23,15 +23,39 @@ import {
   PillarResultCard,
   UnscoredPillarCard,
 } from "@/features/evaluations/components/pillar-result-card"
+import { RunNotices } from "@/features/evaluations/components/run-notices"
+import { RunProgress } from "@/features/evaluations/components/run-progress"
+import { isRunActive } from "@/features/evaluations/components/run-watcher"
 import { SummaryMetricCard } from "@/features/evaluations/components/summary-metric-card"
+import {
+  averageScore,
+  latestVersionScores,
+} from "@/features/evaluations/model/layer-a"
+import type { AnalysisRun } from "@/features/evaluations/model/types"
 import {
   getEvaluationResults,
   getWorkspacePillars,
   listEvidences,
+  listRunSteps,
 } from "@/features/evaluations/services/evaluation-service"
-import { Button } from "@/shared/ui/base/button"
 import { Skeleton } from "@/shared/ui/base/skeleton"
 
+function RunReference({ run }: { run: AnalysisRun }) {
+  const { t } = useTranslation()
+  return (
+    <p className="text-[11px] text-muted-foreground">
+      {t("evaluation.analysis.runReference", {
+        id: run.id.slice(0, 8),
+        date: new Intl.DateTimeFormat(undefined, {
+          dateStyle: "medium",
+          timeStyle: "short",
+        }).format(new Date(run.createdAt)),
+      })}
+    </p>
+  )
+}
+
+/** Écrans 12 à 14 : lancement, suivi du run, puis comparatif général. */
 export function AnalysisOverviewScreen() {
   const { i18n, t } = useTranslation()
   const navigate = useNavigate()
@@ -45,9 +69,16 @@ export function AnalysisOverviewScreen() {
       getEvaluationResults(workspaceId, i18n.resolvedLanguage ?? "fr"),
     enabled: Boolean(workspaceId),
     refetchInterval: (query) =>
-      ["pending", "running"].includes(query.state.data?.run?.status ?? "")
-        ? 5000
-        : false,
+      isRunActive(query.state.data?.latestRun) ? 5000 : false,
+  })
+  const activeRun = isRunActive(results.data?.latestRun)
+    ? (results.data?.latestRun ?? null)
+    : null
+  const steps = useQuery({
+    queryKey: ["evaluation", workspaceId, "steps", activeRun?.id],
+    queryFn: () => listRunSteps(activeRun?.id ?? ""),
+    enabled: Boolean(activeRun),
+    refetchInterval: 3000,
   })
   /* Meme cle que l'ecran du cadre : les piliers sont partages en cache. */
   const pillars = useQuery({
@@ -90,8 +121,6 @@ export function AnalysisOverviewScreen() {
       <div className={pillarGridClassName(layout)}>{cards}</div>
     </PageSection>
   )
-  /* Le lancement d'un run n'est pas encore branche cote backend. */
-  const notifyLaunchSoon = () => toast.info(t("evaluation.analysis.launchSoon"))
   const unscoredGrid = pillarSection(
     unscoredPillars.map((pillar) => (
       <UnscoredPillarCard key={pillar.id} layout={layout} pillar={pillar} />
@@ -102,9 +131,33 @@ export function AnalysisOverviewScreen() {
     eyebrow: t("evaluation.eyebrow"),
     title: t("evaluation.analysis.title"),
   }
-  if (!data?.run) {
+  const notices = (
+    <RunNotices
+      corpusChanged={data?.corpusChanged ?? false}
+      latestRun={data?.latestRun ?? null}
+      run={data?.run ?? null}
+      workspaceId={workspaceId}
+    />
+  )
+
+  /* US-13.1 à 13.3 : le suivi reste intact si l'on navigue puis revient. */
+  if (activeRun) {
     return (
-      <AnalysisPage {...header}>
+      <AnalysisPage
+        actions={<RunReference run={activeRun} />}
+        description={t("evaluation.analysis.runningDescription")}
+        eyebrow={t("evaluation.eyebrow")}
+        title={t("evaluation.analysis.running")}
+      >
+        <RunProgress steps={steps.data ?? []} />
+      </AnalysisPage>
+    )
+  }
+
+  if (!data?.run) {
+    const launch = <LaunchAnalysisButton workspaceId={workspaceId} />
+    return (
+      <AnalysisPage {...header} banner={notices}>
         {unscoredPillars.length > 0 ? (
           <>
             <div className="flex flex-wrap items-center gap-4 rounded-xl border border-border p-5">
@@ -117,9 +170,7 @@ export function AnalysisOverviewScreen() {
                   {t("evaluation.analysis.noRunDescription")}
                 </p>
               </div>
-              <Button onClick={notifyLaunchSoon}>
-                {t("evaluation.analysis.launch")}
-              </Button>
+              {launch}
             </div>
             {unscoredGrid}
           </>
@@ -132,57 +183,22 @@ export function AnalysisOverviewScreen() {
             <p className="mt-2 max-w-lg text-[13px] leading-5 text-muted-foreground">
               {t("evaluation.analysis.noRunDescription")}
             </p>
-            <Button className="mt-6" onClick={notifyLaunchSoon}>
-              {t("evaluation.analysis.launch")}
-            </Button>
+            <div className="mt-6">{launch}</div>
           </div>
         )}
       </AnalysisPage>
     )
   }
 
-  if (data.run.status === "pending" || data.run.status === "running") {
-    return (
-      <AnalysisPage
-        description={t("evaluation.analysis.runningDescription")}
-        eyebrow={t("evaluation.eyebrow")}
-        title={t("evaluation.analysis.running")}
-      >
-        <div className="divide-y divide-border rounded-xl border border-border">
-          {[
-            "classification",
-            "variables",
-            "layerA",
-            "layerB",
-            "layerC",
-            "reporting",
-          ].map((step, index) => (
-            <div className="flex items-center gap-4 px-5 py-4" key={step}>
-              <span className="flex size-7 items-center justify-center rounded-full border border-border text-[11px]">
-                {index + 1}
-              </span>
-              <span className="text-sm">
-                {t(`evaluation.analysis.steps.${step}`)}
-              </span>
-            </div>
-          ))}
-        </div>
-      </AnalysisPage>
-    )
-  }
-
-  const average = data.layerA.length
-    ? Math.round(
-        data.layerA.reduce((sum, item) => sum + item.score, 0) /
-          data.layerA.length
-      )
-    : 0
+  const scores = latestVersionScores(data.layerA)
+  const average = averageScore(scores)
   const concluded = data.layerB.filter(
     (item) => item.status === "conclu"
   ).length
   const pendingAlerts = data.alerts.filter(
     (item) => item.status === "a_instruire"
   ).length
+  const comingSoon = t("evaluation.run.comingSoon")
 
   /* Pyramide inversee : indicateurs cles, puis les piliers, puis les
      lectures transversales qui orientent vers le detail. */
@@ -190,16 +206,16 @@ export function AnalysisOverviewScreen() {
     <AnalysisPage
       {...header}
       actions={
-        <p className="text-[11px] text-muted-foreground">
-          {t("evaluation.analysis.runReference", {
-            id: data.run.id.slice(0, 8),
-            date: new Intl.DateTimeFormat(undefined, {
-              dateStyle: "medium",
-              timeStyle: "short",
-            }).format(new Date(data.run.createdAt)),
-          })}
-        </p>
+        <div className="flex flex-col items-end gap-2">
+          <LaunchAnalysisButton
+            label={t("evaluation.run.relaunch")}
+            variant="outline"
+            workspaceId={workspaceId}
+          />
+          <RunReference run={data.run} />
+        </div>
       }
+      banner={notices}
     >
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryMetricCard
@@ -207,21 +223,29 @@ export function AnalysisOverviewScreen() {
           icon={BarChart3}
           label={t("evaluation.analysis.averageScore")}
           onClick={() => void navigate(`${analysisPath}/pillars`)}
-          value={`${average}/100`}
+          value={average === null ? "—" : `${average}/100`}
         />
         <SummaryMetricCard
-          description={t("evaluation.analysis.criteriaDescription")}
+          description={
+            data.layers.b
+              ? t("evaluation.analysis.criteriaDescription")
+              : comingSoon
+          }
           icon={ListChecks}
           label={t("evaluation.analysis.concludedCriteria")}
           onClick={() => void navigate(`${analysisPath}/criteria`)}
-          value={`${concluded}/${data.layerB.length}`}
+          value={data.layers.b ? `${concluded}/${data.layerB.length}` : "—"}
         />
         <SummaryMetricCard
-          description={t("evaluation.analysis.alertsDescription")}
+          description={
+            data.layers.c
+              ? t("evaluation.analysis.alertsDescription")
+              : comingSoon
+          }
           icon={AlertTriangle}
           label={t("evaluation.analysis.pendingAlerts")}
           onClick={() => void navigate(`${analysisPath}/alerts`)}
-          value={String(pendingAlerts)}
+          value={data.layers.c ? String(pendingAlerts) : "—"}
         />
         <SummaryMetricCard
           description={t("evaluation.analysis.traceabilityDescription")}
@@ -231,10 +255,10 @@ export function AnalysisOverviewScreen() {
           value={`${data.traceability}%`}
         />
       </div>
-      {data.layerA.length === 0
+      {scores.length === 0
         ? unscoredGrid
         : pillarSection(
-            data.layerA.map((score) => (
+            scores.map((score) => (
               <PillarResultCard
                 alertsCount={
                   data.alerts.filter(
@@ -258,16 +282,17 @@ export function AnalysisOverviewScreen() {
               />
             ))
           )}
-      {data.layerA.length > 0 ? (
+      {scores.length > 0 ? (
         <div className="grid items-stretch gap-x-6 gap-y-10 lg:grid-cols-2">
           <PriorityPillarsPanel
             notes={data.layerB}
             onOpenPillar={(pillarId) =>
               void navigate(`${analysisPath}/pillars/${pillarId}`)
             }
-            scores={data.layerA}
+            scores={scores}
           />
           <CriteriaCoveragePanel
+            available={data.layers.b}
             notes={data.layerB}
             onOpenCriterion={(criterionId) =>
               void navigate(`${analysisPath}/criteria?criterion=${criterionId}`)

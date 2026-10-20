@@ -14,6 +14,8 @@ import {
   usePillarLayout,
 } from "@/features/evaluations/components/pillar-layout-toggle"
 import { PillarResultCard } from "@/features/evaluations/components/pillar-result-card"
+import { RunNotices } from "@/features/evaluations/components/run-notices"
+import { latestVersionScores } from "@/features/evaluations/model/layer-a"
 import {
   getEvaluationResults,
   getWorkspacePillars,
@@ -43,15 +45,23 @@ export function LayerAScreen() {
   if (results.isPending)
     return <Skeleton className="mx-auto h-96 w-full max-w-6xl" />
   const data = results.data
-  const scores = data?.layerA ?? []
+  const scores = latestVersionScores(data?.layerA ?? [])
 
   return (
     <AnalysisPage
       banner={
-        <LayerBanner
-          description={t("evaluation.layerA.bannerDescription")}
-          title={t("evaluation.layerA.bannerTitle")}
-        />
+        <>
+          <LayerBanner
+            description={t("evaluation.layerA.bannerDescription")}
+            title={t("evaluation.layerA.bannerTitle")}
+          />
+          <RunNotices
+            corpusChanged={data?.corpusChanged ?? false}
+            latestRun={data?.latestRun ?? null}
+            run={data?.run ?? null}
+            workspaceId={workspaceId}
+          />
+        </>
       }
       description={t("evaluation.layerA.description")}
       eyebrow={t("evaluation.eyebrow")}

@@ -30,7 +30,12 @@ import {
   openEvidenceDocument,
   PillarEvidenceDrawer,
 } from "@/features/evaluations/components/pillar-evidence-drawer"
+import { RunNotices } from "@/features/evaluations/components/run-notices"
 import { ScoreGauge } from "@/features/evaluations/components/score-gauge"
+import {
+  latestVersionScores,
+  pillarVersionScores,
+} from "@/features/evaluations/model/layer-a"
 import type {
   Evidence,
   IntermediateVariable,
@@ -114,6 +119,45 @@ function PillarScoreSummary({
         </StatItem>
       </dl>
     </section>
+  )
+}
+
+/** Mode comparatif : le score du pilier pour chaque version du programme. */
+function VersionScores({ scores }: { scores: LayerAScore[] }) {
+  const { t } = useTranslation()
+  return (
+    <PageSection
+      description={t("evaluation.pillar.versionsDescription")}
+      title={t("evaluation.pillar.versionsTitle")}
+    >
+      <div className={listPanelClassName}>
+        {scores.map((score) => (
+          <div
+            className="grid items-center gap-3 p-4 text-[13px] sm:grid-cols-[minmax(0,1fr)_90px_minmax(0,1fr)_minmax(0,1fr)]"
+            key={score.id}
+          >
+            <p className="min-w-0 truncate font-medium">{score.versionLabel}</p>
+            <span className="tabular-nums">
+              {score.score === null
+                ? t("evaluation.analysis.notComputed")
+                : `${Math.round(score.score)}/100`}
+            </span>
+            <span className="tabular-nums text-muted-foreground">
+              {score.evolution
+                ? `${t(`evaluation.evolution.${score.evolution}`)} · ${
+                    score.delta !== null && score.delta > 0 ? "+" : ""
+                  }${score.delta ?? 0}`
+                : "—"}
+            </span>
+            <span className="flex items-center gap-1.5 tabular-nums text-muted-foreground">
+              <ShieldCheck className="size-4 shrink-0" />
+              {Math.round(score.confidence * 100)}% · {score.documentsCount}{" "}
+              docs
+            </span>
+          </div>
+        ))}
+      </div>
+    </PageSection>
   )
 }
 
@@ -349,6 +393,13 @@ function VariablesSection({
   onShowEvidence: (variable: IntermediateVariable) => void
 }) {
   const { t } = useTranslation()
+  /* Mode comparatif : une ligne par variable et par version, la plus
+     récente d'abord. */
+  const comparative =
+    new Set(variables.map((variable) => variable.versionOrder)).size > 1
+  const rows = [...variables].sort(
+    (left, right) => right.versionOrder - left.versionOrder
+  )
   return (
     <PageSection
       description={t("evaluation.pillar.variablesDescription")}
@@ -362,13 +413,30 @@ function VariablesSection({
         </div>
       ) : (
         <div className={listPanelClassName}>
-          {variables.map((variable) => (
+          {rows.map((variable) => (
             <div
               className="grid items-center gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_110px_70px_auto]"
               key={variable.id}
             >
-              <p className="min-w-0 text-sm font-medium">{variable.label}</p>
-              <span className="text-[13px]">
+              <div className="min-w-0">
+                <p className="text-sm font-medium">{variable.label}</p>
+                {comparative ? (
+                  <p className="mt-0.5 text-[12px] text-muted-foreground">
+                    {variable.versionLabel}
+                  </p>
+                ) : null}
+              </div>
+              <span
+                className={cn(
+                  "text-[13px]",
+                  variable.state === "non_renseigne" && "text-muted-foreground"
+                )}
+                title={
+                  variable.state === "non_renseigne"
+                    ? t("evaluation.pillar.notReportedHint")
+                    : undefined
+                }
+              >
                 {t(`evaluation.variableState.${variable.state}`)}
               </span>
               <span className="text-[12px] tabular-nums text-muted-foreground">
@@ -392,9 +460,12 @@ function VariablesSection({
 
 function AlertsSection({
   alerts,
+  available,
   onOpenAlerts,
 }: {
   alerts: LayerCAlert[]
+  /** `false` : la couche C n'est pas encore calculée par le moteur. */
+  available: boolean
   onOpenAlerts: () => void
 }) {
   const { t } = useTranslation()
@@ -411,7 +482,9 @@ function AlertsSection({
     >
       {alerts.length === 0 ? (
         <div className="rounded-xl border border-border p-5 text-[13px] text-muted-foreground">
-          {t("evaluation.pillar.noAlerts")}
+          {available
+            ? t("evaluation.pillar.noAlerts")
+            : t("evaluation.run.layerCComingSoon")}
         </div>
       ) : (
         <div className={listPanelClassName}>
@@ -449,9 +522,12 @@ function AlertsSection({
 /** Documents ayant fourni au moins une preuve au pilier (US-15.4). */
 function DocumentsSection({
   evidences,
+  corpusSize,
   isLoading,
 }: {
   evidences: Evidence[]
+  /** Documents du corpus figé au lancement du run. */
+  corpusSize: number
   isLoading: boolean
 }) {
   const { t } = useTranslation()
@@ -470,8 +546,9 @@ function DocumentsSection({
 
   return (
     <PageSection
-      description={t("evaluation.pillar.documentsDescription", {
+      description={t("evaluation.pillar.documentsUsage", {
         count: documents.length,
+        total: corpusSize,
       })}
       title={t("evaluation.pillar.documentsTitle")}
     >
@@ -596,7 +673,10 @@ export function PillarDetailScreen() {
     />
   )
   const data = results.data
-  const score = data?.layerA.find((item) => item.pillarId === pillarId)
+  const score = latestVersionScores(data?.layerA ?? []).find(
+    (item) => item.pillarId === pillarId
+  )
+  const versions = pillarVersionScores(data?.layerA ?? [], pillarId)
   const pillar = pillars.data?.find((item) => item.id === pillarId)
   if (!data || !score) {
     return (
@@ -647,7 +727,17 @@ export function PillarDetailScreen() {
         </Button>
       }
       back={back}
-      banner={banner}
+      banner={
+        <>
+          {banner}
+          <RunNotices
+            corpusChanged={data.corpusChanged}
+            latestRun={data.latestRun}
+            run={data.run}
+            workspaceId={workspaceId}
+          />
+        </>
+      }
       description={pillar?.description ?? score.versionLabel}
       eyebrow={t("evaluation.layerA.title")}
       title={score.pillarName}
@@ -660,13 +750,17 @@ export function PillarDetailScreen() {
         score={score}
       />
 
+      {versions.length > 1 ? <VersionScores scores={versions} /> : null}
+
       <PageSection
         description={t("evaluation.pillar.criteriaDescription")}
         title={t("evaluation.pillar.criteriaTitle")}
       >
         {criteria.length === 0 ? (
           <div className="rounded-xl border border-border p-10 text-center text-[13px] text-muted-foreground">
-            {t("evaluation.pillar.noCriteria")}
+            {data.layers.b
+              ? t("evaluation.pillar.noCriteria")
+              : t("evaluation.run.layerBComingSoon")}
           </div>
         ) : (
           <div className="grid overflow-hidden rounded-xl border border-border lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
@@ -705,8 +799,13 @@ export function PillarDetailScreen() {
           />
         </div>
         <aside className="flex min-w-0 flex-col gap-10">
-          <AlertsSection alerts={alerts} onOpenAlerts={openAlerts} />
+          <AlertsSection
+            alerts={alerts}
+            available={data.layers.c}
+            onOpenAlerts={openAlerts}
+          />
           <DocumentsSection
+            corpusSize={data.run?.corpusSize ?? 0}
             evidences={pillarEvidences.data ?? []}
             isLoading={pillarEvidences.isPending}
           />

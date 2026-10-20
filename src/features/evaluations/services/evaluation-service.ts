@@ -1,18 +1,24 @@
 import type { ObservableVariable } from "@/features/evaluation-frameworks/model/types"
-import type {
-  AnalysisRun,
-  EvaluationCriterion,
-  EvaluationPillar,
-  EvaluationResults,
-  Evidence,
-  IntermediateVariable,
-  LayerAScore,
-  LayerBNote,
-  LayerCAlert,
-  SubAnswer,
+import { layerAvailable } from "@/features/evaluations/model/layer-a"
+import {
+  type AnalysisRun,
+  type EvaluationCriterion,
+  type EvaluationPillar,
+  type EvaluationResults,
+  type Evidence,
+  type IntermediateVariable,
+  type LaunchBlocker,
+  type LaunchCheck,
+  type LayerAScore,
+  type LayerBNote,
+  type LayerCAlert,
+  launchBlockers,
+  type RunStep,
+  type SubAnswer,
 } from "@/features/evaluations/model/types"
 import {
   demoFixturePillars,
+  demoRun,
   getDemoResults,
   instructDemoAlert,
   isDemoId,
@@ -85,7 +91,7 @@ type CriterionRow = {
 type ScoreRow = {
   id: string
   pillar_id: string
-  score: number
+  score: number | null
   delta: number | null
   evolution_label: LayerAScore["evolution"]
   corpus_confidence: number
@@ -95,7 +101,7 @@ type ScoreRow = {
         pillar_criteria: { criterion_id: string }[]
       })
     | null
-  program_versions: { label: string } | null
+  program_versions: { label: string; order_index: number } | null
 }
 
 type NoteRow = {
@@ -130,7 +136,7 @@ type VariableRow = {
   state: IntermediateVariable["state"]
   documents_count: number
   corpus_confidence: number | null
-  program_versions: { label: string } | null
+  program_versions: { label: string; order_index: number } | null
   pillars: { pillar_variables: VariableTextRow[] } | null
 }
 
@@ -497,15 +503,24 @@ export async function saveFrameworkPillars(
   if (workspaceError) throw workspaceError
 }
 
+/**
+ * Run le plus récent de l'espace ; avec `completed`, le dernier run terminé,
+ * dont les résultats sont affichés pendant qu'un autre tourne ou après un
+ * échec (RG-6.1).
+ */
 export async function getLatestRun(
-  workspaceId: string
+  workspaceId: string,
+  { completed = false }: { completed?: boolean } = {}
 ): Promise<AnalysisRun | null> {
-  const { data, error } = await supabase
+  if (isEvaluationDemo) return demoRun(workspaceId)
+  let query = supabase
     .from("runs")
     .select(
-      "id, status, corpus_size, corpus_seuil, created_at, completed_at, error_message"
+      "id, status, corpus_size, corpus_seuil, created_at, completed_at, error_code, error_message"
     )
     .eq("workspace_id", workspaceId)
+  if (completed) query = query.eq("status", "completed")
+  const { data, error } = await query
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -521,8 +536,92 @@ export async function getLatestRun(
     corpusLevel: data.corpus_seuil as AnalysisRun["corpusLevel"],
     createdAt: data.created_at,
     completedAt: data.completed_at,
+    errorCode: data.error_code,
     errorMessage: data.error_message,
   }
+}
+
+export async function listRunSteps(runId: string): Promise<RunStep[]> {
+  if (isDemoId(runId)) return []
+  const { data, error } = await supabase
+    .from("run_steps")
+    .select("step_name, status, output_summary, error_message")
+    .eq("run_id", runId)
+    .order("position")
+  if (error) {
+    if (isMissingRelation(error)) return []
+    throw error
+  }
+  return (data ?? []).map((row) => ({
+    name: row.step_name as RunStep["name"],
+    status: row.status as RunStep["status"],
+    summary: row.output_summary as RunStep["summary"],
+    errorMessage: row.error_message,
+  }))
+}
+
+/** Conditions de lancement, vérifiées par la base (US-12.1, US-12.2). */
+export async function getLaunchCheck(
+  workspaceId: string
+): Promise<LaunchCheck> {
+  const { data, error } = await supabase.rpc("run_launch_check", {
+    p_workspace_id: workspaceId,
+  })
+  if (error) throw error
+  const row = data as {
+    code: string | null
+    detail: string | null
+    corpus_size: number
+    minimum_documents: number
+    corpus_seuil: AnalysisRun["corpusLevel"] | null
+  }
+  return {
+    blocker: asLaunchBlocker(row.code),
+    detail: row.detail,
+    corpusSize: row.corpus_size,
+    minimumDocuments: row.minimum_documents,
+    corpusLevel: row.corpus_seuil,
+  }
+}
+
+/** Erreur de lancement refusé par la base, avec sa raison métier. */
+export class LaunchRefusedError extends Error {
+  readonly blocker: LaunchBlocker
+  readonly detail: string | null
+
+  constructor(blocker: LaunchBlocker, detail: string | null) {
+    super(blocker)
+    this.blocker = blocker
+    this.detail = detail
+  }
+}
+
+function asLaunchBlocker(code: string | null | undefined) {
+  return launchBlockers.find((blocker) => blocker === code) ?? null
+}
+
+/** Lance une analyse : le corpus est figé et le run mis en file (US-12.3). */
+export async function launchRun(workspaceId: string) {
+  const { data, error } = await supabase.rpc("create_run", {
+    p_workspace_id: workspaceId,
+  })
+  if (error) {
+    const blocker = asLaunchBlocker(error.message)
+    if (blocker) throw new LaunchRefusedError(blocker, error.details || null)
+    throw error
+  }
+  return data as { run_id: string }
+}
+
+async function isCorpusChanged(runId: string) {
+  const { data, error } = await supabase.rpc("run_corpus_changed", {
+    p_run_id: runId,
+  })
+  if (error) {
+    if (isMissingRelation(error)) return false
+    throw error
+  }
+  return Boolean(data)
 }
 
 export async function getEvaluationResults(
@@ -536,35 +635,55 @@ export async function getEvaluationResults(
     ])
     return getDemoResults(workspaceId, pillars, criteria)
   }
-  const run = await getLatestRun(workspaceId)
+  const [run, latestRun] = await Promise.all([
+    getLatestRun(workspaceId, { completed: true }),
+    getLatestRun(workspaceId),
+  ])
   if (!run)
-    return { run: null, layerA: [], layerB: [], alerts: [], traceability: 0 }
+    return {
+      run: null,
+      latestRun,
+      layerA: [],
+      layerB: [],
+      alerts: [],
+      traceability: 0,
+      layers: { b: false, c: false },
+      corpusChanged: false,
+    }
 
-  const [scoresResult, notesResult, alertsResult, evidenceResult] =
-    await Promise.all([
-      supabase
-        .from("layer_a_scores")
-        .select(
-          `id, pillar_id, score, delta, evolution_label, corpus_confidence, documents_count, pillars(${pillarTextSelect}, pillar_criteria(criterion_id)), program_versions(label)`
-        )
-        .eq("run_id", run.id),
-      supabase
-        .from("layer_b_notes")
-        .select(
-          "id, criterion_id, note, status, documented_sub_questions, total_sub_questions, justification, ambiguity_flag, criteria(name)"
-        )
-        .eq("run_id", run.id),
-      supabase
-        .from("layer_c_alerts")
-        .select(
-          `id, alert_type, severity, message, status, instruction_comment, pillar_id, criterion_id, pillars(${pillarTextSelect}), criteria(name)`
-        )
-        .eq("run_id", run.id),
-      supabase
-        .from("evidences")
-        .select("pillar_id, criterion_id")
-        .eq("run_id", run.id),
-    ])
+  const [
+    scoresResult,
+    notesResult,
+    alertsResult,
+    evidenceResult,
+    steps,
+    corpusChanged,
+  ] = await Promise.all([
+    supabase
+      .from("layer_a_scores")
+      .select(
+        `id, pillar_id, score, delta, evolution_label, corpus_confidence, documents_count, pillars(${pillarTextSelect}, pillar_criteria(criterion_id)), program_versions(label, order_index)`
+      )
+      .eq("run_id", run.id),
+    supabase
+      .from("layer_b_notes")
+      .select(
+        "id, criterion_id, note, status, documented_sub_questions, total_sub_questions, justification, ambiguity_flag, criteria(name)"
+      )
+      .eq("run_id", run.id),
+    supabase
+      .from("layer_c_alerts")
+      .select(
+        `id, alert_type, severity, message, status, instruction_comment, pillar_id, criterion_id, pillars(${pillarTextSelect}), criteria(name)`
+      )
+      .eq("run_id", run.id),
+    supabase
+      .from("evidences")
+      .select("pillar_id, criterion_id")
+      .eq("run_id", run.id),
+    listRunSteps(run.id),
+    isCorpusChanged(run.id),
+  ])
 
   const firstError = [
     scoresResult,
@@ -582,12 +701,13 @@ export async function getEvaluationResults(
     pillarName: row.pillars ? localizePillar(row.pillars, locale).name : "—",
     criterionIds:
       row.pillars?.pillar_criteria.map((item) => item.criterion_id) ?? [],
-    score: Number(row.score),
+    score: row.score === null ? null : Number(row.score),
     delta: row.delta === null ? null : Number(row.delta),
     evolution: row.evolution_label,
     confidence: Number(row.corpus_confidence),
     documentsCount: row.documents_count,
     versionLabel: row.program_versions?.label ?? "—",
+    versionOrder: row.program_versions?.order_index ?? 0,
   }))
   const layerB: LayerBNote[] = (
     (notesResult.data ?? []) as unknown as NoteRow[]
@@ -617,11 +737,15 @@ export async function getEvaluationResults(
     criterionId: row.criterion_id,
     criterionName: row.criteria?.name ?? null,
   }))
+  /* Sorties : scores calculés et notes conclues ; un score vide n'affirme
+     rien et n'a pas à être tracé. */
+  const computedScores = layerA.filter((score) => score.score !== null)
   const outputCount =
-    layerA.length + layerB.filter((item) => item.status === "conclu").length
+    computedScores.length +
+    layerB.filter((item) => item.status === "conclu").length
   const coverageRows = (evidenceResult.data ?? []) as EvidenceCoverageRow[]
   const coveredOutputs =
-    layerA.filter((score) =>
+    computedScores.filter((score) =>
       coverageRows.some((evidence) => evidence.pillar_id === score.pillarId)
     ).length +
     layerB.filter(
@@ -633,7 +757,19 @@ export async function getEvaluationResults(
     ).length
   const traceability =
     outputCount === 0 ? 0 : Math.round((coveredOutputs / outputCount) * 100)
-  return { run, layerA, layerB, alerts, traceability }
+  return {
+    run,
+    latestRun,
+    layerA,
+    layerB,
+    alerts,
+    traceability,
+    layers: {
+      b: layerAvailable(steps, "layer_b"),
+      c: layerAvailable(steps, "layer_c"),
+    },
+    corpusChanged,
+  }
 }
 
 export async function listIntermediateVariables(
@@ -645,7 +781,7 @@ export async function listIntermediateVariables(
   const { data, error } = await supabase
     .from("intermediate_variables")
     .select(
-      `id, pillar_id, variable_code, state, documents_count, corpus_confidence, program_versions(label), pillars(pillar_variables(${variableTextSelect}))`
+      `id, pillar_id, variable_code, state, documents_count, corpus_confidence, program_versions(label, order_index), pillars(pillar_variables(${variableTextSelect}))`
     )
     .eq("run_id", runId)
     .eq("pillar_id", pillarId)
@@ -669,6 +805,7 @@ export async function listIntermediateVariables(
       confidence:
         row.corpus_confidence === null ? null : Number(row.corpus_confidence),
       versionLabel: row.program_versions?.label ?? "—",
+      versionOrder: row.program_versions?.order_index ?? 0,
     }
   })
 }

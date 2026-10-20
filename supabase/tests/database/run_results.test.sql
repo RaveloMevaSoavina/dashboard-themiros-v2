@@ -11,7 +11,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(21);
+select plan(23);
 
 create function pg_temp.axis(k integer)
 returns vector
@@ -105,6 +105,15 @@ create function pg_temp.lease()
 returns uuid
 language sql
 as $$ select (claim ->> 'lease_token')::uuid from job $$;
+
+select set_config('request.jwt.claims',
+  '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}', true);
+select is(
+  public.run_launch_check('a0000000-0000-0000-0000-0000000000a1') ->> 'code',
+  'RUN_ALREADY_ACTIVE',
+  'US-12.2 : le bouton sait qu''une analyse est déjà en cours'
+);
+select set_config('request.jwt.claims', '{"role": "service_role"}', true);
 
 -- ---------------------------------------------------------------------------
 -- Classification pas encore prête : le run attend.
@@ -298,6 +307,16 @@ select throws_ok(
   $$select public.complete_run((select id from launched), pg_temp.lease(), '{}')$$,
   'P0001', 'RUN_LEASE_LOST',
   'un run terminé ne reçoit plus de résultats'
+);
+
+select set_config('request.jwt.claims',
+  '{"sub": "11111111-1111-1111-1111-111111111111", "role": "authenticated"}', true);
+select is(
+  public.run_launch_check('a0000000-0000-0000-0000-0000000000a1')
+    - 'framework_id' - 'approach_id',
+  '{"code": null, "detail": null, "corpus_size": 5, "corpus_seuil": "exploratoire",
+    "minimum_documents": 5}'::jsonb,
+  'US-12.1 : le run terminé, une nouvelle analyse peut être lancée'
 );
 
 select * from finish();

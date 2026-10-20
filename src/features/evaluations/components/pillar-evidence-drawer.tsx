@@ -52,7 +52,7 @@ export function PillarEvidenceDrawer({
             {score
               ? t("evaluation.evidence.pillarSummary", {
                   count: evidences.length,
-                  score: Math.round(score.score),
+                  score: score.score === null ? "—" : Math.round(score.score),
                   confidence: Math.round(score.confidence * 100),
                 })
               : null}

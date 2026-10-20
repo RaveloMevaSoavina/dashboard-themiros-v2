@@ -86,7 +86,9 @@ export function PillarResultCard({
   const { t } = useTranslation()
   const evolution = (
     <span className="text-[12px] tabular-nums text-muted-foreground">
-      {score.evolution ? (
+      {score.score === null ? (
+        t("evaluation.analysis.notComputed")
+      ) : score.evolution ? (
         <>
           {t(`evaluation.evolution.${score.evolution}`)} ·{" "}
           {score.delta !== null && score.delta > 0 ? "+" : ""}

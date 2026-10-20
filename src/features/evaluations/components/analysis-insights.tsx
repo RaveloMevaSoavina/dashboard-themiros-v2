@@ -41,7 +41,11 @@ export function PriorityPillarsPanel({
   onOpenPillar: (pillarId: string) => void
 }) {
   const { t } = useTranslation()
-  const priorities = [...scores]
+  /* Un pilier sans score calculé n'a pas de rang : il n'est pas priorisé. */
+  const priorities = scores
+    .flatMap((score) =>
+      score.score === null ? [] : [{ ...score, score: score.score }]
+    )
     .sort((left, right) => left.score - right.score)
     .slice(0, 3)
 
@@ -109,9 +113,12 @@ export function PriorityPillarsPanel({
 /** Vue transversale : une barre par critère, tous piliers confondus. */
 export function CriteriaCoveragePanel({
   notes,
+  available = true,
   onOpenCriterion,
 }: {
   notes: LayerBNote[]
+  /** `false` : la couche B n'est pas encore calculée par le moteur. */
+  available?: boolean
   onOpenCriterion: (criterionId: string) => void
 }) {
   const { t } = useTranslation()
@@ -123,7 +130,9 @@ export function CriteriaCoveragePanel({
     >
       {notes.length === 0 ? (
         <div className="rounded-xl border border-border p-8 text-center text-[13px] text-muted-foreground">
-          {t("evaluation.layerB.empty")}
+          {available
+            ? t("evaluation.layerB.empty")
+            : t("evaluation.run.layerBComingSoon")}
         </div>
       ) : (
         <div className={cn(listPanelClassName, "flex-1")}>
