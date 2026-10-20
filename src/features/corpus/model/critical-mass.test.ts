@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
+import { resources } from "../../../shared/i18n/resources.ts"
 import {
   assessCriticalMass,
   defaultCriticalMassSettings,
@@ -291,4 +292,24 @@ test("chaque niveau expose ses conditions pour la jauge", () => {
       met: false,
     },
   })
+})
+
+test("T-11 : les messages imposés de l'étape E5 sont inchangés", () => {
+  // Guide par fonctionnalité, F8 « Messages imposés » : la note de décision
+  // sur la masse critique ne les modifie pas.
+  const fr = resources.fr.translation.corpus.criticalMass
+  assert.equal(fr.blockedTitle, "Analyse impossible")
+  assert.equal(
+    fr.blocked,
+    "Analyse impossible. Le corpus actuel contient {{count}} document(s), soit insuffisant pour produire des résultats fiables. Themiros requiert un minimum de {{minimum}} documents pour ce type d'analyse. Ajoutez des documents pour continuer."
+  )
+  assert.equal(
+    fr.exploratoryWarning,
+    "Le corpus contient {{count}} documents. Les résultats sont indicatifs et ne doivent pas être utilisés comme base de décision formelle."
+  )
+  const en = resources.en.translation.corpus.criticalMass
+  assert.equal(
+    en.blocked,
+    "Analysis not possible. The current corpus contains {{count}} document(s), which is not enough to produce reliable results. Themiros requires at least {{minimum}} documents for this type of analysis. Add documents to continue."
+  )
 })
