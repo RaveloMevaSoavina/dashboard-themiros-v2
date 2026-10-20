@@ -464,7 +464,7 @@ function DocumentsSection({
           count: (current?.count ?? 0) + 1,
         })
         return byDocument
-      }, new Map<string, { name: string; count: number }>())
+      }, new Map<string | null, { name: string; count: number }>())
       .entries(),
   ].sort(([, left], [, right]) => right.count - left.count)
 

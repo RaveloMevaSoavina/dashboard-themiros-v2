@@ -103,7 +103,7 @@ export type LayerCAlert = {
 
 export type Evidence = {
   id: string
-  documentId: string
+  documentId: string | null
   documentName: string | null
   storagePath: string | null
   page: number | null

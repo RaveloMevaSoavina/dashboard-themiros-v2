@@ -147,7 +147,7 @@ type AnswerRow = {
 
 type EvidenceRow = {
   id: string
-  document_id: string
+  document_id: string | null
   page_number: number | null
   section_title: string | null
   excerpt: string
