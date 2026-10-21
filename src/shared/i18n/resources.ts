@@ -1280,6 +1280,7 @@ export const resources = {
           corpusChangedTitle: "Le corpus a changé depuis ce calcul",
           corpusChanged:
             "Des documents ont été ajoutés ou retirés : relancez l'analyse pour actualiser les résultats.",
+          staleResult: "Corpus modifié — relancez l'analyse",
           exploratoryTitle: "Niveau exploratoire",
           comingSoon: "Disponible dans une prochaine version",
           layerBComingSoon:
@@ -2642,6 +2643,7 @@ export const resources = {
           corpusChangedTitle: "The corpus has changed since this computation",
           corpusChanged:
             "Documents were added or removed: run the analysis again to refresh the results.",
+          staleResult: "Corpus changed — run the analysis again",
           exploratoryTitle: "Exploratory level",
           comingSoon: "Available in a future version",
           layerBComingSoon:
