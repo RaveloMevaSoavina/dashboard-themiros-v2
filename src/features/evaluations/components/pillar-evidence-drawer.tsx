@@ -27,11 +27,7 @@ export async function openEvidenceDocument(evidence: Evidence) {
 /** Toutes les preuves qui fondent la note d'un pilier, listees d'un bloc. */
 export function PillarEvidenceDrawer({
   score,
-  evidences,
-  isLoading,
-  isError,
-  onRetry,
-  onOpenChange,
+  ...props
 }: {
   /** Pilier dont on lit les preuves ; `null` ferme le drawer. */
   score: LayerAScore | null
@@ -42,21 +38,55 @@ export function PillarEvidenceDrawer({
   onOpenChange: (open: boolean) => void
 }) {
   const { t } = useTranslation()
+  return (
+    <EvidenceListDrawer
+      {...props}
+      description={
+        score
+          ? t("evaluation.evidence.pillarSummary", {
+              count: props.evidences.length,
+              score: score.score === null ? "—" : Math.round(score.score),
+              confidence: Math.round(score.confidence * 100),
+            })
+          : null
+      }
+      emptyLabel={t("evaluation.evidence.noneForScore")}
+      open={Boolean(score)}
+      title={score?.pillarName ?? ""}
+    />
+  )
+}
+
+/** Liste de preuves dans un drawer a droite (pilier ou critere). */
+export function EvidenceListDrawer({
+  open,
+  title,
+  description,
+  emptyLabel,
+  evidences,
+  isLoading,
+  isError,
+  onRetry,
+  onOpenChange,
+}: {
+  open: boolean
+  title: string
+  description: string | null
+  emptyLabel: string
+  evidences: Evidence[]
+  isLoading: boolean
+  isError: boolean
+  onRetry: () => void
+  onOpenChange: (open: boolean) => void
+}) {
+  const { t } = useTranslation()
 
   return (
-    <Sheet onOpenChange={onOpenChange} open={Boolean(score)}>
+    <Sheet onOpenChange={onOpenChange} open={open}>
       <SheetContent className="w-full sm:max-w-xl!">
         <SheetHeader className="border-b border-border pr-12">
-          <SheetTitle>{score?.pillarName}</SheetTitle>
-          <SheetDescription>
-            {score
-              ? t("evaluation.evidence.pillarSummary", {
-                  count: evidences.length,
-                  score: score.score === null ? "—" : Math.round(score.score),
-                  confidence: Math.round(score.confidence * 100),
-                })
-              : null}
-          </SheetDescription>
+          <SheetTitle>{title}</SheetTitle>
+          <SheetDescription>{description}</SheetDescription>
         </SheetHeader>
 
         {isLoading ? (
@@ -78,9 +108,7 @@ export function PillarEvidenceDrawer({
         ) : evidences.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
             <FileWarning className="size-7 text-muted-foreground" />
-            <p className="mt-4 text-sm font-semibold">
-              {t("evaluation.evidence.noneForScore")}
-            </p>
+            <p className="mt-4 text-sm font-semibold">{emptyLabel}</p>
           </div>
         ) : (
           <ol className="flex-1 space-y-3 overflow-y-auto p-5">

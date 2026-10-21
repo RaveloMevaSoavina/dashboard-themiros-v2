@@ -2,11 +2,9 @@ import { useQuery } from "@tanstack/react-query"
 import {
   AlertTriangle,
   ChevronRight,
-  ExternalLink,
   Eye,
   FileSearch,
   FileText,
-  FileWarning,
   ShieldCheck,
 } from "lucide-react"
 import { type ReactNode, useState } from "react"
@@ -27,7 +25,7 @@ import {
 import { EvidenceDrawer } from "@/features/evaluations/components/evidence-drawer"
 import { LayerBanner } from "@/features/evaluations/components/layer-banner"
 import {
-  openEvidenceDocument,
+  EvidenceListDrawer,
   PillarEvidenceDrawer,
 } from "@/features/evaluations/components/pillar-evidence-drawer"
 import { RunNotices } from "@/features/evaluations/components/run-notices"
@@ -154,49 +152,6 @@ function CriterionRow({
   )
 }
 
-function EvidenceExcerpt({ evidence }: { evidence: Evidence }) {
-  const { t } = useTranslation()
-  return (
-    <li className="py-4 first:pt-0 last:pb-0">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-start gap-2">
-          <FileText className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-          <div className="min-w-0">
-            <p
-              className="truncate text-[13px] font-medium"
-              title={evidence.documentName ?? undefined}
-            >
-              {evidence.documentName ?? t("evaluation.evidence.unavailable")}
-            </p>
-            <p className="mt-0.5 text-[12px] text-muted-foreground">
-              {[
-                evidence.page
-                  ? `${t("evaluation.evidence.page")} ${evidence.page}`
-                  : null,
-                evidence.section,
-              ]
-                .filter(Boolean)
-                .join(" · ") || "—"}
-            </p>
-          </div>
-        </div>
-        <Button
-          aria-label={t("evaluation.evidence.openDocument")}
-          disabled={!evidence.storagePath}
-          onClick={() => void openEvidenceDocument(evidence)}
-          size="icon-sm"
-          variant="ghost"
-        >
-          <ExternalLink />
-        </Button>
-      </div>
-      <blockquote className="mt-3 border-l-2 border-foreground pl-4 text-[13px] leading-6">
-        {evidence.excerpt}
-      </blockquote>
-    </li>
-  )
-}
-
 /** Volet detail : justification, sous-questions puis preuves du critere. */
 function CriterionDetail({
   note,
@@ -208,6 +163,7 @@ function CriterionDetail({
   onOpenCriterion: () => void
 }) {
   const { i18n, t } = useTranslation()
+  const [evidenceOpen, setEvidenceOpen] = useState(false)
   const answers = useQuery({
     queryKey: [
       "evaluation",
@@ -285,47 +241,43 @@ function CriterionDetail({
         )}
       </div>
 
-      <div>
-        <div className="flex items-center justify-between gap-3">
-          <p className={subTitleClassName}>
-            {t("evaluation.pillar.criterionEvidence")}
-          </p>
-          {evidences.data ? (
-            <span className="text-[11px] tabular-nums text-muted-foreground">
-              {t("evaluation.pillar.evidenceCount", {
+      <div className="flex flex-wrap gap-2">
+        <Button
+          disabled={evidences.isPending}
+          onClick={() => setEvidenceOpen(true)}
+          size="sm"
+        >
+          <Eye />{" "}
+          {evidences.data
+            ? t("evaluation.pillar.viewCriterionEvidence", {
                 count: evidences.data.length,
-              })}
-            </span>
-          ) : null}
-        </div>
-        {evidences.isPending ? (
-          <Skeleton className="mt-3 h-36" />
-        ) : evidences.isError ? (
-          <p className="mt-3 text-[13px] text-muted-foreground">
-            {t("evaluation.evidence.loadError")}
-          </p>
-        ) : (evidences.data?.length ?? 0) === 0 ? (
-          <div className="mt-3 flex items-center gap-3 rounded-lg border border-dashed border-border p-4 text-[13px] text-muted-foreground">
-            <FileWarning className="size-4 shrink-0" />
-            {t("evaluation.pillar.noEvidence")}
-          </div>
-        ) : (
-          <ol className="mt-3 divide-y divide-border">
-            {(evidences.data ?? []).map((evidence) => (
-              <EvidenceExcerpt evidence={evidence} key={evidence.id} />
-            ))}
-          </ol>
-        )}
+              })
+            : t("evaluation.viewEvidence")}
+        </Button>
+        <Button onClick={onOpenCriterion} size="sm" variant="outline">
+          {t("evaluation.pillar.openCriterion")} <ChevronRight />
+        </Button>
       </div>
 
-      <Button
-        className="self-start"
-        onClick={onOpenCriterion}
-        size="sm"
-        variant="outline"
-      >
-        {t("evaluation.pillar.openCriterion")} <ChevronRight />
-      </Button>
+      <EvidenceListDrawer
+        description={
+          evidences.data
+            ? t("evaluation.pillar.evidenceCount", {
+                count: evidences.data.length,
+              })
+            : null
+        }
+        emptyLabel={t("evaluation.pillar.noEvidence")}
+        evidences={evidences.data ?? []}
+        isError={evidences.isError}
+        isLoading={evidences.isFetching && !evidences.data}
+        onOpenChange={setEvidenceOpen}
+        onRetry={() => void evidences.refetch()}
+        open={evidenceOpen}
+        title={t("evaluation.pillar.criterionEvidenceTitle", {
+          name: note.criterionName,
+        })}
+      />
     </div>
   )
 }
@@ -560,9 +512,9 @@ function DocumentsSection({
 
 /**
  * Ecran 15 : detail d'un pilier, du general au particulier. Le score et
- * ses indicateurs ouvrent la page, puis les criteres en vue maitre-detail ;
- * les variables occupent la colonne principale, alertes et documents la
- * colonne laterale.
+ * ses indicateurs ouvrent la page, puis les variables observables qui le
+ * fondent (alertes et documents en colonne laterale), puis les criteres en
+ * vue maitre-detail, dont les preuves s'ouvrent dans un drawer.
  */
 export function PillarDetailScreen() {
   const { i18n, t } = useTranslation()
@@ -725,6 +677,28 @@ export function PillarDetailScreen() {
         score={score}
       />
 
+      <div className="grid items-start gap-x-6 gap-y-10 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <VariablesSection
+            isLoading={variables.isPending}
+            onShowEvidence={setSelectedVariable}
+            variables={variables.data ?? []}
+          />
+        </div>
+        <aside className="flex min-w-0 flex-col gap-10">
+          <AlertsSection
+            alerts={alerts}
+            available={data.layers.c}
+            onOpenAlerts={openAlerts}
+          />
+          <DocumentsSection
+            corpusSize={data.run?.corpusSize ?? 0}
+            evidences={pillarEvidences.data ?? []}
+            isLoading={pillarEvidences.isPending}
+          />
+        </aside>
+      </div>
+
       <PageSection
         description={t("evaluation.pillar.criteriaDescription")}
         title={t("evaluation.pillar.criteriaTitle")}
@@ -762,28 +736,6 @@ export function PillarDetailScreen() {
           </div>
         )}
       </PageSection>
-
-      <div className="grid items-start gap-x-6 gap-y-10 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <VariablesSection
-            isLoading={variables.isPending}
-            onShowEvidence={setSelectedVariable}
-            variables={variables.data ?? []}
-          />
-        </div>
-        <aside className="flex min-w-0 flex-col gap-10">
-          <AlertsSection
-            alerts={alerts}
-            available={data.layers.c}
-            onOpenAlerts={openAlerts}
-          />
-          <DocumentsSection
-            corpusSize={data.run?.corpusSize ?? 0}
-            evidences={pillarEvidences.data ?? []}
-            isLoading={pillarEvidences.isPending}
-          />
-        </aside>
-      </div>
 
       <EvidenceDrawer
         confidence={selectedVariable?.confidence ?? null}
