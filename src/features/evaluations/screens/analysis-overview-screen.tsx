@@ -26,7 +26,6 @@ import {
 import { RunNotices } from "@/features/evaluations/components/run-notices"
 import { RunProgress } from "@/features/evaluations/components/run-progress"
 import { isRunActive } from "@/features/evaluations/components/run-watcher"
-import { StaleResult } from "@/features/evaluations/components/stale-result"
 import { SummaryMetricCard } from "@/features/evaluations/components/summary-metric-card"
 import {
   averageScore,
@@ -200,10 +199,6 @@ export function AnalysisOverviewScreen() {
     (item) => item.status === "a_instruire"
   ).length
   const comingSoon = t("evaluation.run.comingSoon")
-  /* CA-6.2 : calculés sur un corpus qui n'existe plus, les résultats sont
-     désactivés jusqu'à la prochaine analyse. */
-  const stale = data.corpusChanged
-
   /* Pyramide inversee : indicateurs cles, puis les piliers, puis les
      lectures transversales qui orientent vers le detail. */
   return (
@@ -222,77 +217,68 @@ export function AnalysisOverviewScreen() {
       banner={notices}
     >
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StaleResult stale={stale}>
-          <SummaryMetricCard
-            description={t("evaluation.analysis.scoreDescription")}
-            icon={BarChart3}
-            label={t("evaluation.analysis.averageScore")}
-            onClick={() => void navigate(`${analysisPath}/pillars`)}
-            value={average === null ? "—" : `${average}/100`}
-          />
-        </StaleResult>
-        <StaleResult stale={stale}>
-          <SummaryMetricCard
-            description={
-              data.layers.b
-                ? t("evaluation.analysis.criteriaDescription")
-                : comingSoon
-            }
-            icon={ListChecks}
-            label={t("evaluation.analysis.concludedCriteria")}
-            onClick={() => void navigate(`${analysisPath}/criteria`)}
-            value={data.layers.b ? `${concluded}/${data.layerB.length}` : "—"}
-          />
-        </StaleResult>
-        <StaleResult stale={stale}>
-          <SummaryMetricCard
-            description={
-              data.layers.c
-                ? t("evaluation.analysis.alertsDescription")
-                : comingSoon
-            }
-            icon={AlertTriangle}
-            label={t("evaluation.analysis.pendingAlerts")}
-            onClick={() => void navigate(`${analysisPath}/alerts`)}
-            value={data.layers.c ? String(pendingAlerts) : "—"}
-          />
-        </StaleResult>
-        <StaleResult stale={stale}>
-          <SummaryMetricCard
-            description={t("evaluation.analysis.traceabilityDescription")}
-            icon={FileSearch}
-            label={t("evaluation.analysis.traceability")}
-            onClick={() => setEvidenceOpen(true)}
-            value={`${data.traceability}%`}
-          />
-        </StaleResult>
+        <SummaryMetricCard
+          description={t("evaluation.analysis.scoreDescription")}
+          icon={BarChart3}
+          label={t("evaluation.analysis.averageScore")}
+          onClick={() => void navigate(`${analysisPath}/pillars`)}
+          value={average === null ? "—" : `${average}/100`}
+        />
+        <SummaryMetricCard
+          description={
+            data.layers.b
+              ? t("evaluation.analysis.criteriaDescription")
+              : comingSoon
+          }
+          icon={ListChecks}
+          label={t("evaluation.analysis.concludedCriteria")}
+          onClick={() => void navigate(`${analysisPath}/criteria`)}
+          value={data.layers.b ? `${concluded}/${data.layerB.length}` : "—"}
+        />
+        <SummaryMetricCard
+          description={
+            data.layers.c
+              ? t("evaluation.analysis.alertsDescription")
+              : comingSoon
+          }
+          icon={AlertTriangle}
+          label={t("evaluation.analysis.pendingAlerts")}
+          onClick={() => void navigate(`${analysisPath}/alerts`)}
+          value={data.layers.c ? String(pendingAlerts) : "—"}
+        />
+        <SummaryMetricCard
+          description={t("evaluation.analysis.traceabilityDescription")}
+          icon={FileSearch}
+          label={t("evaluation.analysis.traceability")}
+          onClick={() => setEvidenceOpen(true)}
+          value={`${data.traceability}%`}
+        />
       </div>
       {scores.length === 0
         ? unscoredGrid
         : pillarSection(
             scores.map((score) => (
-              <StaleResult key={score.id} stale={stale}>
-                <PillarResultCard
-                  alertsCount={
-                    data.alerts.filter(
-                      (alert) =>
-                        alert.pillarId === score.pillarId &&
-                        alert.status === "a_instruire"
-                    ).length
-                  }
-                  description={descriptionOf(score.pillarId)}
-                  layout={layout}
-                  onAlerts={() =>
-                    void navigate(
-                      `${analysisPath}/alerts?pillar=${score.pillarId}`
-                    )
-                  }
-                  onOpen={() =>
-                    void navigate(`${analysisPath}/pillars/${score.pillarId}`)
-                  }
-                  score={score}
-                />
-              </StaleResult>
+              <PillarResultCard
+                key={score.id}
+                alertsCount={
+                  data.alerts.filter(
+                    (alert) =>
+                      alert.pillarId === score.pillarId &&
+                      alert.status === "a_instruire"
+                  ).length
+                }
+                description={descriptionOf(score.pillarId)}
+                layout={layout}
+                onAlerts={() =>
+                  void navigate(
+                    `${analysisPath}/alerts?pillar=${score.pillarId}`
+                  )
+                }
+                onOpen={() =>
+                  void navigate(`${analysisPath}/pillars/${score.pillarId}`)
+                }
+                score={score}
+              />
             ))
           )}
       {scores.length > 0 ? (
@@ -303,7 +289,6 @@ export function AnalysisOverviewScreen() {
               void navigate(`${analysisPath}/pillars/${pillarId}`)
             }
             scores={scores}
-            stale={stale}
           />
           <CriteriaCoveragePanel
             available={data.layers.b}
@@ -311,7 +296,6 @@ export function AnalysisOverviewScreen() {
             onOpenCriterion={(criterionId) =>
               void navigate(`${analysisPath}/criteria?criterion=${criterionId}`)
             }
-            stale={stale}
           />
         </div>
       ) : null}

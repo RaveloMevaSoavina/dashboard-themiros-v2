@@ -15,7 +15,6 @@ import {
 } from "@/features/evaluations/components/pillar-layout-toggle"
 import { PillarResultCard } from "@/features/evaluations/components/pillar-result-card"
 import { RunNotices } from "@/features/evaluations/components/run-notices"
-import { StaleResult } from "@/features/evaluations/components/stale-result"
 import { latestVersionScores } from "@/features/evaluations/model/layer-a"
 import {
   getEvaluationResults,
@@ -86,39 +85,38 @@ export function LayerAScreen() {
         >
           <div className={pillarGridClassName(layout)}>
             {scores.map((score) => (
-              <StaleResult key={score.id} stale={data?.corpusChanged ?? false}>
-                <PillarResultCard
-                  alertsCount={
-                    data?.alerts.filter(
-                      (alert) =>
-                        alert.pillarId === score.pillarId &&
-                        alert.status === "a_instruire"
-                    ).length ?? 0
-                  }
-                  criteria={(data?.layerB ?? []).filter((note) =>
-                    score.criterionIds.includes(note.criterionId)
-                  )}
-                  description={
-                    pillars.data?.find((pillar) => pillar.id === score.pillarId)
-                      ?.description
-                  }
-                  layout={layout}
-                  onAlerts={() =>
-                    void navigate(
-                      `${analysisPath}/alerts?pillar=${score.pillarId}`
-                    )
-                  }
-                  onCriterion={(criterionId) =>
-                    void navigate(
-                      `${analysisPath}/pillars/${score.pillarId}?criterion=${criterionId}`
-                    )
-                  }
-                  onOpen={() =>
-                    void navigate(`${analysisPath}/pillars/${score.pillarId}`)
-                  }
-                  score={score}
-                />
-              </StaleResult>
+              <PillarResultCard
+                key={score.id}
+                alertsCount={
+                  data?.alerts.filter(
+                    (alert) =>
+                      alert.pillarId === score.pillarId &&
+                      alert.status === "a_instruire"
+                  ).length ?? 0
+                }
+                criteria={(data?.layerB ?? []).filter((note) =>
+                  score.criterionIds.includes(note.criterionId)
+                )}
+                description={
+                  pillars.data?.find((pillar) => pillar.id === score.pillarId)
+                    ?.description
+                }
+                layout={layout}
+                onAlerts={() =>
+                  void navigate(
+                    `${analysisPath}/alerts?pillar=${score.pillarId}`
+                  )
+                }
+                onCriterion={(criterionId) =>
+                  void navigate(
+                    `${analysisPath}/pillars/${score.pillarId}?criterion=${criterionId}`
+                  )
+                }
+                onOpen={() =>
+                  void navigate(`${analysisPath}/pillars/${score.pillarId}`)
+                }
+                score={score}
+              />
             ))}
           </div>
         </PageSection>

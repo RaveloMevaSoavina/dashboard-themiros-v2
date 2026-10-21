@@ -15,7 +15,6 @@ import { EvidenceDrawer } from "@/features/evaluations/components/evidence-drawe
 import { LayerBanner } from "@/features/evaluations/components/layer-banner"
 import { ProgressMeter } from "@/features/evaluations/components/progress-meter"
 import { RunNotices } from "@/features/evaluations/components/run-notices"
-import { StaleResult } from "@/features/evaluations/components/stale-result"
 import type { LayerBNote } from "@/features/evaluations/model/types"
 import {
   getEvaluationResults,
@@ -244,29 +243,25 @@ export function LayerBScreen() {
         >
           <div className="flex flex-col gap-4">
             {notes.map((note) => (
-              <StaleResult
+              <CriterionResultCard
                 key={note.id}
-                stale={results.data?.corpusChanged ?? false}
-              >
-                <CriterionResultCard
-                  note={note}
-                  onEvidence={setSelected}
-                  onPillar={(pillarId) =>
-                    void navigate(
-                      `/workspaces/${workspaceId}/analysis/pillars/${pillarId}?criterion=${note.criterionId}`
-                    )
-                  }
-                  pillars={(results.data?.layerA ?? [])
-                    .filter((score) =>
-                      score.criterionIds.includes(note.criterionId)
-                    )
-                    .map((score) => ({
-                      id: score.pillarId,
-                      name: score.pillarName,
-                    }))}
-                  runId={results.data?.run?.id ?? ""}
-                />
-              </StaleResult>
+                note={note}
+                onEvidence={setSelected}
+                onPillar={(pillarId) =>
+                  void navigate(
+                    `/workspaces/${workspaceId}/analysis/pillars/${pillarId}?criterion=${note.criterionId}`
+                  )
+                }
+                pillars={(results.data?.layerA ?? [])
+                  .filter((score) =>
+                    score.criterionIds.includes(note.criterionId)
+                  )
+                  .map((score) => ({
+                    id: score.pillarId,
+                    name: score.pillarName,
+                  }))}
+                runId={results.data?.run?.id ?? ""}
+              />
             ))}
             {notes.length === 0 ? (
               <div className="rounded-xl border border-border p-12 text-center text-[13px] text-muted-foreground">

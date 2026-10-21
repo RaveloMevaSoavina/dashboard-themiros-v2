@@ -11,7 +11,6 @@ import {
   CriterionNoteValue,
 } from "@/features/evaluations/components/criterion-note-meter"
 import { ProgressMeter } from "@/features/evaluations/components/progress-meter"
-import { StaleResult } from "@/features/evaluations/components/stale-result"
 import {
   scoreLevel,
   scoreTextClass,
@@ -36,13 +35,10 @@ export function PriorityPillarsPanel({
   scores,
   notes,
   onOpenPillar,
-  stale = false,
 }: {
   scores: LayerAScore[]
   notes: LayerBNote[]
   onOpenPillar: (pillarId: string) => void
-  /** Corpus modifié depuis le run : le panneau est désactivé. */
-  stale?: boolean
 }) {
   const { t } = useTranslation()
   /* Un pilier sans score calculé n'a pas de rang : il n'est pas priorisé. */
@@ -58,60 +54,58 @@ export function PriorityPillarsPanel({
       description={t("evaluation.analysis.priorities.description")}
       title={t("evaluation.analysis.priorities.title")}
     >
-      <StaleResult className="flex-1" stale={stale}>
-        <div className={cn(listPanelClassName, "flex-1")}>
-          {priorities.map((score) => {
-            const criteria = notes.filter((note) =>
-              score.criterionIds.includes(note.criterionId)
-            )
-            return (
-              <button
-                className={listRowClassName}
-                key={score.id}
-                onClick={() => onOpenPillar(score.pillarId)}
-                type="button"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <p className="min-w-0 truncate text-sm font-medium">
-                    {score.pillarName}
-                  </p>
-                  <span className="flex shrink-0 items-center gap-1">
-                    <span
-                      className={cn(
-                        "text-sm font-semibold tabular-nums",
-                        scoreTextClass[scoreLevel(score.score)]
-                      )}
-                    >
-                      {Math.round(score.score)}/100
-                    </span>
-                    <ChevronRight className="size-4 text-muted-foreground" />
+      <div className={cn(listPanelClassName, "flex-1")}>
+        {priorities.map((score) => {
+          const criteria = notes.filter((note) =>
+            score.criterionIds.includes(note.criterionId)
+          )
+          return (
+            <button
+              className={listRowClassName}
+              key={score.id}
+              onClick={() => onOpenPillar(score.pillarId)}
+              type="button"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <p className="min-w-0 truncate text-sm font-medium">
+                  {score.pillarName}
+                </p>
+                <span className="flex shrink-0 items-center gap-1">
+                  <span
+                    className={cn(
+                      "text-sm font-semibold tabular-nums",
+                      scoreTextClass[scoreLevel(score.score)]
+                    )}
+                  >
+                    {Math.round(score.score)}/100
                   </span>
-                </div>
-                <ProgressMeter
-                  className="mt-2.5"
-                  label={score.pillarName}
-                  max={100}
-                  tone="level"
-                  value={score.score}
-                />
-                {criteria.length > 0 ? (
-                  <p className="mt-2.5 text-[12px] leading-5 text-muted-foreground">
-                    {t("evaluation.analysis.priorities.criteria", {
-                      criteria: criteria
-                        .map((note) =>
-                          note.note === null
-                            ? `${note.criterionName} (${t("evaluation.nonConcluded")})`
-                            : `${note.criterionName} (${note.note}/3)`
-                        )
-                        .join(" · "),
-                    })}
-                  </p>
-                ) : null}
-              </button>
-            )
-          })}
-        </div>
-      </StaleResult>
+                  <ChevronRight className="size-4 text-muted-foreground" />
+                </span>
+              </div>
+              <ProgressMeter
+                className="mt-2.5"
+                label={score.pillarName}
+                max={100}
+                tone="level"
+                value={score.score}
+              />
+              {criteria.length > 0 ? (
+                <p className="mt-2.5 text-[12px] leading-5 text-muted-foreground">
+                  {t("evaluation.analysis.priorities.criteria", {
+                    criteria: criteria
+                      .map((note) =>
+                        note.note === null
+                          ? `${note.criterionName} (${t("evaluation.nonConcluded")})`
+                          : `${note.criterionName} (${note.note}/3)`
+                      )
+                      .join(" · "),
+                  })}
+                </p>
+              ) : null}
+            </button>
+          )
+        })}
+      </div>
     </PageSection>
   )
 }
@@ -121,14 +115,11 @@ export function CriteriaCoveragePanel({
   notes,
   available = true,
   onOpenCriterion,
-  stale = false,
 }: {
   notes: LayerBNote[]
   /** `false` : la couche B n'est pas encore calculée par le moteur. */
   available?: boolean
   onOpenCriterion: (criterionId: string) => void
-  /** Corpus modifié depuis le run : le panneau est désactivé. */
-  stale?: boolean
 }) {
   const { t } = useTranslation()
 
@@ -144,38 +135,36 @@ export function CriteriaCoveragePanel({
             : t("evaluation.run.layerBComingSoon")}
         </div>
       ) : (
-        <StaleResult className="flex-1" stale={stale}>
-          <div className={cn(listPanelClassName, "flex-1")}>
-            {sortNotes(notes).map((note) => (
-              <button
-                className={cn(
-                  listRowClassName,
-                  "grid grid-cols-[minmax(0,1fr)_96px_auto] items-center gap-4 py-3"
-                )}
-                key={note.id}
-                onClick={() => onOpenCriterion(note.criterionId)}
-                type="button"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
-                    {note.criterionName}
-                  </p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">
-                    {t("evaluation.pillar.questionsDocumented", {
-                      documented: note.documented,
-                      total: note.total,
-                    })}
-                  </p>
-                </div>
-                <CriterionNoteMeter note={note.note} />
-                <span className="flex w-24 items-center justify-end gap-1 text-sm">
-                  <CriterionNoteValue note={note.note} />
-                  <ChevronRight className="size-4 text-muted-foreground" />
-                </span>
-              </button>
-            ))}
-          </div>
-        </StaleResult>
+        <div className={cn(listPanelClassName, "flex-1")}>
+          {sortNotes(notes).map((note) => (
+            <button
+              className={cn(
+                listRowClassName,
+                "grid grid-cols-[minmax(0,1fr)_96px_auto] items-center gap-4 py-3"
+              )}
+              key={note.id}
+              onClick={() => onOpenCriterion(note.criterionId)}
+              type="button"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">
+                  {note.criterionName}
+                </p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                  {t("evaluation.pillar.questionsDocumented", {
+                    documented: note.documented,
+                    total: note.total,
+                  })}
+                </p>
+              </div>
+              <CriterionNoteMeter note={note.note} />
+              <span className="flex w-24 items-center justify-end gap-1 text-sm">
+                <CriterionNoteValue note={note.note} />
+                <ChevronRight className="size-4 text-muted-foreground" />
+              </span>
+            </button>
+          ))}
+        </div>
       )}
     </PageSection>
   )
