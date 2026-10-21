@@ -25,12 +25,10 @@ const aboveOverlay = "relative z-10"
    l'autre, la jauge et les blocs suivants tombent a la meme hauteur. */
 function PillarHeading({
   name,
-  versionLabel,
   description,
   disabled = false,
 }: {
   name: string
-  versionLabel?: string
   description?: string
   /** Pilier pas encore note : le titre s'estompe comme le reste de la carte. */
   disabled?: boolean
@@ -46,11 +44,6 @@ function PillarHeading({
       >
         {name}
       </h3>
-      {versionLabel ? (
-        <p className="mt-1 truncate text-[12px] leading-5 text-muted-foreground">
-          {versionLabel}
-        </p>
-      ) : null}
       <p
         className="mt-1 line-clamp-2 min-h-10 text-[12px] leading-5 text-muted-foreground"
         title={description}
@@ -91,11 +84,7 @@ export function PillarResultCard({
       </span>
     ) : null
   const header = (
-    <PillarHeading
-      description={description}
-      name={score.pillarName}
-      versionLabel={score.versionLabel}
-    />
+    <PillarHeading description={description} name={score.pillarName} />
   )
   const criteriaBadges =
     criteria.length > 0 ? (
