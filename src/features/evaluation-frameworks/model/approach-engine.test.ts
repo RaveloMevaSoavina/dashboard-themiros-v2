@@ -60,6 +60,7 @@ const criteria: CriterionRule[] = [
 ].map(([code, exAnte, midTerm], index) => ({
   id: `criterion-${index + 1}`,
   code,
+  isOecdDac: code !== "equite" && code !== "gestion_adaptative",
   defaultWeight: null,
   applicabilityByCycle: {
     ex_ante: exAnte,
@@ -69,6 +70,14 @@ const criteria: CriterionRule[] = [
     ex_post: "obligatoire",
   },
 })) as CriterionRule[]
+
+/* Les poids sont arrondis a 4 decimales ; leur somme flottante peut deriver
+   au-dela (la base tolere 0,01). */
+const totalWeight = (result: ReturnType<typeof computeApproach>) =>
+  Math.round(
+    result.criteria.reduce((sum, criterion) => sum + criterion.weight, 0) *
+      10_000
+  ) / 10_000
 
 const questionnaire: ApproachQuestionnaire = {
   scale: "national",
@@ -119,18 +128,13 @@ test("computes the documented FIDA mid-term recipe deterministically", () => {
       ?.applicability,
     "non_applicable"
   )
+  assert.equal(totalWeight(first), 100)
   assert.equal(
-    first.criteria.reduce((sum, criterion) => sum + criterion.weight, 0),
-    100
-  )
-  assert.equal(
-    first.criteria.find((criterion) => criterion.code === "pertinence")
-      ?.source,
+    first.criteria.find((criterion) => criterion.code === "pertinence")?.source,
     "framework"
   )
   assert.equal(
-    first.criteria.find((criterion) => criterion.code === "efficacite")
-      ?.source,
+    first.criteria.find((criterion) => criterion.code === "efficacite")?.source,
     "nature"
   )
   assert.ok(
@@ -256,10 +260,7 @@ test("keeps non-applicable criteria at zero", () => {
 
   assert.equal(impact?.applicability, "non_applicable")
   assert.equal(impact?.weight, 0)
-  assert.equal(
-    result.criteria.reduce((sum, criterion) => sum + criterion.weight, 0),
-    100
-  )
+  assert.equal(totalWeight(result), 100)
 })
 
 const counterfactualQuestionnaire: ApproachQuestionnaire = {
@@ -351,4 +352,117 @@ test("adds most significant change to a complex corpus-only final or ex-post eva
       "most_significant_change"
     )
   )
+})
+
+const dacCodes = [
+  "pertinence",
+  "coherence",
+  "efficacite",
+  "efficience",
+  "impact",
+  "durabilite",
+]
+const activeCodes = (result: ReturnType<typeof computeApproach>) =>
+  result.criteria
+    .filter((criterion) => criterion.applicability !== "non_applicable")
+    .map((criterion) => criterion.code)
+const midTermInput: ComputeApproachInput = {
+  ...recipeInput,
+  fingerprint: { ...recipeInput.fingerprint, stage: "mid_term" },
+}
+
+test("applies only the OECD-DAC criteria by default, whatever the framework", () => {
+  const result = computeApproach(midTermInput)
+
+  assert.equal(result.cycle, "mi_parcours")
+  assert.deepEqual(activeCodes(result), dacCodes)
+  for (const code of ["equite", "gestion_adaptative"]) {
+    const criterion = result.criteria.find((item) => item.code === code)
+
+    assert.equal(criterion?.applicability, "non_applicable")
+    assert.equal(criterion?.weight, 0)
+    assert.equal(criterion?.selection, "optional")
+    assert.equal(criterion?.manualOverride, false)
+  }
+  assert.ok(
+    result.criteria
+      .filter((criterion) => dacCodes.includes(criterion.code))
+      .every((criterion) => criterion.selection === "locked")
+  )
+  assert.equal(totalWeight(result), 100)
+})
+
+test("keeps the five applicable OECD-DAC criteria during implementation", () => {
+  const result = computeApproach(recipeInput)
+
+  assert.equal(result.cycle, "en_cours")
+  assert.deepEqual(
+    activeCodes(result),
+    dacCodes.filter((code) => code !== "impact")
+  )
+  assert.equal(
+    result.criteria.find((criterion) => criterion.code === "impact")?.selection,
+    "cycle_excluded"
+  )
+})
+
+test("adds and removes an additional criterion and renormalizes weights", () => {
+  const added = computeApproach({
+    ...midTermInput,
+    overrides: { optionalCriteria: ["equite"] },
+  })
+  const equite = added.criteria.find((criterion) => criterion.code === "equite")
+
+  assert.deepEqual(activeCodes(added), [...dacCodes, "equite"])
+  assert.equal(equite?.applicability, "obligatoire")
+  assert.equal(equite?.manualOverride, true)
+  assert.ok((equite?.weight ?? 0) > 0)
+  assert.equal(totalWeight(added), 100)
+  assert.deepEqual(added.justifications.criteria.inputs.optionalCriteria, [
+    "equite",
+  ])
+  assert.equal(added.justifications.criteria.overridden, true)
+
+  const removed = computeApproach({
+    ...midTermInput,
+    overrides: { optionalCriteria: [] },
+  })
+
+  assert.deepEqual(removed, computeApproach(midTermInput))
+})
+
+test("never lets the selection remove an OECD-DAC criterion", () => {
+  const result = computeApproach({
+    ...midTermInput,
+    overrides: { optionalCriteria: ["pertinence", "unknown"] },
+  })
+
+  assert.deepEqual(activeCodes(result), dacCodes)
+  assert.ok(result.criteria.every((criterion) => !criterion.manualOverride))
+})
+
+test("never applies an additional criterion excluded by the cycle", () => {
+  const result = computeApproach({
+    ...recipeInput,
+    criteria: criteria.map((criterion) =>
+      criterion.code === "equite"
+        ? {
+            ...criterion,
+            applicabilityByCycle: {
+              ...criterion.applicabilityByCycle,
+              en_cours: "non_applicable",
+            },
+          }
+        : criterion
+    ),
+    overrides: { optionalCriteria: ["equite", "gestion_adaptative"] },
+  })
+  const equite = result.criteria.find(
+    (criterion) => criterion.code === "equite"
+  )
+
+  assert.equal(equite?.selection, "cycle_excluded")
+  assert.equal(equite?.applicability, "non_applicable")
+  assert.equal(equite?.manualOverride, false)
+  assert.ok(activeCodes(result).includes("gestion_adaptative"))
 })

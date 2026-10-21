@@ -55,6 +55,8 @@ export type ApproachFingerprint = {
 export type CriterionRule = {
   id: string
   code: string
+  /* Critere CAD-OCDE : toujours retenu quand le cycle l'autorise. */
+  isOecdDac: boolean
   defaultWeight: number | null
   applicabilityByCycle: Record<EvaluationCycle, CriterionApplicability>
 }
@@ -66,6 +68,8 @@ export type ApproachOverrides = Partial<{
   complexityClass: ComplexityClass
   evaluationNature: EvaluationNature
   recommendedMethods: RecommendedMethods
+  /* Criteres complementaires (non CAD-OCDE) ajoutes par l'utilisateur. */
+  optionalCriteria: string[]
 }>
 
 export type RuleJustification = {
@@ -75,12 +79,22 @@ export type RuleJustification = {
   overridden?: boolean
 }
 
+/**
+ * - `locked` : critere CAD-OCDE, toujours retenu ;
+ * - `optional` : critere complementaire que l'utilisateur ajoute ou retire ;
+ * - `cycle_excluded` : non applicable au cycle, ni ajoutable ni retirable.
+ */
+export type CriterionSelection = "locked" | "optional" | "cycle_excluded"
+
 export type ComputedApproachCriterion = {
   refCriterionId: string
   code: string
   applicability: CriterionApplicability
   weight: number
   source: "cycle" | "framework" | "nature"
+  selection: CriterionSelection
+  /* Vrai quand l'utilisateur a ajoute ce critere complementaire (GF-4). */
+  manualOverride: boolean
 }
 
 export type ComputedApproach = {
@@ -472,22 +486,39 @@ function natureAccents(nature: EvaluationNature) {
   return new Set<string>()
 }
 
+/**
+ * RG-4.7 : les criteres CAD-OCDE sont retenus d'office ; les criteres
+ * complementaires (Equite, Gestion adaptative) ne le sont que si l'utilisateur
+ * les ajoute. Le cycle reste prioritaire : un critere qu'il exclut n'est
+ * jamais retenu.
+ */
 export function computeCriteria(
   cycle: EvaluationCycle,
   nature: EvaluationNature,
   framework: ReferenceFramework,
-  criterionRules: CriterionRule[]
+  criterionRules: CriterionRule[],
+  optionalCriteria: string[] = []
 ): ComputedApproachCriterion[] {
   const accents = natureAccents(nature)
+  const addedCriteria = new Set(optionalCriteria)
   const prepared = criterionRules.map((criterion) => {
     const cycleApplicability = criterion.applicabilityByCycle[cycle]
     const frameworkOverride = readFrameworkCriterionOverride(
       framework,
       criterion.code
     )
-    const applicability =
+    const selection: CriterionSelection =
       cycleApplicability === "non_applicable"
-        ? cycleApplicability
+        ? "cycle_excluded"
+        : criterion.isOecdDac
+          ? "locked"
+          : "optional"
+    const manualOverride =
+      selection === "optional" && addedCriteria.has(criterion.code)
+    const applicability =
+      selection === "cycle_excluded" ||
+      (selection === "optional" && !manualOverride)
+        ? "non_applicable"
         : (frameworkOverride?.status ?? cycleApplicability)
     const accented = accents.has(criterion.code)
     const baseWeight =
@@ -506,6 +537,8 @@ export function computeCriteria(
         : frameworkOverride
           ? ("framework" as const)
           : ("cycle" as const),
+      selection,
+      manualOverride,
     }
   })
   const active = prepared.filter(
@@ -543,6 +576,8 @@ export function computeCriteria(
       applicability: criterion.applicability,
       weight,
       source: criterion.source,
+      selection: criterion.selection,
+      manualOverride: criterion.manualOverride,
     }
   })
 }
@@ -618,11 +653,13 @@ export function computeApproach(input: ComputeApproachInput): ComputedApproach {
     input.questionnaire,
     overrides.recommendedMethods
   )
+  const optionalCriteria = unique(overrides.optionalCriteria ?? [])
   const criteria = computeCriteria(
     cycleResult.cycle,
     nature,
     framework,
-    input.criteria
+    input.criteria,
+    optionalCriteria
   )
 
   return {
@@ -713,12 +750,17 @@ export function computeApproach(input: ComputeApproachInput): ComputedApproach {
           cycle: cycleResult.cycle,
           frameworkCode: framework.code,
           nature,
+          optionalCriteria: criteria
+            .filter((criterion) => criterion.manualOverride)
+            .map((criterion) => criterion.code),
         },
-        result: criteria.map(({ code, applicability, weight }) => ({
+        result: criteria.map(({ code, applicability, weight, selection }) => ({
           code,
           applicability,
           weight,
+          selection,
         })),
+        overridden: criteria.some((criterion) => criterion.manualOverride),
       },
     },
   }

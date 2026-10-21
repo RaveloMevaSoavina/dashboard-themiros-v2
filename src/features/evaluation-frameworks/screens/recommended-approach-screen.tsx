@@ -6,8 +6,11 @@ import {
   ChevronDown,
   ListFilter,
   LoaderCircle,
+  Lock,
+  Plus,
   RefreshCw,
   Scale,
+  X,
 } from "lucide-react"
 import { type ReactNode, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -82,6 +85,7 @@ function toCriterionRule(
   return {
     id: criterion.id,
     code: criterion.code,
+    isOecdDac: criterion.is_oecd_dac,
     defaultWeight: criterion.default_weight,
     applicabilityByCycle,
   }
@@ -132,6 +136,7 @@ export function RecommendedApproachScreen() {
   const [isWhyOpen, setIsWhyOpen] = useState(false)
   const [isContextOpen, setIsContextOpen] = useState(false)
   const [showExcludedCriteria, setShowExcludedCriteria] = useState(false)
+  const [optionalCriteria, setOptionalCriteria] = useState<string[]>([])
   const locale = (
     ["fr", "en", "pt", "es"].includes(i18n.resolvedLanguage ?? "fr")
       ? i18n.resolvedLanguage
@@ -199,12 +204,14 @@ export function RecommendedApproachScreen() {
         toCriterionRule(criterion, cycle)
       ),
       currentYear,
+      overrides: { optionalCriteria },
     })
   }, [
     criteriaQuery.data,
     cycle,
     fingerprint,
     frameworksQuery.data,
+    optionalCriteria,
     persona,
     questionnaire,
   ])
@@ -272,9 +279,19 @@ export function RecommendedApproachScreen() {
   const activeCriteria = approach.criteria
     .filter((criterion) => criterion.applicability !== "non_applicable")
     .sort((first, second) => second.weight - first.weight)
-  const excludedCriteria = approach.criteria.filter(
-    (criterion) => criterion.applicability === "non_applicable"
+  const availableOptionalCriteria = approach.criteria.filter(
+    (criterion) =>
+      criterion.selection === "optional" && !criterion.manualOverride
   )
+  const excludedCriteria = approach.criteria.filter(
+    (criterion) => criterion.selection === "cycle_excluded"
+  )
+  const toggleOptionalCriterion = (code: string) =>
+    setOptionalCriteria((current) =>
+      current.includes(code)
+        ? current.filter((value) => value !== code)
+        : [...current, code]
+    )
   const visibleCriteria = showExcludedCriteria
     ? [...activeCriteria, ...excludedCriteria]
     : activeCriteria
@@ -633,6 +650,13 @@ export function RecommendedApproachScreen() {
                   </span>
                 </div>
 
+                {criterion.selection === "locked" ? (
+                  <p className="mt-2 flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
+                    <Lock className="size-3" />
+                    {t("approach.lockedCriterion")}
+                  </p>
+                ) : null}
+
                 <p className="mt-2 text-[11px] text-muted-foreground">
                   {t("approach.criterionSource", {
                     source: t(`approach.sources.${criterion.source}`),
@@ -657,11 +681,65 @@ export function RecommendedApproachScreen() {
                       style={{ width: `${criterion.weight}%` }}
                     />
                   </div>
+                  {criterion.manualOverride ? (
+                    <Button
+                      className="mt-4 w-full"
+                      disabled={confirmation.isPending}
+                      onClick={() => toggleOptionalCriterion(criterion.code)}
+                      size="sm"
+                      variant="ghost"
+                    >
+                      <X />
+                      {t("approach.removeCriterion")}
+                    </Button>
+                  ) : null}
                 </div>
               </article>
             )
           })}
         </div>
+
+        {availableOptionalCriteria.length > 0 ? (
+          <div className="mt-6 border-t border-border pt-5">
+            <h3 className="text-xs font-semibold">
+              {t("approach.optionalCriteriaTitle")}
+            </h3>
+            <p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">
+              {t("approach.optionalCriteriaDescription")}
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {availableOptionalCriteria.map((criterion) => {
+                const reference = referenceCriteria.get(criterion.code)
+
+                return (
+                  <article
+                    className="flex flex-col rounded-lg border border-dashed border-border p-4"
+                    key={criterion.code}
+                  >
+                    <h4 className="text-sm font-semibold">
+                      {reference?.label ?? humanize(criterion.code)}
+                    </h4>
+                    {reference?.description ? (
+                      <p className="mt-2 text-[11px] leading-5 text-muted-foreground">
+                        {reference.description}
+                      </p>
+                    ) : null}
+                    <Button
+                      className="mt-4 w-full"
+                      disabled={confirmation.isPending}
+                      onClick={() => toggleOptionalCriterion(criterion.code)}
+                      size="sm"
+                      variant="outline"
+                    >
+                      <Plus />
+                      {t("approach.addCriterion")}
+                    </Button>
+                  </article>
+                )
+              })}
+            </div>
+          </div>
+        ) : null}
 
         {excludedCriteria.length > 0 ? (
           <div className="mt-4 border-t border-border pt-4">

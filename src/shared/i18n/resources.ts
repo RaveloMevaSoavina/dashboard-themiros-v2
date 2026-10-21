@@ -604,14 +604,22 @@ export const resources = {
         criteriaStep: "Étape 3",
         criteriaTitle: "Vérifiez les critères qui seront appliqués",
         criteriaDescription:
-          "Ces critères découlent de l'approche ci-dessus. Le cycle définit leur applicabilité ; le référentiel et la nature de l'évaluation ajustent leur poids.",
+          "Les critères CAD-OCDE sont toujours appliqués. Le cycle définit leur applicabilité ; le référentiel et la nature de l'évaluation ajustent leur poids.",
         activeCriteria_one: "{{count}} critère actif",
         activeCriteria_other: "{{count}} critères actifs",
         totalWeight: "Total : {{weight}} %",
         criterionSource: "Pondération issue du : {{source}}",
         weightLabel: "Pondération",
-        showExcludedCriteria_one: "Afficher {{count}} critère exclu",
-        showExcludedCriteria_other: "Afficher {{count}} critères exclus",
+        lockedCriterion: "Critère CAD-OCDE · toujours appliqué",
+        removeCriterion: "Retirer ce critère",
+        addCriterion: "Ajouter ce critère",
+        optionalCriteriaTitle: "Critères complémentaires",
+        optionalCriteriaDescription:
+          "Ces critères d'adaptation climatique ne sont pas appliqués par défaut. Ajoutez-les si l'évaluation doit les couvrir ; les pondérations sont recalculées.",
+        showExcludedCriteria_one:
+          "Afficher {{count}} critère exclu par le cycle",
+        showExcludedCriteria_other:
+          "Afficher {{count}} critères exclus par le cycle",
         hideExcludedCriteria: "Masquer les critères exclus",
         applicability: {
           obligatoire: "Obligatoire",
@@ -1965,14 +1973,22 @@ export const resources = {
         criteriaStep: "Step 3",
         criteriaTitle: "Review the criteria that will be applied",
         criteriaDescription:
-          "These criteria follow from the approach above. The cycle determines applicability; the framework and evaluation nature adjust their weights.",
+          "OECD-DAC criteria are always applied. The cycle determines applicability; the framework and evaluation nature adjust their weights.",
         activeCriteria_one: "{{count}} active criterion",
         activeCriteria_other: "{{count}} active criteria",
         totalWeight: "Total: {{weight}}%",
         criterionSource: "Weight derived from: {{source}}",
         weightLabel: "Weight",
-        showExcludedCriteria_one: "Show {{count}} excluded criterion",
-        showExcludedCriteria_other: "Show {{count}} excluded criteria",
+        lockedCriterion: "OECD-DAC criterion · always applied",
+        removeCriterion: "Remove this criterion",
+        addCriterion: "Add this criterion",
+        optionalCriteriaTitle: "Additional criteria",
+        optionalCriteriaDescription:
+          "These climate adaptation criteria are not applied by default. Add them if the evaluation must cover them; weights are recomputed.",
+        showExcludedCriteria_one:
+          "Show {{count}} criterion excluded by the cycle",
+        showExcludedCriteria_other:
+          "Show {{count}} criteria excluded by the cycle",
         hideExcludedCriteria: "Hide excluded criteria",
         applicability: {
           obligatoire: "Required",
