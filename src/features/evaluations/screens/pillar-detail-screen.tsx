@@ -339,7 +339,10 @@ function VariablesSection({
   isLoading: boolean
   onShowEvidence: (variable: IntermediateVariable) => void
 }) {
-  const { t } = useTranslation()
+  const { i18n, t } = useTranslation()
+  const number = new Intl.NumberFormat(i18n.resolvedLanguage, {
+    maximumFractionDigits: 2,
+  })
   /* Mode comparatif : une ligne par variable et par version, la plus
      récente d'abord. */
   const comparative =
@@ -352,6 +355,17 @@ function VariablesSection({
       description={t("evaluation.pillar.variablesDescription")}
       title={t("evaluation.layerA.variables")}
     >
+      {/* Règle de valeur des variables (couche A, moteur layer-a). */}
+      <ul className="mb-4 space-y-1 rounded-xl border border-dashed border-border p-4 text-[12px] leading-5 text-muted-foreground">
+        {(["present", "partiel", "non_renseigne"] as const).map((state) => (
+          <li key={state}>
+            <span className="font-medium text-foreground">
+              {t(`evaluation.variableState.${state}`)}
+            </span>{" "}
+            — {t(`evaluation.pillar.variableRules.${state}`)}
+          </li>
+        ))}
+      </ul>
       {isLoading ? (
         <Skeleton className="h-52 rounded-xl" />
       ) : variables.length === 0 ? (
@@ -362,11 +376,16 @@ function VariablesSection({
         <div className={listPanelClassName}>
           {rows.map((variable) => (
             <div
-              className="grid items-center gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_110px_70px_auto]"
+              className="grid items-center gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_120px_80px_70px_auto]"
               key={variable.id}
             >
               <div className="min-w-0">
                 <p className="text-sm font-medium">{variable.label}</p>
+                {variable.description ? (
+                  <p className="mt-0.5 line-clamp-2 text-[12px] leading-5 text-muted-foreground">
+                    {variable.description}
+                  </p>
+                ) : null}
                 {comparative ? (
                   <p className="mt-0.5 text-[12px] text-muted-foreground">
                     {variable.versionLabel}
@@ -385,6 +404,16 @@ function VariablesSection({
                 }
               >
                 {t(`evaluation.variableState.${variable.state}`)}
+                {variable.value === null
+                  ? null
+                  : ` · ${number.format(variable.value)}`}
+              </span>
+              <span className="text-[12px] tabular-nums text-muted-foreground">
+                {variable.weight === null
+                  ? "—"
+                  : t("evaluation.pillar.variableWeight", {
+                      weight: number.format(variable.weight),
+                    })}
               </span>
               <span className="text-[12px] tabular-nums text-muted-foreground">
                 {variable.documentsCount} docs

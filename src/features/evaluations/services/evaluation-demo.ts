@@ -327,6 +327,9 @@ function buildDataset(
           pillarId: pillar.id,
           code: variable.code,
           label: variable.label,
+          description: variable.description,
+          weight: Number((100 / pillar.variables.length).toFixed(2)),
+          value: state === "present" ? 1 : state === "partiel" ? 0.5 : null,
           state,
           documentsCount:
             state === "non_renseigne" ? 0 : 1 + ((variableIndex + 1) % 4),

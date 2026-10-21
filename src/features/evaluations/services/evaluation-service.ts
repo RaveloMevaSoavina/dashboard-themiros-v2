@@ -133,11 +133,14 @@ type VariableRow = {
   id: string
   pillar_id: string
   variable_code: string
+  value: number | null
   state: IntermediateVariable["state"]
   documents_count: number
   corpus_confidence: number | null
   program_versions: { label: string; order_index: number } | null
-  pillars: { pillar_variables: VariableTextRow[] } | null
+  pillars: {
+    pillar_variables: (VariableTextRow & { weight: number | null })[]
+  } | null
 }
 
 type AnswerRow = {
@@ -781,7 +784,7 @@ export async function listIntermediateVariables(
   const { data, error } = await supabase
     .from("intermediate_variables")
     .select(
-      `id, pillar_id, variable_code, state, documents_count, corpus_confidence, program_versions(label, order_index), pillars(pillar_variables(${variableTextSelect}))`
+      `id, pillar_id, variable_code, value, state, documents_count, corpus_confidence, program_versions(label, order_index), pillars(pillar_variables(${variableTextSelect}, weight))`
     )
     .eq("run_id", runId)
     .eq("pillar_id", pillarId)
@@ -793,13 +796,15 @@ export async function listIntermediateVariables(
     const variable = row.pillars?.pillar_variables?.find(
       (item) => item.code === row.variable_code
     )
+    const text = variable ? localizeVariable(variable, locale) : null
     return {
       id: row.id,
       pillarId: row.pillar_id,
       code: row.variable_code,
-      label: variable
-        ? localizeVariable(variable, locale).label
-        : row.variable_code,
+      label: text?.label ?? row.variable_code,
+      description: text?.description ?? "",
+      weight: variable?.weight == null ? null : Number(variable.weight),
+      value: row.value === null ? null : Number(row.value),
       state: row.state,
       documentsCount: row.documents_count,
       confidence:

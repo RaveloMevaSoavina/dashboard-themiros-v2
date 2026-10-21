@@ -106,6 +106,12 @@ export type IntermediateVariable = {
   pillarId: string
   code: string
   label: string
+  /** Ce que la variable observe, tel que défini dans le cadre. */
+  description: string
+  /** Poids de la variable dans le score du pilier (%). */
+  weight: number | null
+  /** 1 (présent), 0,5 (partiel) ; `null` si non renseignée. */
+  value: number | null
   state: "present" | "partiel" | "absent" | "non_renseigne"
   documentsCount: number
   confidence: number | null

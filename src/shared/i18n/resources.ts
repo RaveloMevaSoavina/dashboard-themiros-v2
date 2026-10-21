@@ -1096,7 +1096,16 @@ export const resources = {
           noAlerts: "Aucune alerte de cohérence sur ce pilier.",
           seeAlerts: "Voir les alertes",
           variablesDescription:
-            "État de chaque variable observable et documents mobilisés.",
+            "Ce que le moteur a repéré dans le corpus pour chaque variable. Le score du pilier est la moyenne des valeurs des variables renseignées, pondérée par leur poids.",
+          variableWeight: "Poids {{weight}} %",
+          variableRules: {
+            present:
+              "valeur 1 : un passage très proche de la variable figure dans au moins 2 documents distincts.",
+            partiel:
+              "valeur 0,5 : la variable est repérée, sans cette convergence de 2 sources.",
+            non_renseigne:
+              "aucun passage repéré : la variable est exclue du score, sans le faire baisser.",
+          },
           notFound: "Pilier non évalué",
           notFoundDescription:
             "Ce pilier n'a pas de score dans le dernier run.",
@@ -2450,7 +2459,16 @@ export const resources = {
           noAlerts: "No consistency alert on this pillar.",
           seeAlerts: "View alerts",
           variablesDescription:
-            "State of each observable variable and documents used.",
+            "What the engine found in the corpus for each variable. The pillar score is the average value of the documented variables, weighted by their weight.",
+          variableWeight: "Weight {{weight}}%",
+          variableRules: {
+            present:
+              "value 1: a passage closely matching the variable appears in at least 2 distinct documents.",
+            partiel:
+              "value 0.5: the variable is found, without that convergence of 2 sources.",
+            non_renseigne:
+              "no passage found: the variable is left out of the score and does not lower it.",
+          },
           notFound: "Pillar not assessed",
           notFoundDescription: "This pillar has no score in the latest run.",
         },

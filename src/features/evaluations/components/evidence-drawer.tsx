@@ -6,9 +6,8 @@ import {
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-
-import type { Evidence } from "@/features/evaluations/model/types"
 import { getDocumentUrl } from "@/features/corpus/services/corpus-service"
+import type { Evidence } from "@/features/evaluations/model/types"
 import { Button } from "@/shared/ui/base/button"
 import {
   Sheet,
