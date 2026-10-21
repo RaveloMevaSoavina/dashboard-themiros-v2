@@ -121,6 +121,14 @@ export function AlertsScreen() {
           {!alert.pillarId && !alert.criterionId ? (
             <Badge variant="secondary">{alert.type}</Badge>
           ) : null}
+          {alert.qualified ? null : (
+            <Badge
+              title={t("evaluation.alerts.unqualifiedHint")}
+              variant="outline"
+            >
+              {t("evaluation.alerts.unqualified")}
+            </Badge>
+          )}
         </div>
         <Badge variant="outline">
           {t(`evaluation.alertStatus.${alert.status}`)}

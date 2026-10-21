@@ -121,6 +121,7 @@ type AlertRow = {
   alert_type: string
   severity: LayerCAlert["severity"]
   message: string
+  qualified: boolean
   status: LayerCAlert["status"]
   instruction_comment: string | null
   pillar_id: string | null
@@ -677,7 +678,7 @@ export async function getEvaluationResults(
     supabase
       .from("layer_c_alerts")
       .select(
-        `id, alert_type, severity, message, status, instruction_comment, pillar_id, criterion_id, pillars(${pillarTextSelect}), criteria(name)`
+        `id, alert_type, severity, message, qualified, status, instruction_comment, pillar_id, criterion_id, pillars(${pillarTextSelect}), criteria(name)`
       )
       .eq("run_id", run.id),
     supabase
@@ -733,6 +734,7 @@ export async function getEvaluationResults(
     type: row.alert_type,
     severity: row.severity,
     message: row.message,
+    qualified: row.qualified,
     status: row.status,
     instructionComment: row.instruction_comment,
     pillarId: row.pillar_id,
@@ -922,15 +924,10 @@ export async function listAlertEvidences(
 
 export async function instructAlert(alertId: string, comment: string) {
   if (isDemoId(alertId)) return instructDemoAlert(alertId, comment)
-  const { data } = await supabase.auth.getUser()
-  const { error } = await supabase
-    .from("layer_c_alerts")
-    .update({
-      status: "instruite",
-      instruction_comment: comment.trim(),
-      instructed_by: data.user?.id ?? null,
-      instructed_at: new Date().toISOString(),
-    })
-    .eq("id", alertId)
+  /* La fonction journalise l'instruction ; le reste de l'alerte est fige. */
+  const { error } = await supabase.rpc("instruct_alert", {
+    p_alert_id: alertId,
+    p_comment: comment.trim(),
+  })
   if (error) throw error
 }

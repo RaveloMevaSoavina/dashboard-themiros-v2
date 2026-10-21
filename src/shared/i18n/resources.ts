@@ -1285,7 +1285,7 @@ export const resources = {
           layerBComingSoon:
             "Les appréciations évaluatives (couche B) seront calculées dans une prochaine version du moteur.",
           layerCComingSoon:
-            "Les alertes de cohérence (couche C) seront calculées dans une prochaine version du moteur.",
+            "Les alertes de cohérence (couche C) n'ont pas été calculées pour ce run : relancez l'analyse pour les obtenir.",
           waitingClassification:
             "En attente de la classification du corpus par le cadre validé.",
           stepNotAvailable: "Non disponible dans cette version du moteur",
@@ -1360,6 +1360,9 @@ export const resources = {
           instructedTitle: "Instruites ({{count}})",
           filtered: "Alertes du pilier {{name}}",
           showAll: "Voir toutes les alertes",
+          unqualified: "Non qualifiée par l'IA",
+          unqualifiedHint:
+            "Écart détecté par les règles, sans qualification par l'IA : gravité et message par défaut.",
         },
         severity: { mineure: "Mineure", majeure: "Majeure" },
         alertStatus: {
@@ -2647,7 +2650,7 @@ export const resources = {
           layerBComingSoon:
             "Evaluative assessments (layer B) will be computed in a future version of the engine.",
           layerCComingSoon:
-            "Consistency alerts (layer C) will be computed in a future version of the engine.",
+            "Consistency alerts (layer C) were not computed for this run: run the analysis again to get them.",
           waitingClassification:
             "Waiting for the corpus to be classified with the validated framework.",
           stepNotAvailable: "Not available in this engine version",
@@ -2721,6 +2724,9 @@ export const resources = {
           instructedTitle: "Reviewed ({{count}})",
           filtered: "Alerts for pillar {{name}}",
           showAll: "Show all alerts",
+          unqualified: "Not qualified by AI",
+          unqualifiedHint:
+            "Gap detected by the rules, not qualified by AI: default severity and message.",
         },
         severity: { mineure: "Minor", majeure: "Major" },
         alertStatus: {

@@ -144,6 +144,9 @@ export type LayerCAlert = {
   type: string
   severity: "mineure" | "majeure"
   message: string
+  /** `false` : ecart publie sans qualification par l'IA (gravite et
+      message par defaut de la regle). */
+  qualified: boolean
   status: "a_instruire" | "instruite"
   instructionComment: string | null
   pillarId: string | null
