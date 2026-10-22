@@ -93,7 +93,9 @@ values
   ('5a000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000001',
    'Les besoins sont-ils analysés ?', 'B', 'active', null, 1, 'referential'),
   ('5a000000-0000-0000-0000-000000000002', 'c1000000-0000-0000-0000-000000000001',
-   'Les priorités nationales sont-elles prises en compte ?', 'B', 'active', null, 2, 'referential');
+   'Les priorités nationales sont-elles prises en compte ?', 'B', 'active', null, 2, 'referential'),
+  ('5a000000-0000-0000-0000-000000000003', 'c1000000-0000-0000-0000-000000000001',
+   'Le ciblage est-il justifié ?', 'B', 'active', null, 3, 'referential');
 update public.frameworks
 set status = 'validated', validated_by = '11111111-1111-1111-1111-111111111111',
     validated_at = now()
@@ -201,7 +203,7 @@ as $$
       'notes', jsonb_build_array(jsonb_build_object(
         'criterion_id', 'c1000000-0000-0000-0000-000000000001',
         'note', 1, 'status', 'conclu',
-        'documented_sub_questions', 2, 'total_sub_questions', 2,
+        'documented_sub_questions', 2, 'total_sub_questions', 3,
         'justification', 'Weakly supported.', 'ambiguity_flag', false
       )),
       'answers', jsonb_build_array(
@@ -210,7 +212,10 @@ as $$
           'status', 'documentee', 'note', 1, 'contradictory', false),
         jsonb_build_object('id', '5b000000-0000-0000-0000-000000000002',
           'sub_question_id', '5a000000-0000-0000-0000-000000000002',
-          'status', 'documentee', 'note', 1, 'contradictory', false)
+          'status', 'documentee', 'note', 1, 'contradictory', false),
+        jsonb_build_object('id', '5b000000-0000-0000-0000-000000000003',
+          'sub_question_id', '5a000000-0000-0000-0000-000000000003',
+          'status', 'non_documentee', 'note', null, 'contradictory', false)
       ),
       'evidences', jsonb_build_array(
         jsonb_build_object('sub_answer_id', '5b000000-0000-0000-0000-000000000001',

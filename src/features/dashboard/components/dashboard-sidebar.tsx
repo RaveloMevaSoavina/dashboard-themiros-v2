@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query"
 import { ChevronRight } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { NavLink, useLocation } from "react-router-dom"
@@ -7,6 +8,7 @@ import {
   type NavItem,
   sectionsForPersona,
 } from "@/features/dashboard/model/navigation"
+import { countPendingAlerts } from "@/features/evaluations/services/evaluation-service"
 import { WorkspaceSwitcher } from "@/features/workspaces/components/workspace-switcher"
 import { useWorkspaces } from "@/features/workspaces/model/workspace-provider"
 import {
@@ -41,6 +43,18 @@ export function DashboardSidebar() {
   const { isMobile, setOpenMobile } = useSidebar()
 
   const sections = sectionsForPersona(persona)
+  const showsAlerts = sections.some((section) =>
+    section.items.some((item) =>
+      item.children?.some((child) => child.badge === "pendingAlerts")
+    )
+  )
+  /* Sous la cle des resultats : l'instruction d'une alerte, qui invalide
+     ["evaluation", workspaceId], met aussi le compteur a jour (RG-5). */
+  const pendingAlerts = useQuery({
+    queryKey: ["evaluation", navigationWorkspaceId, "pending-alerts"],
+    queryFn: () => countPendingAlerts(navigationWorkspaceId),
+    enabled: Boolean(navigationWorkspaceId) && showsAlerts,
+  })
 
   /* Sur mobile la barre est un tiroir superpose : le choix d'une entree
      doit le refermer, alors qu'en desktop elle reste ouverte. */
@@ -107,6 +121,12 @@ export function DashboardSidebar() {
                     >
                       <NavLink onClick={closeOnMobile} to={childPath}>
                         <span>{t(`nav.items.${child.labelKey}`)}</span>
+                        {child.badge === "pendingAlerts" &&
+                        (pendingAlerts.data ?? 0) > 0 ? (
+                          <span className="ml-auto rounded-md bg-sidebar-accent px-1.5 text-xs font-medium tabular-nums">
+                            {pendingAlerts.data}
+                          </span>
+                        ) : null}
                       </NavLink>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>

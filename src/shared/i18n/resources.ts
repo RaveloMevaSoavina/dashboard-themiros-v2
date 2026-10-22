@@ -1353,6 +1353,16 @@ export const resources = {
           saved: "L'alerte a été instruite et commentée.",
           saveError: "Impossible d'enregistrer l'instruction.",
           empty: "Aucune alerte de cohérence pour ce run.",
+          emptyNothingCompared:
+            "Aucune alerte, mais aucun critère n'a été conclu : les couches A et B n'ont pas pu être comparées. L'absence d'alerte ne dit rien de leur cohérence.",
+          emptyConsistent_one:
+            "Aucun écart entre les couches A et B sur le critère conclu.",
+          emptyConsistent_other:
+            "Aucun écart entre les couches A et B sur les {{count}} critères conclus.",
+          emptyInfirmed_one:
+            "Aucune alerte : un écart détecté par les règles a été écarté par l'IA après examen des preuves.",
+          emptyInfirmed_other:
+            "Aucune alerte : {{count}} écarts détectés par les règles ont été écartés par l'IA après examen des preuves.",
           pendingTitle: "À instruire ({{count}})",
           pendingDescription:
             "Alertes majeures en tête. Instruisez chaque alerte avec un commentaire.",
@@ -2717,6 +2727,16 @@ export const resources = {
           saved: "The alert was reviewed and commented.",
           saveError: "Unable to save the review.",
           empty: "No consistency alerts for this run.",
+          emptyNothingCompared:
+            "No alerts, but no criterion was concluded: layers A and B could not be compared. The absence of alerts says nothing about their consistency.",
+          emptyConsistent_one:
+            "No gap between layers A and B on the concluded criterion.",
+          emptyConsistent_other:
+            "No gap between layers A and B on the {{count}} concluded criteria.",
+          emptyInfirmed_one:
+            "No alerts: one gap detected by the rules was dismissed by AI after reviewing the evidence.",
+          emptyInfirmed_other:
+            "No alerts: {{count}} gaps detected by the rules were dismissed by AI after reviewing the evidence.",
           pendingTitle: "To review ({{count}})",
           pendingDescription:
             "Major alerts first. Review each alert with a comment.",

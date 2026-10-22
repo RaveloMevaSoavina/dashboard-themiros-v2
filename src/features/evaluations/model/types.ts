@@ -179,6 +179,9 @@ export type EvaluationResults = {
   traceability: number
   /** Couches calculées par le moteur du run (B et C : sprints suivants). */
   layers: { b: boolean; c: boolean }
+  /** Résumé de l'étape `layer_c` : écarts détectés par les règles et
+      écarts infirmés par l'IA. `null` sans résumé (démonstration, ancien run). */
+  layerCSummary: { detected: number; infirmed: number } | null
   /** Un document est entré au corpus ou en est sorti depuis le run (CA-6.2). */
   corpusChanged: boolean
 }

@@ -18,6 +18,8 @@ export type NavChild = {
   labelKey: string
   /** Personas autorises a voir l'entree (US-2.3, US-2.4). */
   personas: readonly Persona[]
+  /** Compteur affiche a cote de l'entree. */
+  badge?: "pendingAlerts"
 }
 
 export type NavItem = NavChild & {
@@ -96,6 +98,7 @@ export const navSections: readonly NavSection[] = [
           {
             segment: "alerts",
             labelKey: "layerC",
+            badge: "pendingAlerts",
             personas: allPersonas,
           },
         ],

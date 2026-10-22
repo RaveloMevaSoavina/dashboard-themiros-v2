@@ -476,6 +476,7 @@ function buildDataset(
       alerts,
       traceability: 87,
       layers: { b: true, c: true },
+      layerCSummary: null,
       corpusChanged: false,
     },
     variables,
@@ -505,6 +506,15 @@ export function getDemoResults(
     datasets.set(workspaceId, dataset)
   }
   return structuredClone(dataset.results)
+}
+
+export function countDemoPendingAlerts(workspaceId: string) {
+  return (
+    datasets
+      .get(workspaceId)
+      ?.results.alerts.filter((alert) => alert.status === "a_instruire")
+      .length ?? 0
+  )
 }
 
 export function listDemoVariables(runId: string, pillarId: string) {

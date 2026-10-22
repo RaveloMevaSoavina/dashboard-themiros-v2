@@ -85,6 +85,22 @@ export function AlertsScreen() {
   const instructed = alerts
     .filter((alert) => alert.status === "instruite")
     .sort(bySeverity)
+  /* « Aucune alerte » ne vaut cohérence que si des critères ont pu être
+     comparés : un critère non conclu ne produit jamais d'alerte (RG-2). */
+  const concluded =
+    results.data?.layerB.filter((note) => note.status === "conclu").length ?? 0
+  const infirmed = results.data?.layerCSummary?.infirmed ?? 0
+  const emptyMessage = !results.data?.run
+    ? t("evaluation.alerts.empty")
+    : !results.data.layers.c
+      ? t("evaluation.run.layerCComingSoon")
+      : pillarFilter || !results.data.layerCSummary
+        ? t("evaluation.alerts.empty")
+        : concluded === 0
+          ? t("evaluation.alerts.emptyNothingCompared")
+          : infirmed > 0
+            ? t("evaluation.alerts.emptyInfirmed", { count: infirmed })
+            : t("evaluation.alerts.emptyConsistent", { count: concluded })
   const renderAlert = (alert: LayerCAlert) => (
     <article className="rounded-xl border border-border p-5" key={alert.id}>
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -204,9 +220,7 @@ export function AlertsScreen() {
         <Skeleton className="h-80 rounded-xl" />
       ) : alerts.length === 0 ? (
         <div className="rounded-xl border border-border p-16 text-center text-[13px] text-muted-foreground">
-          {results.data?.run && !results.data.layers.c
-            ? t("evaluation.run.layerCComingSoon")
-            : t("evaluation.alerts.empty")}
+          {emptyMessage}
         </div>
       ) : (
         <>

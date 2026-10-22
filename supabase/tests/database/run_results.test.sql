@@ -255,7 +255,7 @@ select is(
       "summary": {"scores_without_value": 0}
     }'
   ),
-  '{"scores": 1, "evidences": 2, "variables": 1, "notes": 0, "sub_answers": 0, "layer_b_evidences": 0}'::jsonb,
+  '{"scores": 1, "evidences": 2, "variables": 1, "notes": 0, "sub_answers": 0, "layer_b_evidences": 0, "alerts": 0, "alert_evidences": 0}'::jsonb,
   'les résultats sont écrits ; une preuve sur un segment inconnu est ignorée'
 );
 
@@ -294,7 +294,7 @@ select results_eq(
 select is(
   (select output_summary from public.run_steps
    where run_id = (select id from launched) and step_name = 'restitution'),
-  '{"scores": 1, "evidences": 2, "variables": 1, "notes": 0, "sub_answers": 0, "layer_b_evidences": 0, "scores_without_value": 0}'::jsonb,
+  '{"scores": 1, "evidences": 2, "variables": 1, "notes": 0, "sub_answers": 0, "layer_b_evidences": 0, "alerts": 0, "scores_without_value": 0}'::jsonb,
   'la restitution résume ce qui a été publié'
 );
 select is(

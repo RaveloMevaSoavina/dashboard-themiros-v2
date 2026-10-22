@@ -17,6 +17,7 @@ import {
   type SubAnswer,
 } from "@/features/evaluations/model/types"
 import {
+  countDemoPendingAlerts,
   demoFixturePillars,
   demoRun,
   getDemoResults,
@@ -652,6 +653,7 @@ export async function getEvaluationResults(
       alerts: [],
       traceability: 0,
       layers: { b: false, c: false },
+      layerCSummary: null,
       corpusChanged: false,
     }
 
@@ -773,8 +775,37 @@ export async function getEvaluationResults(
       b: layerAvailable(steps, "layer_b"),
       c: layerAvailable(steps, "layer_c"),
     },
+    layerCSummary: layerCSummary(steps),
     corpusChanged,
   }
+}
+
+function layerCSummary(steps: RunStep[]): EvaluationResults["layerCSummary"] {
+  const summary = steps.find(
+    (step) => step.name === "layer_c" && step.status === "completed"
+  )?.summary
+  if (typeof summary?.detected !== "number") return null
+  return {
+    detected: summary.detected,
+    infirmed: typeof summary.infirmed === "number" ? summary.infirmed : 0,
+  }
+}
+
+/** Alertes « à instruire » du run affiché : badge de navigation (RG-5). */
+export async function countPendingAlerts(workspaceId: string): Promise<number> {
+  if (isEvaluationDemo) return countDemoPendingAlerts(workspaceId)
+  const run = await getLatestRun(workspaceId, { completed: true })
+  if (!run) return 0
+  const { count, error } = await supabase
+    .from("layer_c_alerts")
+    .select("id", { count: "exact", head: true })
+    .eq("run_id", run.id)
+    .eq("status", "a_instruire")
+  if (error) {
+    if (isMissingRelation(error)) return 0
+    throw error
+  }
+  return count ?? 0
 }
 
 export async function listIntermediateVariables(
