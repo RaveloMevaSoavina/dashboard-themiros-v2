@@ -1397,8 +1397,14 @@ export const resources = {
             "Chaque constat renvoie à ses preuves. La synthèse est figée avec le run : elle n'est jamais recalculée à l'affichage.",
           empty:
             "Lancez une analyse pour obtenir la synthèse et le plan d'action.",
-          unqualified:
-            "L'IA n'était pas disponible lors du calcul : les constats sont des libellés factuels, sans conclusion ni plan d'action.",
+          notice: {
+            not_needed:
+              "Aucun progrès, faiblesse ni zone à vérifier n'a été retenu pour ce run : il n'y avait rien à faire rédiger par l'IA.",
+            disabled:
+              "L'IA était désactivée lors du calcul : les constats sont des libellés factuels, sans conclusion ni plan d'action.",
+            failed:
+              "La rédaction par l'IA a échoué lors du calcul : les constats sont des libellés factuels, sans conclusion ni plan d'action. Relancez l'analyse pour réessayer.",
+          },
           sections: {
             progres: "Progrès principaux",
             faiblesse: "Faiblesses principales",
@@ -1410,7 +1416,13 @@ export const resources = {
             a_verifier: "Aucune alerte de cohérence à vérifier.",
           },
           conclusionTitle: "Conclusion",
-          noConclusion: "Conclusion non rédigée : l'IA n'était pas disponible.",
+          noConclusion: {
+            completed: "L'IA n'a pas rédigé de conclusion pour ce run.",
+            not_needed:
+              "Pas de conclusion : aucun constat n'a été retenu pour ce run.",
+            disabled: "Conclusion non rédigée : l'IA était désactivée.",
+            failed: "Conclusion non rédigée : la rédaction par l'IA a échoué.",
+          },
         },
         actionPlan: {
           title: "Plan d'action",
@@ -1427,9 +1439,16 @@ export const resources = {
           listDescription:
             "Les mêmes actions pour les trois rôles, reformulées pour chacun : changer de rôle ne recalcule rien.",
           because: "Recommandée parce que {{reason}}.",
-          empty: "Aucune action : aucune faiblesse ni alerte n'a été retenue.",
-          unqualified:
-            "Plan d'action non généré : l'IA n'était pas disponible lors du calcul.",
+          empty: {
+            completed:
+              "Aucune action : l'IA n'a proposé aucune action étayée pour ce run.",
+            not_needed:
+              "Aucune action : aucune faiblesse, alerte ni critère non conclu n'a été retenu.",
+            disabled:
+              "Plan d'action non généré : l'IA était désactivée lors du calcul.",
+            failed:
+              "Plan d'action non généré : la rédaction par l'IA a échoué lors du calcul.",
+          },
         },
         severity: { mineure: "Mineure", majeure: "Majeure" },
         alertStatus: {
@@ -2827,8 +2846,14 @@ export const resources = {
           bannerDescription:
             "Every finding links to its evidence. The synthesis is frozen with the run: it is never recomputed on display.",
           empty: "Run an analysis to get the synthesis and action plan.",
-          unqualified:
-            "AI was unavailable during the computation: findings are factual labels, with no conclusion or action plan.",
+          notice: {
+            not_needed:
+              "No progress, weakness or area to verify was retained for this run: there was nothing for AI to write.",
+            disabled:
+              "AI was disabled during the computation: findings are factual labels, with no conclusion or action plan.",
+            failed:
+              "AI writing failed during the computation: findings are factual labels, with no conclusion or action plan. Run the analysis again to retry.",
+          },
           sections: {
             progres: "Main progress",
             faiblesse: "Main weaknesses",
@@ -2840,7 +2865,12 @@ export const resources = {
             a_verifier: "No consistency alert to verify.",
           },
           conclusionTitle: "Conclusion",
-          noConclusion: "No conclusion written: AI was unavailable.",
+          noConclusion: {
+            completed: "AI wrote no conclusion for this run.",
+            not_needed: "No conclusion: no finding was retained for this run.",
+            disabled: "No conclusion written: AI was disabled.",
+            failed: "No conclusion written: AI writing failed.",
+          },
         },
         actionPlan: {
           title: "Action plan",
@@ -2857,9 +2887,16 @@ export const resources = {
           listDescription:
             "The same actions for all three roles, reworded for each: switching roles recomputes nothing.",
           because: "Recommended because {{reason}}.",
-          empty: "No action: no weakness or alert was retained.",
-          unqualified:
-            "Action plan not generated: AI was unavailable during the computation.",
+          empty: {
+            completed:
+              "No action: AI proposed no supported action for this run.",
+            not_needed:
+              "No action: no weakness, alert or unconcluded criterion was retained.",
+            disabled:
+              "Action plan not generated: AI was disabled during the computation.",
+            failed:
+              "Action plan not generated: AI writing failed during the computation.",
+          },
         },
         severity: { mineure: "Minor", majeure: "Major" },
         alertStatus: {

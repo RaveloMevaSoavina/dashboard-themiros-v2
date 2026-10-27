@@ -628,7 +628,7 @@ function buildDataset(
       confidence,
       leads,
     },
-    qualified: true,
+    status: "completed",
     items,
     actions,
   }

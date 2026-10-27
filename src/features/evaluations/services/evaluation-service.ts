@@ -196,7 +196,7 @@ type SynthesisRow = {
     confidence?: number
     leads?: boolean
   }
-  qualified: boolean
+  status: Restitution["status"]
 }
 
 type SynthesisItemRow = OriginRow & {
@@ -1060,7 +1060,7 @@ export async function getRunRestitution(
   const [synthesisResult, itemsResult, actionsResult] = await Promise.all([
     supabase
       .from("syntheses")
-      .select("conclusion, limits, qualified")
+      .select("conclusion, limits, status")
       .eq("run_id", runId)
       .maybeSingle(),
     supabase
@@ -1128,7 +1128,7 @@ export async function getRunRestitution(
       confidence: synthesis.limits.confidence ?? 0,
       leads: synthesis.limits.leads ?? false,
     },
-    qualified: synthesis.qualified,
+    status: synthesis.status,
     items,
     actions,
   }

@@ -100,9 +100,7 @@ export function ActionPlanScreen() {
           >
             {actions.length === 0 ? (
               <div className="rounded-xl border border-border p-12 text-center text-[13px] text-muted-foreground">
-                {data.qualified
-                  ? t("evaluation.actionPlan.empty")
-                  : t("evaluation.actionPlan.unqualified")}
+                {t(`evaluation.actionPlan.empty.${data.status}`)}
               </div>
             ) : (
               <ol className="flex flex-col gap-3">

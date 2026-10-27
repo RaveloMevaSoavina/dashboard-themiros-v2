@@ -80,9 +80,9 @@ export function SynthesisScreen() {
       ) : (
         <StaleResult className="gap-10" stale={stale}>
           {data.limits.leads ? <CorpusLimits limits={data.limits} /> : null}
-          {data.qualified ? null : (
+          {data.status === "completed" ? null : (
             <div className="rounded-xl border border-dashed border-border px-4 py-3 text-[13px] text-muted-foreground">
-              {t("evaluation.synthesis.unqualified")}
+              {t(`evaluation.synthesis.notice.${data.status}`)}
             </div>
           )}
           <div className="grid gap-6 lg:grid-cols-3">
@@ -132,7 +132,7 @@ export function SynthesisScreen() {
             <div className="rounded-xl border border-border p-5 text-sm leading-7">
               {data.conclusion ?? (
                 <span className="text-muted-foreground">
-                  {t("evaluation.synthesis.noConclusion")}
+                  {t(`evaluation.synthesis.noConclusion.${data.status}`)}
                 </span>
               )}
             </div>

@@ -237,7 +237,8 @@ as $$
       'conclusion', '  The results suggest, subject to a richer corpus, a well documented budget.  ',
       'limits', jsonb_build_object('not_concluded', 0, 'criteria', 1,
         'confidence', 0.8, 'leads', false),
-      'qualified', true
+      'qualified', true,
+      'status', 'completed'
     ),
     'items', jsonb_build_array(
       jsonb_build_object(
@@ -299,11 +300,11 @@ select is(
   'la restitution est écrite avec le run'
 );
 select results_eq(
-  $$select conclusion, qualified, limits ->> 'leads'
+  $$select conclusion, qualified, status, limits ->> 'leads'
     from public.syntheses where run_id = pg_temp.run_id()$$,
   $$values ('The results suggest, subject to a richer corpus, a well documented budget.'::text,
-    true, 'false'::text)$$,
-  'conclusion nettoyée, qualification et limites'
+    true, 'completed'::text, 'false'::text)$$,
+  'conclusion nettoyée, qualification, statut et limites'
 );
 select results_eq(
   $$select item.section, evidence.segment_id

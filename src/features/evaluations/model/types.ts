@@ -203,8 +203,18 @@ export type RunAction = {
   projections: Partial<Record<Persona, ActionProjection>>
 }
 
+/**
+ * Redaction de la synthese par l'IA : faite, inutile (aucun constat retenu),
+ * IA desactivee, ou en echec.
+ */
+export type RestitutionStatus =
+  | "completed"
+  | "not_needed"
+  | "disabled"
+  | "failed"
+
 export type Restitution = {
-  /** `null` : conclusion non redigee (IA indisponible). */
+  /** `null` : conclusion non redigee (voir `status`). */
   conclusion: string | null
   limits: {
     notConcluded: number
@@ -213,8 +223,8 @@ export type Restitution = {
     /** La synthese ouvre par les limites du corpus (RG-11.1). */
     leads: boolean
   }
-  /** `false` : libelles factuels, sans redaction par l'IA ni plan. */
-  qualified: boolean
+  /** Hors `completed` : libelles factuels, sans conclusion ni plan. */
+  status: RestitutionStatus
   items: SynthesisItem[]
   actions: RunAction[]
 }
