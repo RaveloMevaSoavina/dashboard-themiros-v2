@@ -1374,6 +1374,63 @@ export const resources = {
           unqualifiedHint:
             "Écart détecté par les règles, sans qualification par l'IA : gravité et message par défaut.",
         },
+        restitution: {
+          origin: {
+            pillar: "Pilier",
+            criterion: "Critère",
+            alert: "Alerte",
+          },
+          limitsTitle: "Limites du corpus",
+          limits_one:
+            "{{count}} critère sur {{criteria}} non conclu, confiance corpus moyenne {{confidence}} % : lisez ces résultats comme provisoires.",
+          limits_other:
+            "{{count}} critères sur {{criteria}} non conclus, confiance corpus moyenne {{confidence}} % : lisez ces résultats comme provisoires.",
+          notComputed:
+            "La synthèse et le plan d'action n'ont pas été calculés pour ce run : relancez l'analyse pour les obtenir.",
+        },
+        synthesis: {
+          title: "Synthèse",
+          description:
+            "Trois progrès, trois faiblesses, trois zones à vérifier et une conclusion prudente, tirés du dernier run.",
+          bannerTitle: "Synthèse en une page",
+          bannerDescription:
+            "Chaque constat renvoie à ses preuves. La synthèse est figée avec le run : elle n'est jamais recalculée à l'affichage.",
+          empty:
+            "Lancez une analyse pour obtenir la synthèse et le plan d'action.",
+          unqualified:
+            "L'IA n'était pas disponible lors du calcul : les constats sont des libellés factuels, sans conclusion ni plan d'action.",
+          sections: {
+            progres: "Progrès principaux",
+            faiblesse: "Faiblesses principales",
+            a_verifier: "Zones à vérifier",
+          },
+          none: {
+            progres: "Aucun pilier renforcé depuis la version précédente.",
+            faiblesse: "Aucune faiblesse retenue.",
+            a_verifier: "Aucune alerte de cohérence à vérifier.",
+          },
+          conclusionTitle: "Conclusion",
+          noConclusion: "Conclusion non rédigée : l'IA n'était pas disponible.",
+        },
+        actionPlan: {
+          title: "Plan d'action",
+          description:
+            "Actions recommandées à partir des faiblesses et des alertes du dernier run, formulées pour votre rôle de lecture.",
+          bannerTitle: "Lecture {{persona}}",
+          register: {
+            decideur: "Des arbitrages : réallouer, exiger, décider.",
+            pmu: "Des actions opérationnelles : compléter un dispositif, documenter un mécanisme.",
+            analyste:
+              "Des travaux d'instruction : documenter une variable, vérifier une contradiction.",
+          },
+          listTitle: "Actions ({{count}})",
+          listDescription:
+            "Les mêmes actions pour les trois rôles, reformulées pour chacun : changer de rôle ne recalcule rien.",
+          because: "Recommandée parce que {{reason}}.",
+          empty: "Aucune action : aucune faiblesse ni alerte n'a été retenue.",
+          unqualified:
+            "Plan d'action non généré : l'IA n'était pas disponible lors du calcul.",
+        },
         severity: { mineure: "Mineure", majeure: "Majeure" },
         alertStatus: {
           a_instruire: "À instruire",
@@ -2747,6 +2804,62 @@ export const resources = {
           unqualified: "Not qualified by AI",
           unqualifiedHint:
             "Gap detected by the rules, not qualified by AI: default severity and message.",
+        },
+        restitution: {
+          origin: {
+            pillar: "Pillar",
+            criterion: "Criterion",
+            alert: "Alert",
+          },
+          limitsTitle: "Corpus limits",
+          limits_one:
+            "{{count}} criterion out of {{criteria}} not concluded, average corpus confidence {{confidence}}%: read these results as provisional.",
+          limits_other:
+            "{{count}} criteria out of {{criteria}} not concluded, average corpus confidence {{confidence}}%: read these results as provisional.",
+          notComputed:
+            "The synthesis and action plan were not computed for this run: run the analysis again to get them.",
+        },
+        synthesis: {
+          title: "Synthesis",
+          description:
+            "Three progress points, three weaknesses, three areas to verify and a cautious conclusion, drawn from the latest run.",
+          bannerTitle: "One-page synthesis",
+          bannerDescription:
+            "Every finding links to its evidence. The synthesis is frozen with the run: it is never recomputed on display.",
+          empty: "Run an analysis to get the synthesis and action plan.",
+          unqualified:
+            "AI was unavailable during the computation: findings are factual labels, with no conclusion or action plan.",
+          sections: {
+            progres: "Main progress",
+            faiblesse: "Main weaknesses",
+            a_verifier: "Areas to verify",
+          },
+          none: {
+            progres: "No pillar strengthened since the previous version.",
+            faiblesse: "No weakness retained.",
+            a_verifier: "No consistency alert to verify.",
+          },
+          conclusionTitle: "Conclusion",
+          noConclusion: "No conclusion written: AI was unavailable.",
+        },
+        actionPlan: {
+          title: "Action plan",
+          description:
+            "Recommended actions based on the weaknesses and alerts of the latest run, worded for your reading role.",
+          bannerTitle: "{{persona}} view",
+          register: {
+            decideur: "Trade-offs: reallocate, require, decide.",
+            pmu: "Operational actions: complete a mechanism, document a process.",
+            analyste:
+              "Review work: document a variable, check a contradiction.",
+          },
+          listTitle: "Actions ({{count}})",
+          listDescription:
+            "The same actions for all three roles, reworded for each: switching roles recomputes nothing.",
+          because: "Recommended because {{reason}}.",
+          empty: "No action: no weakness or alert was retained.",
+          unqualified:
+            "Action plan not generated: AI was unavailable during the computation.",
         },
         severity: { mineure: "Minor", majeure: "Major" },
         alertStatus: {

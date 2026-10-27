@@ -15,6 +15,7 @@ import { ApproachFlowLayout } from "@/features/evaluation-frameworks/screens/app
 import { ApproachGenerationScreen } from "@/features/evaluation-frameworks/screens/approach-generation-screen"
 import { ApproachPillarsScreen } from "@/features/evaluation-frameworks/screens/approach-pillars-screen"
 import { RecommendedApproachScreen } from "@/features/evaluation-frameworks/screens/recommended-approach-screen"
+import { ActionPlanScreen } from "@/features/evaluations/screens/action-plan-screen"
 import { AlertsScreen } from "@/features/evaluations/screens/alerts-screen"
 import { AnalysisOverviewScreen } from "@/features/evaluations/screens/analysis-overview-screen"
 import { FrameworkBriefScreen } from "@/features/evaluations/screens/framework-brief-screen"
@@ -23,6 +24,7 @@ import { FrameworkPillarsScreen } from "@/features/evaluations/screens/framework
 import { LayerAScreen } from "@/features/evaluations/screens/layer-a-screen"
 import { LayerBScreen } from "@/features/evaluations/screens/layer-b-screen"
 import { PillarDetailScreen } from "@/features/evaluations/screens/pillar-detail-screen"
+import { SynthesisScreen } from "@/features/evaluations/screens/synthesis-screen"
 import { CreateWorkspaceScreen } from "@/features/workspaces/screens/create-workspace-screen"
 import { WelcomeScreen } from "@/features/workspaces/screens/welcome-screen"
 import { WorkspaceAccessLayout } from "@/features/workspaces/screens/workspace-access-layout"
@@ -49,6 +51,8 @@ const workspaceRoutes = navSections.flatMap((section) =>
             <Navigate replace to="documents" />
           ) : item.segment === "analysis" ? (
             <AnalysisOverviewScreen />
+          ) : item.segment === "plan" ? (
+            <SynthesisScreen />
           ) : item.segment === "settings" ? (
             <WorkspaceSettingsScreen />
           ) : (
@@ -68,6 +72,10 @@ const workspaceRoutes = navSections.flatMap((section) =>
             <LayerBScreen />
           ) : item.segment === "analysis" && child.segment === "alerts" ? (
             <AlertsScreen />
+          ) : item.segment === "plan" && child.segment === "synthesis" ? (
+            <SynthesisScreen />
+          ) : item.segment === "plan" && child.segment === "actions" ? (
+            <ActionPlanScreen />
           ) : item.segment === "settings" && child.segment === "general" ? (
             <WorkspaceSettingsScreen />
           ) : item.segment === "settings" && child.segment === "brief" ? (

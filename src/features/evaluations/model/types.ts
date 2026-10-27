@@ -2,6 +2,7 @@ import type {
   CriterionApplicability,
   ObservableVariable,
 } from "@/features/evaluation-frameworks/model/types"
+import type { Persona } from "@/features/workspaces/model/types"
 
 export type EvaluationPillar = {
   id: string
@@ -166,6 +167,56 @@ export type Evidence = {
   pillarName: string | null
   criterionName: string | null
   variableCode: string | null
+}
+
+/** Ce qui fonde une puce de synthese ou une action, et ou la verifier. */
+export type RestitutionOrigin = {
+  type: "pillar" | "criterion" | "alert"
+  id: string
+  /** Pilier ou critere ; pour une alerte, son critere, sinon son pilier. */
+  name: string | null
+  /** Pilier de l'alerte : filtre de l'ecran des alertes. */
+  pillarId: string | null
+}
+
+export type SynthesisSection = "progres" | "faiblesse" | "a_verifier"
+
+export type SynthesisItem = {
+  id: string
+  section: SynthesisSection
+  position: number
+  text: string
+  origin: RestitutionOrigin
+}
+
+export type ActionProjection = {
+  text: string
+  /** Raison, affichee apres « Recommandee parce que ». */
+  justification: string
+}
+
+/** Action commune aux trois personas, reformulee pour chacun (RG-11.4). */
+export type RunAction = {
+  id: string
+  position: number
+  origin: RestitutionOrigin
+  projections: Partial<Record<Persona, ActionProjection>>
+}
+
+export type Restitution = {
+  /** `null` : conclusion non redigee (IA indisponible). */
+  conclusion: string | null
+  limits: {
+    notConcluded: number
+    criteria: number
+    confidence: number
+    /** La synthese ouvre par les limites du corpus (RG-11.1). */
+    leads: boolean
+  }
+  /** `false` : libelles factuels, sans redaction par l'IA ni plan. */
+  qualified: boolean
+  items: SynthesisItem[]
+  actions: RunAction[]
 }
 
 export type EvaluationResults = {

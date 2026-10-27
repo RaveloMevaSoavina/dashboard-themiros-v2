@@ -8,13 +8,16 @@ import type {
   LayerAScore,
   LayerBNote,
   LayerCAlert,
+  Restitution,
+  RunAction,
   SubAnswer,
+  SynthesisItem,
 } from "@/features/evaluations/model/types"
 
 /**
  * Mode demonstration des resultats d'analyse (`VITE_EVALUATION_DEMO=true`).
  * Tant qu'aucun run n'est branche cote backend, il remplace les couches
- * A, B et C par des donnees fictives. Les piliers et criteres du cadre sont
+ * A, B et C et la restitution par des donnees fictives. Les piliers et criteres du cadre sont
  * repris s'ils existent, sinon un cadre fictif prend le relais. Rien n'est
  * ecrit en base : l'instruction d'une alerte vit en memoire.
  */
@@ -215,7 +218,9 @@ type DemoDataset = {
   variables: Map<string, IntermediateVariable[]>
   answers: Map<string, SubAnswer[]>
   evidences: DemoEvidence[]
-  alertEvidenceIds: Map<string, string[]>
+  restitution: Restitution
+  /** Preuves citees par une alerte, une puce de synthese ou une action. */
+  linkedEvidenceIds: Map<string, string[]>
 }
 
 const datasets = new Map<string, DemoDataset>()
@@ -453,7 +458,7 @@ function buildDataset(
   const alerts: LayerCAlert[] = alertDrafts.flatMap((draft, index) =>
     draft ? [{ ...draft, id: `demo-alert-${index}` }] : []
   )
-  const alertEvidenceIds = new Map(
+  const linkedEvidenceIds = new Map(
     alerts.map((alert) => [
       alert.id,
       evidences
@@ -466,6 +471,167 @@ function buildDataset(
         .map((evidence) => evidence.id),
     ])
   )
+
+  /* Restitution : memes regles que le moteur, sur les resultats fictifs. */
+  const pillarEvidenceIds = (pillarId: string) =>
+    evidences
+      .filter(
+        (evidence) => evidence.pillarId === pillarId && !evidence.criterionId
+      )
+      .slice(0, 3)
+      .map((evidence) => evidence.id)
+  const criterionEvidenceIds = (criterionId: string) =>
+    evidences
+      .filter((evidence) => evidence.criterionId === criterionId)
+      .slice(0, 3)
+      .map((evidence) => evidence.id)
+  const progresses = layerA
+    .filter((score) => score.evolution === "renforce" && (score.delta ?? 0) > 0)
+    .sort((left, right) => (right.delta ?? 0) - (left.delta ?? 0))
+    .slice(0, 3)
+  const weakCriteria = layerB.filter(
+    (note) => note.status === "conclu" && note.note !== null && note.note <= 1
+  )
+  const weakPillars = layerA
+    .filter((score) => score.score !== null && score.score < 50)
+    .sort((left, right) => (left.score ?? 0) - (right.score ?? 0))
+  const toVerify = alerts
+    .filter((alert) => alert.status === "a_instruire")
+    .sort(
+      (left, right) =>
+        Number(right.severity === "majeure") -
+        Number(left.severity === "majeure")
+    )
+    .slice(0, 3)
+  const items: SynthesisItem[] = [
+    ...progresses.map((score, index) => ({
+      id: `demo-item-progres-${index}`,
+      section: "progres" as const,
+      position: index + 1,
+      text: `${score.pillarName} : le dispositif est mieux documenté (${score.score}/100, +${score.delta} points).`,
+      origin: {
+        type: "pillar" as const,
+        id: score.pillarId,
+        name: score.pillarName,
+        pillarId: score.pillarId,
+      },
+    })),
+    ...[
+      ...weakCriteria.map((note) => ({
+        text: `${note.criterionName} : appréciation faible (${note.note}/3), les preuves portent sur l'existence plus que sur la mise en œuvre.`,
+        origin: {
+          type: "criterion" as const,
+          id: note.criterionId,
+          name: note.criterionName,
+          pillarId: null,
+        },
+      })),
+      ...weakPillars.map((score) => ({
+        text: `${score.pillarName} : présence documentaire limitée (${score.score}/100).`,
+        origin: {
+          type: "pillar" as const,
+          id: score.pillarId,
+          name: score.pillarName,
+          pillarId: score.pillarId,
+        },
+      })),
+    ]
+      .slice(0, 3)
+      .map((item, index) => ({
+        ...item,
+        id: `demo-item-faiblesse-${index}`,
+        section: "faiblesse" as const,
+        position: index + 1,
+      })),
+    ...toVerify.map((alert, index) => ({
+      id: `demo-item-a_verifier-${index}`,
+      section: "a_verifier" as const,
+      position: index + 1,
+      text: alert.message,
+      origin: {
+        type: "alert" as const,
+        id: alert.id,
+        name: alert.criterionName ?? alert.pillarName,
+        pillarId: alert.pillarId,
+      },
+    })),
+  ]
+  const originEvidenceIds = (origin: SynthesisItem["origin"]) =>
+    origin.type === "alert"
+      ? (linkedEvidenceIds.get(origin.id) ?? [])
+      : origin.type === "criterion"
+        ? criterionEvidenceIds(origin.id)
+        : pillarEvidenceIds(origin.id)
+  const actions: RunAction[] = items
+    .filter((item) => item.section !== "progres")
+    .map((item, index) => {
+      const name = item.origin.name ?? "—"
+      const alert = item.origin.type === "alert"
+      return {
+        id: `demo-action-${index}`,
+        position: index + 1,
+        origin: item.origin,
+        projections: {
+          decideur: {
+            text: alert
+              ? `Exiger une note d'explication sur l'écart relevé pour « ${name} » avant la prochaine revue.`
+              : `Conditionner la prochaine tranche à un plan de renforcement de « ${name} ».`,
+            justification: alert
+              ? "une alerte de cohérence reste à instruire"
+              : `« ${name} » reste faiblement étayé`,
+          },
+          pmu: {
+            text: alert
+              ? `Rassembler les pièces qui expliquent l'écart sur « ${name} ».`
+              : `Documenter la mise en œuvre effective de « ${name} » dans le prochain rapport.`,
+            justification: alert
+              ? "une alerte de cohérence reste à instruire"
+              : `« ${name} » reste faiblement étayé`,
+          },
+          analyste: {
+            text: alert
+              ? `Confronter les extraits contradictoires sur « ${name} » et instruire l'alerte.`
+              : `Rechercher des preuves de résultats pour « ${name} » dans les rapports annuels.`,
+            justification: alert
+              ? "une alerte de cohérence reste à instruire"
+              : `« ${name} » reste faiblement étayé`,
+          },
+        },
+      }
+    })
+  for (const item of items)
+    linkedEvidenceIds.set(item.id, originEvidenceIds(item.origin))
+  for (const action of actions)
+    linkedEvidenceIds.set(action.id, originEvidenceIds(action.origin))
+  const notConcluded = layerB.filter(
+    (note) => note.status === "non_conclu"
+  ).length
+  const confidence =
+    layerA.length === 0
+      ? 0
+      : Number(
+          (
+            layerA.reduce((total, score) => total + score.confidence, 0) /
+            layerA.length
+          ).toFixed(2)
+        )
+  const leads = notConcluded >= 2 || confidence < 0.5
+  const restitution: Restitution = {
+    conclusion: `${
+      leads
+        ? `Sous réserve d'un corpus encore incomplet (${notConcluded} critères non conclus sur ${layerB.length}), les`
+        : "Les"
+    } résultats suggèrent un dispositif mieux documenté qu'à la version précédente, sans que sa mise en œuvre effective soit encore établie. Les écarts signalés doivent être instruits avant toute conclusion.`,
+    limits: {
+      notConcluded,
+      criteria: layerB.length,
+      confidence,
+      leads,
+    },
+    qualified: true,
+    items,
+    actions,
+  }
 
   return {
     results: {
@@ -482,7 +648,8 @@ function buildDataset(
     variables,
     answers,
     evidences,
-    alertEvidenceIds,
+    restitution,
+    linkedEvidenceIds,
   }
 }
 
@@ -543,9 +710,14 @@ export function listDemoEvidences(filters: {
     .map(toEvidence)
 }
 
-export function listDemoAlertEvidences(alertId: string): Evidence[] {
+export function getDemoRestitution(runId: string): Restitution | null {
+  const restitution = datasetForRun(runId)?.restitution
+  return restitution ? structuredClone(restitution) : null
+}
+
+export function listDemoLinkedEvidences(id: string): Evidence[] {
   for (const dataset of datasets.values()) {
-    const ids = dataset.alertEvidenceIds.get(alertId)
+    const ids = dataset.linkedEvidenceIds.get(id)
     if (ids) {
       return dataset.evidences
         .filter((evidence) => ids.includes(evidence.id))

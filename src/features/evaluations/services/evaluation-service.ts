@@ -13,22 +13,28 @@ import {
   type LayerBNote,
   type LayerCAlert,
   launchBlockers,
+  type Restitution,
+  type RestitutionOrigin,
+  type RunAction,
   type RunStep,
   type SubAnswer,
+  type SynthesisItem,
 } from "@/features/evaluations/model/types"
 import {
   countDemoPendingAlerts,
   demoFixturePillars,
   demoRun,
+  getDemoRestitution,
   getDemoResults,
   instructDemoAlert,
   isDemoId,
   isEvaluationDemo,
-  listDemoAlertEvidences,
   listDemoEvidences,
+  listDemoLinkedEvidences,
   listDemoSubAnswers,
   listDemoVariables,
 } from "@/features/evaluations/services/evaluation-demo"
+import { isPersona } from "@/features/workspaces/model/types"
 import { supabase } from "@/shared/lib/supabase"
 
 export type PillarTextRow = {
@@ -166,6 +172,49 @@ type EvidenceRow = {
   documents: { original_filename: string; storage_path: string } | null
   pillars: PillarTextRow | null
   criteria: { name: string } | null
+}
+
+/** Origine d'une puce ou d'une action : pilier, critere ou alerte. */
+type OriginRow = {
+  pillar_id: string | null
+  criterion_id: string | null
+  alert_id: string | null
+  pillars: PillarTextRow | null
+  criteria: { name: string } | null
+  layer_c_alerts: {
+    pillar_id: string
+    pillars: PillarTextRow | null
+    criteria: { name: string } | null
+  } | null
+}
+
+type SynthesisRow = {
+  conclusion: string | null
+  limits: {
+    not_concluded?: number
+    criteria?: number
+    confidence?: number
+    leads?: boolean
+  }
+  qualified: boolean
+}
+
+type SynthesisItemRow = OriginRow & {
+  id: string
+  section: SynthesisItem["section"]
+  position: number
+  text: string
+}
+
+type ActionRow = OriginRow & {
+  id: string
+  position: number
+  origin_type: RestitutionOrigin["type"]
+  run_action_projections: {
+    persona: string
+    text: string
+    justification: string
+  }[]
 }
 
 type EvidenceCoverageRow = {
@@ -875,6 +924,23 @@ export async function listSubAnswers(
   }))
 }
 
+const evidenceSelect = `id, document_id, page_number, section_title, excerpt, variable_code, documents(original_filename, storage_path), pillars(${pillarTextSelect}), criteria(name)`
+
+function toEvidence(row: EvidenceRow, locale: string): Evidence {
+  return {
+    id: row.id,
+    documentId: row.document_id,
+    documentName: row.documents?.original_filename ?? null,
+    storagePath: row.documents?.storage_path ?? null,
+    page: row.page_number,
+    section: row.section_title,
+    excerpt: row.excerpt,
+    pillarName: row.pillars ? localizePillar(row.pillars, locale).name : null,
+    criterionName: row.criteria?.name ?? null,
+    variableCode: row.variable_code,
+  }
+}
+
 export async function listEvidences(
   filters: {
     runId: string
@@ -887,9 +953,7 @@ export async function listEvidences(
   if (isDemoId(filters.runId)) return listDemoEvidences(filters)
   let query = supabase
     .from("evidences")
-    .select(
-      `id, document_id, page_number, section_title, excerpt, variable_code, documents(original_filename, storage_path), pillars(${pillarTextSelect}), criteria(name)`
-    )
+    .select(evidenceSelect)
     .eq("run_id", filters.runId)
   if (filters.pillarId) query = query.eq("pillar_id", filters.pillarId)
   if (filters.criterionId) query = query.eq("criterion_id", filters.criterionId)
@@ -900,57 +964,174 @@ export async function listEvidences(
     if (isMissingRelation(error)) return []
     throw error
   }
-  return ((data ?? []) as unknown as EvidenceRow[]).map((row) => ({
-    id: row.id,
-    documentId: row.document_id,
-    documentName: row.documents?.original_filename ?? null,
-    storagePath: row.documents?.storage_path ?? null,
-    page: row.page_number,
-    section: row.section_title,
-    excerpt: row.excerpt,
-    pillarName: row.pillars ? localizePillar(row.pillars, locale).name : null,
-    criterionName: row.criteria?.name ?? null,
-    variableCode: row.variable_code,
-  }))
+  return ((data ?? []) as unknown as EvidenceRow[]).map((row) =>
+    toEvidence(row, locale)
+  )
 }
 
-export async function listAlertEvidences(
-  alertId: string,
+/** Preuves citees par une alerte, une puce de synthese ou une action. */
+async function listLinkedEvidences(
+  table:
+    | "alert_evidences"
+    | "synthesis_item_evidences"
+    | "run_action_evidences",
+  column: "alert_id" | "item_id" | "action_id",
+  id: string,
   locale: string
 ): Promise<Evidence[]> {
-  if (isDemoId(alertId)) return listDemoAlertEvidences(alertId)
+  if (isDemoId(id)) return listDemoLinkedEvidences(id)
   const { data, error } = await supabase
-    .from("alert_evidences")
-    .select(
-      `evidences(id, document_id, page_number, section_title, excerpt, variable_code, documents(original_filename, storage_path), pillars(${pillarTextSelect}), criteria(name))`
-    )
-    .eq("alert_id", alertId)
+    .from(table)
+    .select(`evidences(${evidenceSelect})`)
+    .eq(column, id)
   if (error) {
     if (isMissingRelation(error)) return []
     throw error
   }
   return (
     (data ?? []) as unknown as { evidences: EvidenceRow | null }[]
-  ).flatMap((row) => {
-    const evidence = row.evidences
-    if (!evidence) return []
-    return [
-      {
-        id: evidence.id,
-        documentId: evidence.document_id,
-        documentName: evidence.documents?.original_filename ?? null,
-        storagePath: evidence.documents?.storage_path ?? null,
-        page: evidence.page_number,
-        section: evidence.section_title,
-        excerpt: evidence.excerpt,
-        pillarName: evidence.pillars
-          ? localizePillar(evidence.pillars, locale).name
-          : null,
-        criterionName: evidence.criteria?.name ?? null,
-        variableCode: evidence.variable_code,
-      },
-    ]
-  })
+  ).flatMap((row) => (row.evidences ? [toEvidence(row.evidences, locale)] : []))
+}
+
+export function listAlertEvidences(alertId: string, locale: string) {
+  return listLinkedEvidences("alert_evidences", "alert_id", alertId, locale)
+}
+
+export function listSynthesisItemEvidences(itemId: string, locale: string) {
+  return listLinkedEvidences(
+    "synthesis_item_evidences",
+    "item_id",
+    itemId,
+    locale
+  )
+}
+
+export function listActionEvidences(actionId: string, locale: string) {
+  return listLinkedEvidences(
+    "run_action_evidences",
+    "action_id",
+    actionId,
+    locale
+  )
+}
+
+const originSelect = `pillar_id, criterion_id, alert_id, pillars(${pillarTextSelect}), criteria(name), layer_c_alerts(pillar_id, pillars(${pillarTextSelect}), criteria(name))`
+
+function toOrigin(
+  type: RestitutionOrigin["type"],
+  row: OriginRow,
+  locale: string
+): RestitutionOrigin {
+  const alert = row.layer_c_alerts
+  if (type === "alert")
+    return {
+      type,
+      id: row.alert_id ?? "",
+      name:
+        alert?.criteria?.name ??
+        (alert?.pillars ? localizePillar(alert.pillars, locale).name : null),
+      pillarId: alert?.pillar_id ?? null,
+    }
+  if (type === "criterion")
+    return {
+      type,
+      id: row.criterion_id ?? "",
+      name: row.criteria?.name ?? null,
+      pillarId: null,
+    }
+  return {
+    type,
+    id: row.pillar_id ?? "",
+    name: row.pillars ? localizePillar(row.pillars, locale).name : null,
+    pillarId: row.pillar_id,
+  }
+}
+
+/**
+ * Synthese et plan d'action du run, figes a son calcul (RG-11.3) ; les
+ * trois projections persona sont chargees ensemble : changer de persona ne
+ * recalcule rien (CA-11.2). `null` : run calcule avant la restitution.
+ */
+export async function getRunRestitution(
+  runId: string,
+  locale: string
+): Promise<Restitution | null> {
+  if (isDemoId(runId)) return getDemoRestitution(runId)
+  const [synthesisResult, itemsResult, actionsResult] = await Promise.all([
+    supabase
+      .from("syntheses")
+      .select("conclusion, limits, qualified")
+      .eq("run_id", runId)
+      .maybeSingle(),
+    supabase
+      .from("synthesis_items")
+      .select(`id, section, position, text, ${originSelect}`)
+      .eq("run_id", runId)
+      .order("position"),
+    supabase
+      .from("run_actions")
+      .select(
+        `id, position, origin_type, ${originSelect}, run_action_projections(persona, text, justification)`
+      )
+      .eq("run_id", runId)
+      .order("position"),
+  ])
+  const firstError = [synthesisResult, itemsResult, actionsResult].find(
+    (result) => result.error
+  )?.error
+  if (firstError) {
+    if (isMissingRelation(firstError)) return null
+    throw firstError
+  }
+  const synthesis = synthesisResult.data as SynthesisRow | null
+  if (!synthesis) return null
+  const items: SynthesisItem[] = (
+    (itemsResult.data ?? []) as unknown as SynthesisItemRow[]
+  ).map((row) => ({
+    id: row.id,
+    section: row.section,
+    position: row.position,
+    text: row.text,
+    origin: toOrigin(
+      row.alert_id ? "alert" : row.criterion_id ? "criterion" : "pillar",
+      row,
+      locale
+    ),
+  }))
+  const actions: RunAction[] = (
+    (actionsResult.data ?? []) as unknown as ActionRow[]
+  ).map((row) => ({
+    id: row.id,
+    position: row.position,
+    origin: toOrigin(row.origin_type, row, locale),
+    projections: Object.fromEntries(
+      row.run_action_projections.flatMap((projection) =>
+        isPersona(projection.persona)
+          ? [
+              [
+                projection.persona,
+                {
+                  text: projection.text,
+                  justification: projection.justification,
+                },
+              ],
+            ]
+          : []
+      )
+    ),
+  }))
+  return {
+    conclusion: synthesis.conclusion,
+    limits: {
+      notConcluded: synthesis.limits.not_concluded ?? 0,
+      criteria: synthesis.limits.criteria ?? 0,
+      confidence: synthesis.limits.confidence ?? 0,
+      leads: synthesis.limits.leads ?? false,
+    },
+    qualified: synthesis.qualified,
+    items,
+    actions,
+  }
 }
 
 export async function instructAlert(alertId: string, comment: string) {
