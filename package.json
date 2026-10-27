@@ -9,6 +9,7 @@
     "lint": "biome lint .",
     "format": "biome format --write .",
     "check": "biome check .",
+    "test:audit": "node --experimental-strip-types --test src/features/audit/model/audit-log.test.ts",
     "test:approach": "node --experimental-strip-types --test src/features/evaluation-frameworks/model/approach-engine.test.ts",
     "test:critical-mass": "node --experimental-strip-types --test src/features/corpus/model/critical-mass.test.ts",
     "test:layer-a": "node --experimental-strip-types --test src/features/evaluations/model/layer-a.test.ts",

@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router-dom"
 
 import { RootLayout } from "@/app/root-layout"
+import { AuditLogScreen } from "@/features/audit/screens/audit-log-screen"
 import { AuthGuard } from "@/features/auth/screens/auth-guard"
 import { LoginScreen } from "@/features/auth/screens/login-screen"
 import { ProfileScreen } from "@/features/auth/screens/profile-screen"
@@ -53,6 +54,8 @@ const workspaceRoutes = navSections.flatMap((section) =>
             <AnalysisOverviewScreen />
           ) : item.segment === "plan" ? (
             <SynthesisScreen />
+          ) : item.segment === "audit" ? (
+            <AuditLogScreen />
           ) : item.segment === "settings" ? (
             <WorkspaceSettingsScreen />
           ) : (
