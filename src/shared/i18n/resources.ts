@@ -1298,6 +1298,34 @@ export const resources = {
             skipped: "—",
           },
         },
+        validation: {
+          action: "Valider le run",
+          title: "Valider ce run ?",
+          description:
+            "Vous attestez avoir relu ces résultats. La validation est définitive, journalisée et mentionnée dans les exports ; une correction passera par une nouvelle analyse.",
+          exploratoryWarning:
+            "Ce run porte sur un corpus exploratoire : ses résultats restent indicatifs, même validés.",
+          pendingAlerts_one:
+            "{{count}} alerte de cohérence reste à instruire. Vous pouvez valider quand même, mais il vaut mieux l'instruire d'abord.",
+          pendingAlerts_other:
+            "{{count}} alertes de cohérence restent à instruire. Vous pouvez valider quand même, mais il vaut mieux les instruire d'abord.",
+          cancel: "Annuler",
+          confirm: "Valider",
+          saved: "Run validé.",
+          saveError: "La validation n'a pas pu être enregistrée. Réessayez.",
+          staleHint:
+            "Le corpus a changé depuis ce calcul : relancez l'analyse avant de valider.",
+          validatedBy: "Validé par {{name}} le {{date}}",
+          unknownMember: "un membre de l'espace",
+          refused: {
+            RUN_NOT_COMPLETED: "Ce run n'est pas terminé.",
+            RUN_ALREADY_VALIDATED: "Ce run a déjà été validé.",
+            RUN_SUPERSEDED:
+              "Une analyse plus récente est disponible : c'est elle qu'il faut valider.",
+            RUN_CORPUS_CHANGED:
+              "Le corpus a changé depuis ce calcul : relancez l'analyse avant de valider.",
+          },
+        },
         layerA: {
           title: "Piliers",
           description: "Scores factuels par pilier et variables observables.",
@@ -2747,6 +2775,34 @@ export const resources = {
             completed: "Done",
             failed: "Failed",
             skipped: "—",
+          },
+        },
+        validation: {
+          action: "Validate the run",
+          title: "Validate this run?",
+          description:
+            "You confirm that you have reviewed these results. Validation is final, logged and stated in exports; any correction will require a new analysis.",
+          exploratoryWarning:
+            "This run is based on an exploratory corpus: its results remain indicative, even once validated.",
+          pendingAlerts_one:
+            "{{count}} consistency alert is still to be reviewed. You can validate anyway, but it is better to review it first.",
+          pendingAlerts_other:
+            "{{count}} consistency alerts are still to be reviewed. You can validate anyway, but it is better to review them first.",
+          cancel: "Cancel",
+          confirm: "Validate",
+          saved: "Run validated.",
+          saveError: "The validation could not be saved. Try again.",
+          staleHint:
+            "The corpus has changed since this computation: run the analysis again before validating.",
+          validatedBy: "Validated by {{name}} on {{date}}",
+          unknownMember: "a workspace member",
+          refused: {
+            RUN_NOT_COMPLETED: "This run is not complete.",
+            RUN_ALREADY_VALIDATED: "This run has already been validated.",
+            RUN_SUPERSEDED:
+              "A more recent analysis is available: that is the one to validate.",
+            RUN_CORPUS_CHANGED:
+              "The corpus has changed since this computation: run the analysis again before validating.",
           },
         },
         layerA: {

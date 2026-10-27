@@ -44,7 +44,19 @@ export type AnalysisRun = {
   completedAt: string | null
   errorCode: string | null
   errorMessage: string | null
+  /** Validation humaine finale (GF-6) ; null tant que le run n'est pas validé. */
+  validation: { by: string | null; at: string } | null
 }
+
+/** Raisons pour lesquelles la base refuse de valider un run (GF-6). */
+export const validationRefusals = [
+  "RUN_NOT_COMPLETED",
+  "RUN_ALREADY_VALIDATED",
+  "RUN_SUPERSEDED",
+  "RUN_CORPUS_CHANGED",
+] as const
+
+export type ValidationRefusal = (typeof validationRefusals)[number]
 
 /** Étapes nommées du pipeline (US-13.1), dans l'ordre d'exécution. */
 export const runStepNames = [

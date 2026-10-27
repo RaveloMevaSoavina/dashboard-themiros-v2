@@ -25,6 +25,7 @@ import {
 } from "@/features/evaluations/components/pillar-result-card"
 import { RunNotices } from "@/features/evaluations/components/run-notices"
 import { RunProgress } from "@/features/evaluations/components/run-progress"
+import { RunValidationMention } from "@/features/evaluations/components/run-validation"
 import { isRunActive } from "@/features/evaluations/components/run-watcher"
 import { StaleResult } from "@/features/evaluations/components/stale-result"
 import { SummaryMetricCard } from "@/features/evaluations/components/summary-metric-card"
@@ -216,6 +217,9 @@ export function AnalysisOverviewScreen() {
             workspaceId={workspaceId}
           />
           <RunReference run={data.run} />
+          {data.run.validation ? (
+            <RunValidationMention validation={data.run.validation} />
+          ) : null}
         </div>
       }
       banner={notices}

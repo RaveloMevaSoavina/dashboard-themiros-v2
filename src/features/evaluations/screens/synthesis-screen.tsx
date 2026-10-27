@@ -13,6 +13,7 @@ import { EvidenceDrawer } from "@/features/evaluations/components/evidence-drawe
 import { LayerBanner } from "@/features/evaluations/components/layer-banner"
 import { OriginBadge } from "@/features/evaluations/components/origin-badge"
 import { RunNotices } from "@/features/evaluations/components/run-notices"
+import { RunValidation } from "@/features/evaluations/components/run-validation"
 import { StaleResult } from "@/features/evaluations/components/stale-result"
 import type { SynthesisSection } from "@/features/evaluations/model/types"
 import {
@@ -48,9 +49,25 @@ export function SynthesisScreen() {
   })
   const data = restitution.data
   const stale = results.data?.corpusChanged ?? false
+  const run = results.data?.run
 
+  /* GF-6 : la validation humaine clôt la lecture des résultats. */
   return (
     <AnalysisPage
+      actions={
+        run ? (
+          <RunValidation
+            pendingAlerts={
+              results.data?.alerts.filter(
+                (alert) => alert.status === "a_instruire"
+              ).length ?? 0
+            }
+            run={run}
+            stale={stale}
+            workspaceId={workspaceId}
+          />
+        ) : null
+      }
       banner={
         <>
           <LayerBanner

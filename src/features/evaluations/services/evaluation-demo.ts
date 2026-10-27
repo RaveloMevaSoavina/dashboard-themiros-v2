@@ -19,7 +19,8 @@ import type {
  * Tant qu'aucun run n'est branche cote backend, il remplace les couches
  * A, B et C et la restitution par des donnees fictives. Les piliers et criteres du cadre sont
  * repris s'ils existent, sinon un cadre fictif prend le relais. Rien n'est
- * ecrit en base : l'instruction d'une alerte vit en memoire.
+ * ecrit en base : l'instruction d'une alerte et la validation du run vivent
+ * en memoire.
  */
 export const isEvaluationDemo = import.meta.env.VITE_EVALUATION_DEMO === "true"
 
@@ -224,11 +225,13 @@ type DemoDataset = {
 }
 
 const datasets = new Map<string, DemoDataset>()
+const validations = new Map<string, AnalysisRun["validation"]>()
 
 /** Run fictif de l'espace, terminé depuis peu. */
 export function demoRun(workspaceId: string): AnalysisRun {
+  const id = `${demoRunPrefix}${workspaceId}`
   return {
-    id: `${demoRunPrefix}${workspaceId}`,
+    id,
     status: "completed",
     corpusSize: 14,
     corpusLevel: "standard",
@@ -236,6 +239,7 @@ export function demoRun(workspaceId: string): AnalysisRun {
     completedAt: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
     errorCode: null,
     errorMessage: null,
+    validation: validations.get(id) ?? null,
   }
 }
 
@@ -725,6 +729,16 @@ export function listDemoLinkedEvidences(id: string): Evidence[] {
     }
   }
   return []
+}
+
+export function validateDemoRun(runId: string) {
+  const validation = {
+    by: "Utilisateur de démonstration",
+    at: new Date().toISOString(),
+  }
+  validations.set(runId, validation)
+  const run = datasetForRun(runId)?.results.run
+  if (run) run.validation = validation
 }
 
 export function instructDemoAlert(alertId: string, comment: string) {

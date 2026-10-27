@@ -19,6 +19,8 @@ import {
   type RunStep,
   type SubAnswer,
   type SynthesisItem,
+  type ValidationRefusal,
+  validationRefusals,
 } from "@/features/evaluations/model/types"
 import {
   countDemoPendingAlerts,
@@ -33,6 +35,7 @@ import {
   listDemoLinkedEvidences,
   listDemoSubAnswers,
   listDemoVariables,
+  validateDemoRun,
 } from "@/features/evaluations/services/evaluation-demo"
 import { isPersona } from "@/features/workspaces/model/types"
 import { supabase } from "@/shared/lib/supabase"
@@ -570,7 +573,7 @@ export async function getLatestRun(
   let query = supabase
     .from("runs")
     .select(
-      "id, status, corpus_size, corpus_seuil, created_at, completed_at, error_code, error_message"
+      "id, status, corpus_size, corpus_seuil, created_at, completed_at, error_code, error_message, validated_at, validated_by_name"
     )
     .eq("workspace_id", workspaceId)
   if (completed) query = query.eq("status", "completed")
@@ -592,6 +595,9 @@ export async function getLatestRun(
     completedAt: data.completed_at,
     errorCode: data.error_code,
     errorMessage: data.error_message,
+    validation: data.validated_at
+      ? { by: data.validated_by_name, at: data.validated_at }
+      : null,
   }
 }
 
@@ -1131,6 +1137,27 @@ export async function getRunRestitution(
     status: synthesis.status,
     items,
     actions,
+  }
+}
+
+/** Erreur de validation refusée par la base, avec sa raison métier. */
+export class ValidationRefusedError extends Error {
+  readonly refusal: ValidationRefusal
+
+  constructor(refusal: ValidationRefusal) {
+    super(refusal)
+    this.refusal = refusal
+  }
+}
+
+/** Validation humaine finale du run (GF-6), journalisée par la base. */
+export async function validateRun(runId: string) {
+  if (isDemoId(runId)) return validateDemoRun(runId)
+  const { error } = await supabase.rpc("validate_run", { p_run_id: runId })
+  if (error) {
+    const refusal = validationRefusals.find((code) => code === error.message)
+    if (refusal) throw new ValidationRefusedError(refusal)
+    throw error
   }
 }
 
