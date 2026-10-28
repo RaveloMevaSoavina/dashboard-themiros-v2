@@ -7,6 +7,8 @@ type GeneratedPillarsResponse = {
   rationale: string
   prompt_version: string
   tokens_used: number
+  input_tokens: number
+  output_tokens: number
   cost_eur: string | number
 }
 

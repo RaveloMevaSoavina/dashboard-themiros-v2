@@ -1505,6 +1505,52 @@ export const resources = {
           loadError: "Impossible de charger les preuves.",
         },
       },
+      usage: {
+        title: "Consommation IA",
+        description:
+          "Tokens facturés par OpenAI pour cet espace et coût correspondant.",
+        descriptionSince:
+          "Tokens facturés par OpenAI pour cet espace et coût correspondant, depuis le {{date}}.",
+        loadError: "Impossible de charger la consommation IA.",
+        empty: "Aucune consommation IA enregistrée pour cet espace.",
+        total: {
+          cost: "Coût total",
+          calls_one: "{{count}} appel au modèle",
+          calls_other: "{{count}} appels au modèle",
+          completion: "Tokens de rédaction",
+          completionHint: "Génération du cadre, notes, alertes, synthèse",
+          embedding: "Tokens d'embeddings",
+          embeddingHint: "Documents, cadre et recherche des extraits",
+        },
+        unpriced:
+          "Les coûts sont à 0 : les tarifs OpenAI ne sont pas renseignés dans la configuration de l'API (OPENAI_*_COST_EUR_PER_MILLION). Les tokens, eux, sont exacts.",
+        bySource: "Par source",
+        byRun: "Par analyse",
+        partialSplit:
+          "« — » en sortie : détail entrée / sortie inconnu pour les générations antérieures au suivi ; la colonne Entrée donne alors le total.",
+        note: "Tokens tels que facturés par OpenAI. Le coût est calculé avec les tarifs configurés au moment de chaque appel. Les embeddings ne sont comptés que depuis la mise en place de ce suivi.",
+        columns: {
+          source: "Source",
+          model: "Modèle",
+          calls: "Appels",
+          input: "Entrée",
+          output: "Sortie",
+          cost: "Coût",
+          run: "Analyse du",
+          status: "Statut",
+          completion: "Rédaction",
+          embedding: "Embeddings",
+        },
+        sources: {
+          pillar_generation: "Génération du cadre",
+          ingestion: "Import des documents",
+          classification: "Classification du corpus",
+          layer_b_search: "Recherche des extraits (couche B)",
+          layer_b: "Notes évaluatives (couche B)",
+          layer_c: "Qualification des alertes (couche C)",
+          restitution: "Synthèse et plan d'action",
+        },
+      },
       exports: {
         title: "Exports",
         description:
@@ -3148,6 +3194,52 @@ export const resources = {
             "{{count}} pieces of evidence · score {{score}}/100 · confidence {{confidence}}%",
           noneForScore: "No evidence linked to this score.",
           loadError: "Unable to load evidence.",
+        },
+      },
+      usage: {
+        title: "AI usage",
+        description:
+          "Tokens billed by OpenAI for this workspace and their cost.",
+        descriptionSince:
+          "Tokens billed by OpenAI for this workspace and their cost, since {{date}}.",
+        loadError: "Unable to load AI usage.",
+        empty: "No AI usage recorded for this workspace.",
+        total: {
+          cost: "Total cost",
+          calls_one: "{{count}} model call",
+          calls_other: "{{count}} model calls",
+          completion: "Generation tokens",
+          completionHint: "Framework generation, ratings, alerts, synthesis",
+          embedding: "Embedding tokens",
+          embeddingHint: "Documents, framework and excerpt search",
+        },
+        unpriced:
+          "Costs are 0: OpenAI prices are not set in the API configuration (OPENAI_*_COST_EUR_PER_MILLION). Token counts are exact.",
+        bySource: "By source",
+        byRun: "By analysis",
+        partialSplit:
+          "“—” as output: input / output split unknown for generations made before tracking; the Input column then shows the total.",
+        note: "Tokens as billed by OpenAI. Cost uses the prices configured at the time of each call. Embeddings are only counted since this tracking was introduced.",
+        columns: {
+          source: "Source",
+          model: "Model",
+          calls: "Calls",
+          input: "Input",
+          output: "Output",
+          cost: "Cost",
+          run: "Analysis of",
+          status: "Status",
+          completion: "Generation",
+          embedding: "Embeddings",
+        },
+        sources: {
+          pillar_generation: "Framework generation",
+          ingestion: "Document import",
+          classification: "Corpus classification",
+          layer_b_search: "Excerpt search (layer B)",
+          layer_b: "Evaluative ratings (layer B)",
+          layer_c: "Alert qualification (layer C)",
+          restitution: "Synthesis and action plan",
         },
       },
       exports: {
