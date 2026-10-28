@@ -374,6 +374,7 @@ function buildDataset(
           documentId: `demo-document-${seed % documents.length}`,
           documentName: documents[seed % documents.length],
           storagePath: null,
+          isPdf: false,
           page: 3 + ((seed * 7) % 48),
           section: sections[seed % sections.length],
           excerpt: excerptTemplates[seed % excerptTemplates.length](

@@ -61,10 +61,10 @@ export async function apiRequest<T>(
 export async function apiDownload(
   path: string,
   options: RequestInit & { accessToken: string; fallbackName: string }
-): Promise<{ blob: Blob; filename: string }> {
+): Promise<{ blob: Blob; filename: string; headers: Headers }> {
   const { fallbackName, ...requestOptions } = options
   const response = await apiFetch(path, requestOptions)
   const disposition = response.headers.get("Content-Disposition") ?? ""
   const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? fallbackName
-  return { blob: await response.blob(), filename }
+  return { blob: await response.blob(), filename, headers: response.headers }
 }

@@ -172,7 +172,11 @@ type EvidenceRow = {
   section_title: string | null
   excerpt: string
   variable_code: string | null
-  documents: { original_filename: string; storage_path: string } | null
+  documents: {
+    original_filename: string
+    storage_path: string
+    mime_type: string
+  } | null
   pillars: PillarTextRow | null
   criteria: { name: string } | null
 }
@@ -934,7 +938,7 @@ export async function listSubAnswers(
   }))
 }
 
-const evidenceSelect = `id, document_id, page_number, section_title, excerpt, variable_code, documents(original_filename, storage_path), pillars(${pillarTextSelect}), criteria(name)`
+const evidenceSelect = `id, document_id, page_number, section_title, excerpt, variable_code, documents(original_filename, storage_path, mime_type), pillars(${pillarTextSelect}), criteria(name)`
 
 function toEvidence(row: EvidenceRow, locale: string): Evidence {
   return {
@@ -942,6 +946,7 @@ function toEvidence(row: EvidenceRow, locale: string): Evidence {
     documentId: row.document_id,
     documentName: row.documents?.original_filename ?? null,
     storagePath: row.documents?.storage_path ?? null,
+    isPdf: row.documents?.mime_type === "application/pdf",
     page: row.page_number,
     section: row.section_title,
     excerpt: row.excerpt,

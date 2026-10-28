@@ -6,7 +6,7 @@ import {
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { getDocumentUrl } from "@/features/corpus/services/corpus-service"
+import { useEvidenceDocument } from "@/features/evaluations/components/evidence-document-dialog"
 import type { Evidence } from "@/features/evaluations/model/types"
 import { Button } from "@/shared/ui/base/button"
 import {
@@ -35,16 +35,7 @@ export function EvidenceDrawer({
     if (open) setIndex(0)
   }, [open])
   const evidence = evidences[index]
-
-  async function openDocument() {
-    if (!evidence?.storagePath) return
-    const url = await getDocumentUrl(evidence.storagePath)
-    window.open(
-      evidence.page ? `${url}#page=${evidence.page}` : url,
-      "_blank",
-      "noopener,noreferrer"
-    )
-  }
+  const viewer = useEvidenceDocument()
 
   return (
     <Sheet onOpenChange={onOpenChange} open={open}>
@@ -136,11 +127,12 @@ export function EvidenceDrawer({
           ) : null}
           <Button
             disabled={!evidence?.storagePath}
-            onClick={() => void openDocument()}
+            onClick={() => evidence && viewer.open(evidence)}
           >
             <ExternalLink /> {t("evaluation.evidence.openDocument")}
           </Button>
         </SheetFooter>
+        {viewer.dialog}
       </SheetContent>
     </Sheet>
   )

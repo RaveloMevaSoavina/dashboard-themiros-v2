@@ -173,6 +173,8 @@ export type Evidence = {
   documentId: string | null
   documentName: string | null
   storagePath: string | null
+  /** Seul un PDF s'affiche dans l'app, le passage cite surligne. */
+  isPdf: boolean
   page: number | null
   section: string | null
   excerpt: string

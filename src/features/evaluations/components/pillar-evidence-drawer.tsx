@@ -1,7 +1,7 @@
 import { ExternalLink, FileText, FileWarning, RotateCcw } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-import { getDocumentUrl } from "@/features/corpus/services/corpus-service"
+import { useEvidenceDocument } from "@/features/evaluations/components/evidence-document-dialog"
 import type { Evidence, LayerAScore } from "@/features/evaluations/model/types"
 import { Button } from "@/shared/ui/base/button"
 import {
@@ -12,17 +12,6 @@ import {
   SheetTitle,
 } from "@/shared/ui/base/sheet"
 import { Skeleton } from "@/shared/ui/base/skeleton"
-
-/** Ouvre le document source d'une preuve, a la page citee si connue. */
-export async function openEvidenceDocument(evidence: Evidence) {
-  if (!evidence.storagePath) return
-  const url = await getDocumentUrl(evidence.storagePath)
-  window.open(
-    evidence.page ? `${url}#page=${evidence.page}` : url,
-    "_blank",
-    "noopener,noreferrer"
-  )
-}
 
 /** Toutes les preuves qui fondent la note d'un pilier, listees d'un bloc. */
 export function PillarEvidenceDrawer({
@@ -80,6 +69,7 @@ export function EvidenceListDrawer({
   onOpenChange: (open: boolean) => void
 }) {
   const { t } = useTranslation()
+  const viewer = useEvidenceDocument()
 
   return (
     <Sheet onOpenChange={onOpenChange} open={open}>
@@ -148,7 +138,7 @@ export function EvidenceListDrawer({
                 <Button
                   className="mt-3"
                   disabled={!evidence.storagePath}
-                  onClick={() => void openEvidenceDocument(evidence)}
+                  onClick={() => viewer.open(evidence)}
                   size="sm"
                   variant="outline"
                 >
@@ -158,6 +148,7 @@ export function EvidenceListDrawer({
             ))}
           </ol>
         )}
+        {viewer.dialog}
       </SheetContent>
     </Sheet>
   )

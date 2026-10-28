@@ -1497,6 +1497,12 @@ export const resources = {
           previous: "Précédente",
           next: "Suivante",
           openDocument: "Ouvrir dans le document",
+          viewer: {
+            notHighlighted:
+              "Passage non retrouvé dans la page (scan ou tableau) : document ouvert à la page citée",
+            error: "Impossible d'afficher le document.",
+            original: "Ouvrir le fichier d'origine",
+          },
           showForPillar: "Voir les preuves de {{name}}",
           pillarSummary_one:
             "{{count}} preuve · note {{score}}/100 · confiance {{confidence}} %",
@@ -3190,6 +3196,12 @@ export const resources = {
           previous: "Previous",
           next: "Next",
           openDocument: "Open in document",
+          viewer: {
+            notHighlighted:
+              "Passage not found on the page (scan or table): document opened at the cited page",
+            error: "Unable to display the document.",
+            original: "Open the original file",
+          },
           showForPillar: "View evidence for {{name}}",
           pillarSummary_one:
             "{{count}} piece of evidence · score {{score}}/100 · confidence {{confidence}}%",
