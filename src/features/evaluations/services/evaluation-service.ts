@@ -200,6 +200,8 @@ type SynthesisRow = {
     leads?: boolean
   }
   status: Restitution["status"]
+  /** Conclusion traduite, par langue de l'interface (prompt v1.2). */
+  translations: Record<string, { conclusion?: string }> | null
 }
 
 type SynthesisItemRow = OriginRow & {
@@ -207,6 +209,7 @@ type SynthesisItemRow = OriginRow & {
   section: SynthesisItem["section"]
   position: number
   text: string
+  translations: Record<string, string> | null
 }
 
 type ActionRow = OriginRow & {
@@ -217,6 +220,7 @@ type ActionRow = OriginRow & {
     persona: string
     text: string
     justification: string
+    translations: Record<string, { text: string; justification: string }> | null
   }[]
 }
 
@@ -1056,7 +1060,9 @@ function toOrigin(
 /**
  * Synthese et plan d'action du run, figes a son calcul (RG-11.3) ; les
  * trois projections persona sont chargees ensemble : changer de persona ne
- * recalcule rien (CA-11.2). `null` : run calcule avant la restitution.
+ * recalcule rien (CA-11.2). Les textes suivent la langue de l'interface
+ * quand le run en a la traduction, sinon ceux de sa langue de redaction.
+ * `null` : run calcule avant la restitution.
  */
 export async function getRunRestitution(
   runId: string,
@@ -1066,18 +1072,18 @@ export async function getRunRestitution(
   const [synthesisResult, itemsResult, actionsResult] = await Promise.all([
     supabase
       .from("syntheses")
-      .select("conclusion, limits, status")
+      .select("conclusion, limits, status, translations")
       .eq("run_id", runId)
       .maybeSingle(),
     supabase
       .from("synthesis_items")
-      .select(`id, section, position, text, ${originSelect}`)
+      .select(`id, section, position, text, translations, ${originSelect}`)
       .eq("run_id", runId)
       .order("position"),
     supabase
       .from("run_actions")
       .select(
-        `id, position, origin_type, ${originSelect}, run_action_projections(persona, text, justification)`
+        `id, position, origin_type, ${originSelect}, run_action_projections(persona, text, justification, translations)`
       )
       .eq("run_id", runId)
       .order("position"),
@@ -1097,7 +1103,7 @@ export async function getRunRestitution(
     id: row.id,
     section: row.section,
     position: row.position,
-    text: row.text,
+    text: row.translations?.[locale] ?? row.text,
     origin: toOrigin(
       row.alert_id ? "alert" : row.criterion_id ? "criterion" : "pillar",
       row,
@@ -1116,7 +1122,7 @@ export async function getRunRestitution(
           ? [
               [
                 projection.persona,
-                {
+                projection.translations?.[locale] ?? {
                   text: projection.text,
                   justification: projection.justification,
                 },
@@ -1127,7 +1133,8 @@ export async function getRunRestitution(
     ),
   }))
   return {
-    conclusion: synthesis.conclusion,
+    conclusion:
+      synthesis.translations?.[locale]?.conclusion ?? synthesis.conclusion,
     limits: {
       notConcluded: synthesis.limits.not_concluded ?? 0,
       criteria: synthesis.limits.criteria ?? 0,
