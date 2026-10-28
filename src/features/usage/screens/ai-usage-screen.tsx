@@ -1,8 +1,11 @@
 import { useQuery } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
+import { useParams } from "react-router-dom"
 
+import { CorpusPageHeader } from "@/features/corpus/components/corpus-page-header"
 import type { AiUsageBySource } from "@/features/usage/model/types"
 import { getWorkspaceAiUsage } from "@/features/usage/services/ai-usage-service"
+import { useWorkspaces } from "@/features/workspaces/model/workspace-provider"
 import { Skeleton } from "@/shared/ui/base/skeleton"
 import {
   Table,
@@ -24,11 +27,15 @@ function hasSplit(source: AiUsageBySource) {
 }
 
 /**
- * Consommation IA de l'espace : tokens factures par OpenAI (chiffres de
- * l'API) et cout calcule avec les tarifs configures cote API.
+ * Consommation IA de l'espace, ouverte depuis le menu du compte : tokens
+ * factures par OpenAI (chiffres de l'API) et cout calcule avec les tarifs
+ * configures cote API.
  */
-export function AiUsagePanel({ workspaceId }: { workspaceId: string }) {
+export function AiUsageScreen() {
   const { i18n, t } = useTranslation()
+  const { workspaceId = "" } = useParams<{ workspaceId: string }>()
+  const { workspaces } = useWorkspaces()
+  const workspace = workspaces.find((item) => item.id === workspaceId)
   const locale = i18n.resolvedLanguage ?? "fr"
   const usage = useQuery({
     queryKey: ["usage", workspaceId],
@@ -55,17 +62,20 @@ export function AiUsagePanel({ workspaceId }: { workspaceId: string }) {
     data !== undefined && data.total.totalTokens > 0 && data.total.costEur === 0
 
   return (
-    <section className="mt-12 rounded-xl border border-border p-5 sm:p-6">
-      <h2 className="text-base font-semibold">{t("usage.title")}</h2>
-      <p className="mt-1 text-[12px] leading-5 text-muted-foreground">
-        {data?.total.since
-          ? t("usage.descriptionSince", {
-              date: dates.format(new Date(data.total.since)),
-            })
-          : t("usage.description")}
-      </p>
+    <div className="mx-auto w-full max-w-6xl pb-10">
+      <CorpusPageHeader
+        description={
+          data?.total.since
+            ? t("usage.descriptionSince", {
+                date: dates.format(new Date(data.total.since)),
+              })
+            : t("usage.description")
+        }
+        eyebrow={workspace?.name ?? t("usage.eyebrow")}
+        title={t("usage.title")}
+      />
 
-      <div className="mt-6">
+      <div className="mt-8">
         {usage.isPending ? (
           <Skeleton className="h-48 rounded-xl" />
         ) : usage.isError || !data ? (
@@ -233,6 +243,6 @@ export function AiUsagePanel({ workspaceId }: { workspaceId: string }) {
           </div>
         )}
       </div>
-    </section>
+    </div>
   )
 }

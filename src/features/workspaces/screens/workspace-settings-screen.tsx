@@ -4,7 +4,6 @@ import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router-dom"
 import { toast } from "sonner"
-import { AiUsagePanel } from "@/features/usage/components/ai-usage-panel"
 import {
   type EditableWorkspaceFinancier,
   WorkspaceFinanciersField,
@@ -358,8 +357,6 @@ function WorkspaceSettingsForm({
           </div>
         ) : null}
       </form>
-
-      <AiUsagePanel workspaceId={details.id} />
 
       {canManage ? (
         <section className="mt-12 rounded-xl border border-red-500/40 bg-red-500/5 p-6">

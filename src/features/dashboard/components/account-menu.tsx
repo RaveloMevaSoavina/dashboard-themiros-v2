@@ -1,5 +1,6 @@
 import {
   ChevronsUpDown,
+  Gauge,
   Languages,
   LogOut,
   Moon,
@@ -10,6 +11,7 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
 import { useAuth } from "@/features/auth/model/auth-provider"
+import { useWorkspaces } from "@/features/workspaces/model/workspace-provider"
 import { type Theme, useTheme } from "@/shared/theme/theme-provider"
 import {
   DropdownMenu,
@@ -46,6 +48,7 @@ export function AccountMenu() {
   const { isMobile } = useSidebar()
   const { session, signOut } = useAuth()
   const { theme, setTheme } = useTheme()
+  const { activeWorkspace } = useWorkspaces()
 
   const metadata = session?.user.user_metadata
   const email = session?.user.email ?? ""
@@ -113,6 +116,18 @@ export function AccountMenu() {
               <UserRound />
               {t("account.profile")}
             </DropdownMenuItem>
+
+            {/* Consommation de l'espace ouvert : sans espace, rien a montrer. */}
+            {activeWorkspace ? (
+              <DropdownMenuItem
+                onSelect={() => {
+                  void navigate(`/workspaces/${activeWorkspace.id}/usage`)
+                }}
+              >
+                <Gauge />
+                {t("account.aiUsage")}
+              </DropdownMenuItem>
+            ) : null}
 
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="gap-2">

@@ -31,6 +31,7 @@ export const resources = {
       account: {
         fallbackName: "Mon compte",
         profile: "Profil",
+        aiUsage: "Consommation IA",
         email: "Adresse e-mail",
         theme: {
           label: "Thème",
@@ -1506,6 +1507,7 @@ export const resources = {
         },
       },
       usage: {
+        eyebrow: "Espace",
         title: "Consommation IA",
         description:
           "Tokens facturés par OpenAI pour cet espace et coût correspondant.",
@@ -1753,6 +1755,7 @@ export const resources = {
       account: {
         fallbackName: "My account",
         profile: "Profile",
+        aiUsage: "AI usage",
         email: "Email address",
         theme: {
           label: "Theme",
@@ -3197,6 +3200,7 @@ export const resources = {
         },
       },
       usage: {
+        eyebrow: "Workspace",
         title: "AI usage",
         description:
           "Tokens billed by OpenAI for this workspace and their cost.",
