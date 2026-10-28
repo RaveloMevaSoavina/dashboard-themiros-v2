@@ -22,10 +22,10 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiRequest<T>(
+async function apiFetch(
   path: string,
   options: RequestInit & { accessToken: string }
-): Promise<T> {
+) {
   const { accessToken, headers, ...requestOptions } = options
   const response = await fetch(`${apiUrl}${path}`, {
     ...requestOptions,
@@ -46,5 +46,25 @@ export async function apiRequest<T>(
     throw new ApiError(response.status, payload)
   }
 
+  return response
+}
+
+export async function apiRequest<T>(
+  path: string,
+  options: RequestInit & { accessToken: string }
+): Promise<T> {
+  const response = await apiFetch(path, options)
   return (await response.json()) as T
+}
+
+/** Fichier produit par l'API, avec le nom qu'elle lui donne. */
+export async function apiDownload(
+  path: string,
+  options: RequestInit & { accessToken: string; fallbackName: string }
+): Promise<{ blob: Blob; filename: string }> {
+  const { fallbackName, ...requestOptions } = options
+  const response = await apiFetch(path, requestOptions)
+  const disposition = response.headers.get("Content-Disposition") ?? ""
+  const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? fallbackName
+  return { blob: await response.blob(), filename }
 }

@@ -1505,6 +1505,73 @@ export const resources = {
           loadError: "Impossible de charger les preuves.",
         },
       },
+      exports: {
+        title: "Exports",
+        description:
+          "Le dernier run terminé, en rapport PDF, document Word retravaillable ou tableau. Les limites du corpus y figurent toujours.",
+        empty: "Lancez une analyse pour pouvoir l'exporter.",
+        loadError: "Impossible de charger le dernier run.",
+        retry: "Réessayer",
+        demo: "Données de démonstration : l'export est désactivé.",
+        run: {
+          title: "Run exporté",
+          date: "Date du run",
+          corpus: "Corpus",
+          documents_one: "{{count}} document",
+          documents_other: "{{count}} documents",
+          validation: "Validation humaine",
+          notValidated: "Non validé : l'export le mentionne.",
+        },
+        formatsTitle: "Formats",
+        formatsDescription:
+          "Le plan d'action est rédigé pour votre rôle de lecture : {{persona}}.",
+        formats: {
+          pdf: {
+            name: "PDF",
+            description:
+              "Rapport mis en forme, à diffuser tel quel. Les preuves figurent en notes numérotées.",
+          },
+          docx: {
+            name: "Word",
+            description:
+              "Même rapport en document retravaillable, pour l'intégrer à vos livrables.",
+          },
+          xlsx: {
+            name: "Excel",
+            description:
+              "Un onglet par écran : comparatif, variables, critères, alertes, synthèse, plan d'action, preuves.",
+          },
+          csv: {
+            name: "CSV",
+            description:
+              "Tableau unique, une ligne par élément, la couche (A, B, C) en première colonne.",
+          },
+        },
+        action: "Télécharger",
+        exporting: "Export en cours…",
+        done: "Export {{format}} téléchargé.",
+        error: "L'export a échoué.",
+        failed: "Échec de l'export. Réessayez.",
+        contents: {
+          title: "Contenu de l'export",
+          sections: {
+            overview: "Comparatif général",
+            pillars:
+              "Piliers : scores objectivés (couche A), avec leurs variables",
+            criteria:
+              "Critères : notes évaluatives (couche B), conclues ou non",
+            alerts: "Alertes de cohérence (couche C) et leur instruction",
+            synthesis: "Synthèse et conclusion",
+            actions: "Plan d'action pour votre rôle de lecture",
+            notes:
+              "Notes : document et page de chaque preuve, avec la date du run et la version du moteur",
+          },
+          limits:
+            "Les limites du corpus et les sections non conclues ouvrent toujours le rapport. Un run exploratoire porte le bandeau d'avertissement en première page.",
+          audit:
+            "Chaque export est inscrit au journal d'audit : format, run, auteur et horodatage.",
+        },
+      },
       audit: {
         title: "Journal d'audit",
         description:
@@ -1589,6 +1656,8 @@ export const resources = {
           alert_instructed: "Alerte instruite",
           prompt_call: "Appel au modèle",
           audit_log_exported: "Journal d'audit exporté",
+          report_exported: "Rapport du run exporté",
+          report_export_failed: "Échec de l'export du rapport",
         },
         csv: {
           createdAt: "Horodatage",
@@ -3081,6 +3150,73 @@ export const resources = {
           loadError: "Unable to load evidence.",
         },
       },
+      exports: {
+        title: "Exports",
+        description:
+          "The latest completed run, as a PDF report, an editable Word document or a table. Corpus limits are always included.",
+        empty: "Run an analysis to be able to export it.",
+        loadError: "Unable to load the latest run.",
+        retry: "Retry",
+        demo: "Demonstration data: exporting is disabled.",
+        run: {
+          title: "Exported run",
+          date: "Run date",
+          corpus: "Corpus",
+          documents_one: "{{count}} document",
+          documents_other: "{{count}} documents",
+          validation: "Human validation",
+          notValidated: "Not validated: the export says so.",
+        },
+        formatsTitle: "Formats",
+        formatsDescription:
+          "The action plan is written for your reading role: {{persona}}.",
+        formats: {
+          pdf: {
+            name: "PDF",
+            description:
+              "Formatted report, ready to share. Evidence appears as numbered notes.",
+          },
+          docx: {
+            name: "Word",
+            description:
+              "The same report as an editable document, to fit into your deliverables.",
+          },
+          xlsx: {
+            name: "Excel",
+            description:
+              "One sheet per screen: comparison, variables, criteria, alerts, synthesis, action plan, evidence.",
+          },
+          csv: {
+            name: "CSV",
+            description:
+              "A single table, one row per item, with the layer (A, B, C) in the first column.",
+          },
+        },
+        action: "Download",
+        exporting: "Exporting…",
+        done: "{{format}} export downloaded.",
+        error: "The export failed.",
+        failed: "Export failed. Try again.",
+        contents: {
+          title: "What the export contains",
+          sections: {
+            overview: "Overall comparison",
+            pillars:
+              "Pillars: objective scores (layer A), with their variables",
+            criteria:
+              "Criteria: evaluative ratings (layer B), concluded or not",
+            alerts: "Consistency alerts (layer C) and their review",
+            synthesis: "Synthesis and conclusion",
+            actions: "Action plan for your reading role",
+            notes:
+              "Notes: document and page of each piece of evidence, with the run date and engine version",
+          },
+          limits:
+            "Corpus limits and unconcluded sections always open the report. An exploratory run carries the warning banner on the first page.",
+          audit:
+            "Every export is recorded in the audit log: format, run, author and timestamp.",
+        },
+      },
       audit: {
         title: "Audit log",
         description:
@@ -3165,6 +3301,8 @@ export const resources = {
           alert_instructed: "Alert reviewed",
           prompt_call: "Model call",
           audit_log_exported: "Audit log exported",
+          report_exported: "Run report exported",
+          report_export_failed: "Run report export failed",
         },
         csv: {
           createdAt: "Timestamp",

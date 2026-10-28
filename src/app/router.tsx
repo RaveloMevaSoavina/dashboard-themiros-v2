@@ -26,6 +26,7 @@ import { LayerAScreen } from "@/features/evaluations/screens/layer-a-screen"
 import { LayerBScreen } from "@/features/evaluations/screens/layer-b-screen"
 import { PillarDetailScreen } from "@/features/evaluations/screens/pillar-detail-screen"
 import { SynthesisScreen } from "@/features/evaluations/screens/synthesis-screen"
+import { ExportsScreen } from "@/features/exports/screens/exports-screen"
 import { CreateWorkspaceScreen } from "@/features/workspaces/screens/create-workspace-screen"
 import { WelcomeScreen } from "@/features/workspaces/screens/welcome-screen"
 import { WorkspaceAccessLayout } from "@/features/workspaces/screens/workspace-access-layout"
@@ -56,6 +57,8 @@ const workspaceRoutes = navSections.flatMap((section) =>
             <SynthesisScreen />
           ) : item.segment === "audit" ? (
             <AuditLogScreen />
+          ) : item.segment === "exports" ? (
+            <ExportsScreen />
           ) : item.segment === "settings" ? (
             <WorkspaceSettingsScreen />
           ) : (
