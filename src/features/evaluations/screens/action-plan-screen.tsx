@@ -117,7 +117,7 @@ export function ActionPlanScreen() {
                         <p className="text-sm font-medium leading-6">
                           {action.projection.text}
                         </p>
-                        <p className="mt-1 text-[13px] leading-5 text-muted-foreground">
+                        <p className="mt-2 text-[13px] leading-6 text-muted-foreground">
                           {t("evaluation.actionPlan.because", {
                             reason: action.projection.justification,
                           })}

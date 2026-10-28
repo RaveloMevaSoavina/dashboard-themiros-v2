@@ -146,8 +146,11 @@ export function SynthesisScreen() {
             })}
           </div>
           <PageSection title={t("evaluation.synthesis.conclusionTitle")}>
-            <div className="rounded-xl border border-border p-5 text-sm leading-7">
-              {data.conclusion ?? (
+            <div className="flex flex-col gap-4 rounded-xl border border-border p-5 text-sm leading-7">
+              {/* Conclusion narrative : un paragraphe par bloc (prompt v1.1). */}
+              {data.conclusion
+                ?.split(/\n\s*\n/)
+                .map((paragraph) => <p key={paragraph}>{paragraph}</p>) ?? (
                 <span className="text-muted-foreground">
                   {t(`evaluation.synthesis.noConclusion.${data.status}`)}
                 </span>

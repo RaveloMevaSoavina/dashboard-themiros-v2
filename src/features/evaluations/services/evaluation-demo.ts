@@ -578,27 +578,27 @@ function buildDataset(
         projections: {
           decideur: {
             text: alert
-              ? `Exiger une note d'explication sur l'écart relevé pour « ${name} » avant la prochaine revue.`
-              : `Conditionner la prochaine tranche à un plan de renforcement de « ${name} ».`,
+              ? `Exiger de l'équipe projet une note d'explication sur l'écart relevé pour « ${name} » avant la prochaine revue. La décision sur la suite du financement de ce volet attendra que l'alerte soit instruite.`
+              : `Conditionner la prochaine tranche à un plan de renforcement de « ${name} », assorti d'indicateurs vérifiables et d'une échéance. Le comité de pilotage en examinera l'avancement à la revue suivante.`,
             justification: alert
-              ? "une alerte de cohérence reste à instruire"
-              : `« ${name} » reste faiblement étayé`,
+              ? "la couche objectivée et la couche évaluative divergent sur ce point, et l'alerte de cohérence n'a pas encore été instruite : arbitrer avant, ce serait décider sur un constat contesté"
+              : `« ${name} » reste faiblement étayé dans le corpus : les documents décrivent le dispositif prévu, mais apportent peu d'éléments sur sa mise en œuvre et ses premiers résultats`,
           },
           pmu: {
             text: alert
-              ? `Rassembler les pièces qui expliquent l'écart sur « ${name} ».`
-              : `Documenter la mise en œuvre effective de « ${name} » dans le prochain rapport.`,
+              ? `Rassembler les pièces qui expliquent l'écart sur « ${name} » (rapports d'activité, comptes rendus, données de suivi) et les verser au corpus. Signaler ensuite les points qui restent sans justification.`
+              : `Documenter la mise en œuvre effective de « ${name} » dans le prochain rapport : activités réalisées, bénéficiaires touchés et difficultés rencontrées, avec les pièces justificatives correspondantes.`,
             justification: alert
-              ? "une alerte de cohérence reste à instruire"
-              : `« ${name} » reste faiblement étayé`,
+              ? "l'alerte ne pourra être instruite qu'avec les documents de terrain : ce sont eux qui diront si l'écart vient d'un manque de documentation ou d'un réel décalage"
+              : `les extraits disponibles sur « ${name} » portent surtout sur les intentions du programme ; sans trace de la mise en œuvre, l'appréciation reste fragile`,
           },
           analyste: {
             text: alert
-              ? `Confronter les extraits contradictoires sur « ${name} » et instruire l'alerte.`
-              : `Rechercher des preuves de résultats pour « ${name} » dans les rapports annuels.`,
+              ? `Confronter les extraits contradictoires sur « ${name} », qualifier l'origine de l'écart (documentation, calendrier ou résultat), puis instruire l'alerte avec un commentaire argumenté.`
+              : `Rechercher des preuves de résultats pour « ${name} » dans les rapports annuels et les données de suivi, puis compléter les variables encore non renseignées avant la prochaine analyse.`,
             justification: alert
-              ? "une alerte de cohérence reste à instruire"
-              : `« ${name} » reste faiblement étayé`,
+              ? "les deux couches lisent les mêmes documents de façon opposée : seule une lecture croisée des extraits permet de dire laquelle reflète la situation"
+              : `plusieurs variables de « ${name} » restent non renseignées, ce qui pèse à la fois sur le score objectivé et sur la confiance du corpus`,
           },
         },
       }
@@ -621,11 +621,15 @@ function buildDataset(
         )
   const leads = notConcluded >= 2 || confidence < 0.5
   const restitution: Restitution = {
-    conclusion: `${
-      leads
-        ? `Sous réserve d'un corpus encore incomplet (${notConcluded} critères non conclus sur ${layerB.length}), les`
-        : "Les"
-    } résultats suggèrent un dispositif mieux documenté qu'à la version précédente, sans que sa mise en œuvre effective soit encore établie. Les écarts signalés doivent être instruits avant toute conclusion.`,
+    conclusion: [
+      `${
+        leads
+          ? `Sous réserve d'un corpus encore incomplet (${notConcluded} critères non conclus sur ${layerB.length}), les`
+          : "Les"
+      } résultats suggèrent un dispositif mieux documenté qu'à la version précédente. Les documents décrivent plus précisément les objectifs, les mécanismes prévus et les responsabilités, ce qui renforce la présence documentaire de plusieurs piliers.`,
+      "Cette progression porte toutefois davantage sur la description du dispositif que sur sa mise en œuvre effective, qui n'est pas encore établie par le corpus. Les faiblesses relevées concernent surtout des volets où les rapports restent peu détaillés sur les activités réalisées et leurs premiers résultats.",
+      "Les écarts de cohérence signalés entre les couches doivent être instruits avant toute conclusion ferme. Compléter le corpus avec des rapports de suivi et des données de terrain permettrait de confirmer ou de nuancer ces constats lors d'une prochaine analyse.",
+    ].join("\n\n"),
     limits: {
       notConcluded,
       criteria: layerB.length,
