@@ -120,6 +120,7 @@ export function DashboardSidebar() {
                       isActive={pathname === childPath}
                     >
                       <NavLink onClick={closeOnMobile} to={childPath}>
+                        <child.icon />
                         <span>{t(`nav.items.${child.labelKey}`)}</span>
                         {child.badge === "pendingAlerts" &&
                         (pendingAlerts.data ?? 0) > 0 ? (

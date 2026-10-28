@@ -1,10 +1,20 @@
 import {
   BarChart3,
   ClipboardList,
+  Columns3,
+  Compass,
   Download,
+  Files,
+  FileText,
+  Fingerprint,
   FolderOpen,
   History,
+  LayoutDashboard,
+  ListChecks,
+  ListTodo,
+  Scale,
   Settings,
+  TriangleAlert,
 } from "lucide-react"
 import type { ComponentType, SVGProps } from "react"
 
@@ -16,6 +26,7 @@ export type NavChild = {
   segment: string
   /** Cle i18n sous `nav.items.` */
   labelKey: string
+  icon: ComponentType<SVGProps<SVGSVGElement>>
   /** Personas autorises a voir l'entree (US-2.3, US-2.4). */
   personas: readonly Persona[]
   /** Compteur affiche a cote de l'entree. */
@@ -23,7 +34,6 @@ export type NavChild = {
 }
 
 export type NavItem = NavChild & {
-  icon: ComponentType<SVGProps<SVGSVGElement>>
   /**
    * Sous-entrees. Le parent reste navigable : son `segment` est la vue
    * par defaut du groupe, et les enfants sont des routes filles.
@@ -61,6 +71,7 @@ export const navSections: readonly NavSection[] = [
           {
             segment: "documents",
             labelKey: "documents",
+            icon: Files,
             personas: withoutDecideur,
           },
         ],
@@ -80,24 +91,28 @@ export const navSections: readonly NavSection[] = [
           {
             segment: "overview",
             labelKey: "overview",
+            icon: LayoutDashboard,
             personas: allPersonas,
           },
           /* Ecran 15 */
           {
             segment: "pillars",
             labelKey: "layerA",
+            icon: Columns3,
             personas: allPersonas,
           },
           /* Ecran 16 */
           {
             segment: "criteria",
             labelKey: "layerB",
+            icon: Scale,
             personas: withoutDecideur,
           },
           /* Ecran 17 */
           {
             segment: "alerts",
             labelKey: "layerC",
+            icon: TriangleAlert,
             badge: "pendingAlerts",
             personas: allPersonas,
           },
@@ -113,12 +128,14 @@ export const navSections: readonly NavSection[] = [
           {
             segment: "synthesis",
             labelKey: "synthesis",
+            icon: FileText,
             personas: allPersonas,
           },
           /* Ecran 19 */
           {
             segment: "actions",
             labelKey: "actions",
+            icon: ListTodo,
             personas: allPersonas,
           },
         ],
@@ -152,6 +169,7 @@ export const navSections: readonly NavSection[] = [
           {
             segment: "general",
             labelKey: "fingerprint",
+            icon: Fingerprint,
             personas: withoutDecideur,
           },
           /* Cadre d'evaluation, regroupe sous les parametres de l'espace. */
@@ -159,18 +177,21 @@ export const navSections: readonly NavSection[] = [
           {
             segment: "brief",
             labelKey: "brief",
+            icon: Compass,
             personas: withoutDecideur,
           },
           /* Ecran 6 */
           {
             segment: "pillars",
             labelKey: "pillars",
+            icon: Columns3,
             personas: withoutDecideur,
           },
           /* Ecran 7 */
           {
             segment: "criteria",
             labelKey: "criteria",
+            icon: ListChecks,
             personas: withoutDecideur,
           },
         ],
