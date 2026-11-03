@@ -19,14 +19,13 @@ import {
   getRunRestitution,
   listActionEvidences,
 } from "@/features/evaluations/services/evaluation-service"
-import { PersonaSwitcher } from "@/features/workspaces/components/persona-switcher"
 import { useWorkspaces } from "@/features/workspaces/model/workspace-provider"
 import { Button } from "@/shared/ui/base/button"
 import { Skeleton } from "@/shared/ui/base/skeleton"
 
 /**
- * Plan d'action du persona actif. Les trois projections d'une action sont
- * chargees ensemble : la bascule de persona change la formulation, jamais
+ * Plan d'action du persona du compte. Les trois projections d'une action
+ * sont chargees ensemble : le persona change la formulation, jamais
  * l'action, son origine ni ses preuves (RG-11.4, CA-11.2).
  */
 export function ActionPlanScreen() {
@@ -60,7 +59,6 @@ export function ActionPlanScreen() {
 
   return (
     <AnalysisPage
-      actions={<PersonaSwitcher />}
       banner={
         <>
           <LayerBanner

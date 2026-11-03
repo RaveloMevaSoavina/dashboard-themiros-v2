@@ -5,21 +5,21 @@ import {
   useCallback,
   useContext,
   useMemo,
-  useState,
 } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 
 import { useAuth } from "@/features/auth/model/auth-provider"
 import {
-  defaultPersona,
-  isPersona,
   type Persona,
+  personaFromProfileRole,
   type Workspace,
 } from "@/features/workspaces/model/types"
-import { listWorkspaces } from "@/features/workspaces/services/workspace-service"
+import {
+  getWorkspaceAccountContext,
+  listWorkspaces,
+} from "@/features/workspaces/services/workspace-service"
 
 const lastWorkspaceStorageKey = "themiros-last-workspace"
-const personaStorageKey = "themiros-persona"
 
 export const workspacesQueryKey = ["workspaces", "list"] as const
 
@@ -35,26 +35,15 @@ type WorkspaceContextValue = {
   navigationWorkspaceId: string
   isLoading: boolean
   error: Error | null
-  /** Persona de lecture conserve localement (absent du schema SQL). */
+  /** Persona de lecture impose par le role du compte (`profiles.role`). */
   persona: Persona
   selectWorkspace: (workspaceId: string) => void
-  setPersona: (persona: Persona) => void
   refetch: () => void
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | undefined>(
   undefined
 )
-
-function readStoredPersona(): Persona {
-  try {
-    const stored = window.localStorage.getItem(personaStorageKey)
-
-    return isPersona(stored) ? stored : defaultPersona
-  } catch {
-    return defaultPersona
-  }
-}
 
 function writeStorage(key: string, value: string) {
   try {
@@ -80,7 +69,15 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
   const { session } = useAuth()
   const navigate = useNavigate()
   const { workspaceId } = useParams<{ workspaceId?: string }>()
-  const [persona, setLocalPersona] = useState(readStoredPersona)
+  const userId = session?.user.id ?? ""
+
+  const accountQuery = useQuery({
+    queryKey: ["workspaces", "creation-context", userId],
+    queryFn: () => getWorkspaceAccountContext(userId),
+    enabled: Boolean(userId),
+  })
+
+  const persona = personaFromProfileRole(accountQuery.data?.role ?? null)
 
   const workspacesQuery = useQuery({
     queryKey: workspacesQueryKey,
@@ -113,31 +110,28 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     [navigate]
   )
 
-  const setPersona = useCallback((nextPersona: Persona) => {
-    writeStorage(personaStorageKey, nextPersona)
-    setLocalPersona(nextPersona)
-  }, [])
-
   const value = useMemo<WorkspaceContextValue>(
     () => ({
       workspaces,
       activeWorkspace,
       navigationWorkspaceId,
-      isLoading: workspacesQuery.isPending,
-      error: workspacesQuery.error,
+      // Le persona conditionne la navigation : on attend le profil pour ne
+      // pas afficher brievement les entrees d'un autre role.
+      isLoading: workspacesQuery.isPending || accountQuery.isPending,
+      error: workspacesQuery.error ?? accountQuery.error,
       persona,
       selectWorkspace,
-      setPersona,
       refetch: () => {
         void workspacesQuery.refetch()
       },
     }),
     [
+      accountQuery.error,
+      accountQuery.isPending,
       activeWorkspace,
       navigationWorkspaceId,
       persona,
       selectWorkspace,
-      setPersona,
       workspaces,
       workspacesQuery,
     ]

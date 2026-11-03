@@ -80,3 +80,15 @@ export type UpdateWorkspaceInput = Omit<
 export function isPersona(value: unknown): value is Persona {
   return personas.includes(value as Persona)
 }
+
+/**
+ * Persona de lecture derive de `profiles.role` : l'utilisateur ne le choisit
+ * pas, il reflete le role du compte. L'admin lit tout, comme l'Analyste.
+ */
+export function personaFromProfileRole(role: string | null): Persona {
+  if (role === "admin") {
+    return "analyste"
+  }
+
+  return isPersona(role) ? role : defaultPersona
+}

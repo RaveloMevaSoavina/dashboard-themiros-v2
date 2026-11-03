@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next"
 
-import { PersonaSwitcher } from "@/features/workspaces/components/persona-switcher"
 import { useWorkspaces } from "@/features/workspaces/model/workspace-provider"
 import { Badge } from "@/shared/ui/base/badge"
 import { SidebarTrigger } from "@/shared/ui/base/sidebar"
@@ -22,8 +21,6 @@ export function DashboardTopbar() {
           <Badge variant="warning">{t("workspaces.framework.draft")}</Badge>
         ) : null}
       </div>
-
-      <PersonaSwitcher />
     </header>
   )
 }

@@ -6,8 +6,8 @@ import { SidebarInset, SidebarProvider } from "@/shared/ui/base/sidebar"
 
 /**
  * Coquille commune a tous les ecrans authentifies : barre laterale shadcn
- * (navigation projetee par persona), en-tete (espace courant + puce
- * profil) et zone de contenu.
+ * (navigation projetee par persona), en-tete (espace courant) et zone de
+ * contenu.
  */
 export function DashboardLayout() {
   return (
