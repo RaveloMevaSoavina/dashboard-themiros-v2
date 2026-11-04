@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
 import { useAuth } from "@/features/auth/model/auth-provider"
+import { AI_USAGE_PAGE_ENABLED } from "@/features/usage/model/visibility"
 import { useWorkspaces } from "@/features/workspaces/model/workspace-provider"
 import { type Theme, useTheme } from "@/shared/theme/theme-provider"
 import {
@@ -118,7 +119,7 @@ export function AccountMenu() {
             </DropdownMenuItem>
 
             {/* Consommation de l'espace ouvert : sans espace, rien a montrer. */}
-            {activeWorkspace ? (
+            {AI_USAGE_PAGE_ENABLED && activeWorkspace ? (
               <DropdownMenuItem
                 onSelect={() => {
                   void navigate(`/workspaces/${activeWorkspace.id}/usage`)

@@ -27,6 +27,7 @@ import { LayerBScreen } from "@/features/evaluations/screens/layer-b-screen"
 import { PillarDetailScreen } from "@/features/evaluations/screens/pillar-detail-screen"
 import { SynthesisScreen } from "@/features/evaluations/screens/synthesis-screen"
 import { ExportsScreen } from "@/features/exports/screens/exports-screen"
+import { AI_USAGE_PAGE_ENABLED } from "@/features/usage/model/visibility"
 import { AiUsageScreen } from "@/features/usage/screens/ai-usage-screen"
 import { CreateWorkspaceScreen } from "@/features/workspaces/screens/create-workspace-screen"
 import { WelcomeScreen } from "@/features/workspaces/screens/welcome-screen"
@@ -188,7 +189,9 @@ export const appRouter = createBrowserRouter([
                           { index: true, element: <WorkspaceRedirect /> },
                           ...workspaceRoutes,
                           /* Hors menu lateral : ouvert depuis le menu du compte. */
-                          { path: "usage", element: <AiUsageScreen /> },
+                          ...(AI_USAGE_PAGE_ENABLED
+                            ? [{ path: "usage", element: <AiUsageScreen /> }]
+                            : []),
                           /* Anciennes URL du cadre, deplace sous Parametres. */
                           {
                             path: "framework/:section?",
