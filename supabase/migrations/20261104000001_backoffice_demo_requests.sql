@@ -1,9 +1,10 @@
 -- ---------------------------------------------------------------------------
 -- Backoffice : suivi des demandes de démonstration de la landing page.
 --
--- La table vient de landing-page (20260918000001_demo_requests.sql) ; la
--- fonction demo-request y écrit avec la clé serveur. On y ajoute le suivi
--- commercial : statut, notes, dernier administrateur à l'avoir traitée.
+-- La table vient de landing-page (20260918000001_demo_requests.sql) ;
+-- l'API (POST /api/v1/demo-requests) y écrit avec la clé serveur. On y
+-- ajoute le suivi commercial : statut, notes, dernier administrateur à
+-- l'avoir traitée.
 --
 --   new        : arrivée, personne ne l'a encore prise ;
 --   contacted  : une réponse est partie ;
@@ -14,8 +15,7 @@
 -- Accès : uniquement par les fonctions backoffice_* ci-dessous. Le dump
 -- montre un GRANT ALL à anon et authenticated : la RLS sans policy les
 -- bloque déjà, on retire quand même ces droits, comme pour les autres
--- tables du backoffice. La fonction demo-request n'est pas concernée (clé
--- serveur).
+-- tables du backoffice. L'API n'est pas concernée (clé serveur).
 -- ---------------------------------------------------------------------------
 
 alter table public.demo_requests
