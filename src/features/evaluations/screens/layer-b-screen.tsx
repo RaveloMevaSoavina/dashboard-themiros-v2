@@ -8,6 +8,10 @@ import {
   PageSection,
 } from "@/features/evaluations/components/analysis-layout"
 import {
+  CitedText,
+  useCitationSources,
+} from "@/features/evaluations/components/cited-text"
+import {
   CriterionNoteMeter,
   CriterionNoteValue,
 } from "@/features/evaluations/components/criterion-note-meter"
@@ -52,6 +56,10 @@ function CriterionResultCard({
     queryFn: () =>
       listSubAnswers(runId, note.criterionId, i18n.resolvedLanguage ?? "fr"),
   })
+  const cited = useCitationSources(
+    [note.citations],
+    i18n.resolvedLanguage ?? "fr"
+  )
   const percentage =
     note.total === 0 ? 0 : Math.round((note.documented / note.total) * 100)
   return (
@@ -96,9 +104,14 @@ function CriterionResultCard({
       </div>
       {note.justification ? (
         <p className="mt-5 text-[13px] leading-6 text-muted-foreground">
-          {note.justification}
+          <CitedText
+            citations={note.citations}
+            sources={cited.sources}
+            text={note.justification}
+          />
         </p>
       ) : null}
+      {cited.dialog}
       {note.ambiguous ? (
         <button
           className="mt-3 flex items-center gap-2 text-[12px] text-muted-foreground hover:underline"

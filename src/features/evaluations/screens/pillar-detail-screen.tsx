@@ -19,6 +19,10 @@ import {
   PageSection,
 } from "@/features/evaluations/components/analysis-layout"
 import {
+  CitedText,
+  useCitationSources,
+} from "@/features/evaluations/components/cited-text"
+import {
   CriterionNoteMeter,
   CriterionNoteValue,
 } from "@/features/evaluations/components/criterion-note-meter"
@@ -189,9 +193,14 @@ function CriterionDetail({
         i18n.resolvedLanguage ?? "fr"
       ),
   })
+  const cited = useCitationSources(
+    [note.citations],
+    i18n.resolvedLanguage ?? "fr"
+  )
 
   return (
     <div className="flex min-w-0 flex-col gap-6 p-5">
+      {cited.dialog}
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h3 className="truncate text-base font-semibold">
@@ -206,7 +215,13 @@ function CriterionDetail({
         <CriterionNoteValue className="shrink-0 text-xl" note={note.note} />
       </div>
       {note.justification ? (
-        <p className="text-[13px] leading-6">{note.justification}</p>
+        <p className="text-[13px] leading-6">
+          <CitedText
+            citations={note.citations}
+            sources={cited.sources}
+            text={note.justification}
+          />
+        </p>
       ) : null}
 
       <div>

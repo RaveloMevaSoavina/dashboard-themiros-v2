@@ -140,7 +140,10 @@ export type LayerBNote = {
   status: "conclu" | "non_conclu"
   documented: number
   total: number
+  /** Peut porter des marqueurs de sources « ⟦1⟧ » (voir `Citation`). */
   justification: string | null
+  /** Sources des marqueurs de la justification, dans l'ordre des numeros. */
+  citations?: Citation[]
   ambiguous: boolean
   answers: SubAnswer[]
 }
@@ -177,10 +180,28 @@ export type Evidence = {
   isPdf: boolean
   page: number | null
   section: string | null
+  /** Texte brut du segment, tel qu'extrait du document. */
   excerpt: string
+  /** Ce que l'extrait etablit, redige par l'IA ; `null` : extrait non lu. */
+  interpretation?: string | null
+  /** Positions [debut, fin) des phrases citees dans `excerpt`. */
+  spans?: Span[] | null
   pillarName: string | null
   criterionName: string | null
   variableCode: string | null
+}
+
+/** Positions [debut, fin) d'un passage dans l'extrait d'une preuve. */
+export type Span = [number, number]
+
+/**
+ * Source d'un marqueur « ⟦n⟧ » d'un texte redige par l'IA : la preuve et
+ * les phrases citees, surlignees a l'ouverture du document. `evidenceId`
+ * vaut `null` si la preuve n'a pas ete retrouvee : le numero reste affiche.
+ */
+export type Citation = {
+  evidenceId: string | null
+  spans: Span[]
 }
 
 /** Ce qui fonde une puce de synthese ou une action, et ou la verifier. */
@@ -199,7 +220,9 @@ export type SynthesisItem = {
   id: string
   section: SynthesisSection
   position: number
+  /** Peut porter des marqueurs de sources « ⟦1⟧ ». */
   text: string
+  citations?: Citation[]
   origin: RestitutionOrigin
 }
 
@@ -207,6 +230,8 @@ export type ActionProjection = {
   text: string
   /** Raison, affichee apres « Recommandee parce que ». */
   justification: string
+  /** Sources des marqueurs de `text` et `justification`. */
+  citations?: Citation[]
 }
 
 /** Action commune aux trois personas, reformulee pour chacun (RG-11.4). */
@@ -230,6 +255,7 @@ export type RestitutionStatus =
 export type Restitution = {
   /** `null` : conclusion non redigee (voir `status`). */
   conclusion: string | null
+  conclusionCitations?: Citation[]
   limits: {
     notConcluded: number
     criteria: number

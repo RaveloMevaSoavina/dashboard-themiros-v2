@@ -7,6 +7,7 @@ import {
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useEvidenceDocument } from "@/features/evaluations/components/evidence-document-dialog"
+import { EvidenceReading } from "@/features/evaluations/components/evidence-reading"
 import type { Evidence } from "@/features/evaluations/model/types"
 import { Button } from "@/shared/ui/base/button"
 import {
@@ -92,12 +93,7 @@ export function EvidenceDrawer({
               </dd>
             </dl>
             <div className="py-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                {t("evaluation.evidence.primary")}
-              </p>
-              <blockquote className="mt-3 border-l-2 border-foreground pl-4 text-[14px] leading-7">
-                {evidence.excerpt}
-              </blockquote>
+              <EvidenceReading evidence={evidence} key={evidence.id} />
             </div>
           </div>
         )}

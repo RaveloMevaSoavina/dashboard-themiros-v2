@@ -2,6 +2,7 @@ import { ExternalLink, FileText, FileWarning, RotateCcw } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { useEvidenceDocument } from "@/features/evaluations/components/evidence-document-dialog"
+import { EvidenceReading } from "@/features/evaluations/components/evidence-reading"
 import type { Evidence, LayerAScore } from "@/features/evaluations/model/types"
 import { Button } from "@/shared/ui/base/button"
 import {
@@ -132,9 +133,9 @@ export function EvidenceListDrawer({
                     {index + 1}/{evidences.length}
                   </span>
                 </div>
-                <blockquote className="mt-3 border-l-2 border-foreground pl-4 text-[13px] leading-6">
-                  {evidence.excerpt}
-                </blockquote>
+                <div className="mt-3">
+                  <EvidenceReading evidence={evidence} size="sm" />
+                </div>
                 <Button
                   className="mt-3"
                   disabled={!evidence.storagePath}

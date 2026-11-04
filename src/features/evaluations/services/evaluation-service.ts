@@ -2,6 +2,7 @@ import type { ObservableVariable } from "@/features/evaluation-frameworks/model/
 import { layerAvailable } from "@/features/evaluations/model/layer-a"
 import {
   type AnalysisRun,
+  type Citation,
   type EvaluationCriterion,
   type EvaluationPillar,
   type EvaluationResults,
@@ -17,6 +18,7 @@ import {
   type RestitutionOrigin,
   type RunAction,
   type RunStep,
+  type Span,
   type SubAnswer,
   type SynthesisItem,
   type ValidationRefusal,
@@ -123,7 +125,18 @@ type NoteRow = {
   total_sub_questions: number
   justification: string | null
   ambiguity_flag: boolean
+  citations?: CitationRow[] | null
   criteria: { name: string } | null
+}
+
+/** Source d'un marqueur « ⟦n⟧ » : preuve et phrases citees. */
+type CitationRow = { e: string | null; s: Span[] | null }
+
+function toCitations(rows: CitationRow[] | null | undefined): Citation[] {
+  return (rows ?? []).map((row) => ({
+    evidenceId: row.e,
+    spans: Array.isArray(row.s) ? row.s : [],
+  }))
 }
 
 type AlertRow = {
@@ -171,6 +184,9 @@ type EvidenceRow = {
   page_number: number | null
   section_title: string | null
   excerpt: string
+  interpretation?: string | null
+  interpretation_translations?: Record<string, string> | null
+  spans?: Span[] | null
   variable_code: string | null
   documents: {
     original_filename: string
@@ -206,6 +222,7 @@ type SynthesisRow = {
   status: Restitution["status"]
   /** Conclusion traduite, par langue de l'interface (prompt v1.2). */
   translations: Record<string, { conclusion?: string }> | null
+  citations?: CitationRow[] | null
 }
 
 type SynthesisItemRow = OriginRow & {
@@ -214,6 +231,7 @@ type SynthesisItemRow = OriginRow & {
   position: number
   text: string
   translations: Record<string, string> | null
+  citations?: CitationRow[] | null
 }
 
 type ActionRow = OriginRow & {
@@ -225,6 +243,7 @@ type ActionRow = OriginRow & {
     text: string
     justification: string
     translations: Record<string, { text: string; justification: string }> | null
+    citations?: CitationRow[] | null
   }[]
 }
 
@@ -737,7 +756,7 @@ export async function getEvaluationResults(
     supabase
       .from("layer_b_notes")
       .select(
-        "id, criterion_id, note, status, documented_sub_questions, total_sub_questions, justification, ambiguity_flag, criteria(name)"
+        "id, criterion_id, note, status, documented_sub_questions, total_sub_questions, justification, ambiguity_flag, citations, criteria(name)"
       )
       .eq("run_id", run.id),
     supabase
@@ -789,6 +808,7 @@ export async function getEvaluationResults(
     documented: row.documented_sub_questions,
     total: row.total_sub_questions,
     justification: row.justification,
+    citations: toCitations(row.citations),
     ambiguous: row.ambiguity_flag,
     answers: [],
   }))
@@ -938,7 +958,7 @@ export async function listSubAnswers(
   }))
 }
 
-const evidenceSelect = `id, document_id, page_number, section_title, excerpt, variable_code, documents(original_filename, storage_path, mime_type), pillars(${pillarTextSelect}), criteria(name)`
+const evidenceSelect = `id, document_id, page_number, section_title, excerpt, interpretation, interpretation_translations, spans, variable_code, documents(original_filename, storage_path, mime_type), pillars(${pillarTextSelect}), criteria(name)`
 
 function toEvidence(row: EvidenceRow, locale: string): Evidence {
   return {
@@ -950,6 +970,9 @@ function toEvidence(row: EvidenceRow, locale: string): Evidence {
     page: row.page_number,
     section: row.section_title,
     excerpt: row.excerpt,
+    interpretation:
+      row.interpretation_translations?.[locale] ?? row.interpretation ?? null,
+    spans: row.spans ?? null,
     pillarName: row.pillars ? localizePillar(row.pillars, locale).name : null,
     criterionName: row.criteria?.name ?? null,
     variableCode: row.variable_code,
@@ -975,6 +998,26 @@ export async function listEvidences(
   if (filters.variableCode)
     query = query.eq("variable_code", filters.variableCode)
   const { data, error } = await query.order("created_at")
+  if (error) {
+    if (isMissingRelation(error)) return []
+    throw error
+  }
+  return ((data ?? []) as unknown as EvidenceRow[]).map((row) =>
+    toEvidence(row, locale)
+  )
+}
+
+/** Preuves des sources citees dans les textes de l'IA, par identifiant. */
+export async function listEvidencesByIds(
+  ids: string[],
+  locale: string
+): Promise<Evidence[]> {
+  const unique = [...new Set(ids)]
+  if (unique.length === 0 || unique.some(isDemoId)) return []
+  const { data, error } = await supabase
+    .from("evidences")
+    .select(evidenceSelect)
+    .in("id", unique)
   if (error) {
     if (isMissingRelation(error)) return []
     throw error
@@ -1077,18 +1120,20 @@ export async function getRunRestitution(
   const [synthesisResult, itemsResult, actionsResult] = await Promise.all([
     supabase
       .from("syntheses")
-      .select("conclusion, limits, status, translations")
+      .select("conclusion, limits, status, translations, citations")
       .eq("run_id", runId)
       .maybeSingle(),
     supabase
       .from("synthesis_items")
-      .select(`id, section, position, text, translations, ${originSelect}`)
+      .select(
+        `id, section, position, text, translations, citations, ${originSelect}`
+      )
       .eq("run_id", runId)
       .order("position"),
     supabase
       .from("run_actions")
       .select(
-        `id, position, origin_type, ${originSelect}, run_action_projections(persona, text, justification, translations)`
+        `id, position, origin_type, ${originSelect}, run_action_projections(persona, text, justification, translations, citations)`
       )
       .eq("run_id", runId)
       .order("position"),
@@ -1109,6 +1154,7 @@ export async function getRunRestitution(
     section: row.section,
     position: row.position,
     text: row.translations?.[locale] ?? row.text,
+    citations: toCitations(row.citations),
     origin: toOrigin(
       row.alert_id ? "alert" : row.criterion_id ? "criterion" : "pillar",
       row,
@@ -1127,9 +1173,12 @@ export async function getRunRestitution(
           ? [
               [
                 projection.persona,
-                projection.translations?.[locale] ?? {
-                  text: projection.text,
-                  justification: projection.justification,
+                {
+                  ...(projection.translations?.[locale] ?? {
+                    text: projection.text,
+                    justification: projection.justification,
+                  }),
+                  citations: toCitations(projection.citations),
                 },
               ],
             ]
@@ -1140,6 +1189,7 @@ export async function getRunRestitution(
   return {
     conclusion:
       synthesis.translations?.[locale]?.conclusion ?? synthesis.conclusion,
+    conclusionCitations: toCitations(synthesis.citations),
     limits: {
       notConcluded: synthesis.limits.not_concluded ?? 0,
       criteria: synthesis.limits.criteria ?? 0,

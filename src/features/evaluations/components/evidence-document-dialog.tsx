@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { getDocumentUrl } from "@/features/corpus/services/corpus-service"
-import type { Evidence } from "@/features/evaluations/model/types"
+import type { Evidence, Span } from "@/features/evaluations/model/types"
 import { getHighlightedDocument } from "@/features/evaluations/services/evidence-document-service"
 import { Button } from "@/shared/ui/base/button"
 import {
@@ -29,20 +29,25 @@ export async function openEvidenceDocument(evidence: Evidence) {
 
 /**
  * Ouvre le document d'une preuve : un PDF s'affiche dans l'app, le passage
- * surligne ; un DOCX ou un XLSX s'ouvre tel quel dans un onglet.
+ * surligne ; un DOCX ou un XLSX s'ouvre tel quel dans un onglet. `spans` :
+ * phrases citees par un texte de l'IA, seules surlignees.
  */
 export function useEvidenceDocument() {
-  const [viewing, setViewing] = useState<Evidence | null>(null)
-  function open(evidence: Evidence) {
-    if (evidence.isPdf) setViewing(evidence)
+  const [viewing, setViewing] = useState<{
+    evidence: Evidence
+    spans: Span[]
+  } | null>(null)
+  function open(evidence: Evidence, spans: Span[] = []) {
+    if (evidence.isPdf) setViewing({ evidence, spans })
     else void openEvidenceDocument(evidence)
   }
   const dialog = (
     <EvidenceDocumentDialog
-      evidence={viewing}
+      evidence={viewing?.evidence ?? null}
       onOpenChange={(next) => {
         if (!next) setViewing(null)
       }}
+      spans={viewing?.spans}
     />
   )
   return { open, dialog }
@@ -51,16 +56,19 @@ export function useEvidenceDocument() {
 /** PDF source d'une preuve, le passage cite surligne, ouvert a sa page. */
 export function EvidenceDocumentDialog({
   evidence,
+  spans = [],
   onOpenChange,
 }: {
   /** Preuve dont on lit le document ; `null` ferme la fenetre. */
   evidence: Evidence | null
+  /** Phrases a surligner ; vide : celles de la preuve, sinon l'extrait. */
+  spans?: Span[]
   onOpenChange: (open: boolean) => void
 }) {
   const { t } = useTranslation()
   const pdf = useQuery({
-    queryKey: ["evidence-document", evidence?.id],
-    queryFn: () => getHighlightedDocument(evidence?.id ?? ""),
+    queryKey: ["evidence-document", evidence?.id, spans],
+    queryFn: () => getHighlightedDocument(evidence?.id ?? "", spans),
     enabled: Boolean(evidence),
     staleTime: Number.POSITIVE_INFINITY,
     gcTime: 5 * 60 * 1000,

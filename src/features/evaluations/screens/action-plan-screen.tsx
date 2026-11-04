@@ -8,6 +8,10 @@ import {
   AnalysisPage,
   PageSection,
 } from "@/features/evaluations/components/analysis-layout"
+import {
+  CitedText,
+  useCitationSources,
+} from "@/features/evaluations/components/cited-text"
 import { CorpusLimits } from "@/features/evaluations/components/corpus-limits"
 import { EvidenceDrawer } from "@/features/evaluations/components/evidence-drawer"
 import { LayerBanner } from "@/features/evaluations/components/layer-banner"
@@ -56,6 +60,15 @@ export function ActionPlanScreen() {
     const projection = action.projections[persona]
     return projection ? [{ ...action, projection }] : []
   })
+  /* Sources citees dans l'action et sa raison (prompt v1.3). */
+  const cited = useCitationSources(
+    actions.map((action) => action.projection.citations),
+    locale
+  )
+  /* « Recommandee parce que {{reason}}. » : la raison porte ses sources. */
+  const [beforeReason, afterReason] = t("evaluation.actionPlan.because", {
+    reason: "\u0000",
+  }).split("\u0000")
 
   return (
     <AnalysisPage
@@ -113,12 +126,20 @@ export function ActionPlanScreen() {
                     <div className="flex min-w-0 flex-1 flex-col gap-3">
                       <div>
                         <p className="text-sm font-medium leading-6">
-                          {action.projection.text}
+                          <CitedText
+                            citations={action.projection.citations}
+                            sources={cited.sources}
+                            text={action.projection.text}
+                          />
                         </p>
                         <p className="mt-2 text-[13px] leading-6 text-muted-foreground">
-                          {t("evaluation.actionPlan.because", {
-                            reason: action.projection.justification,
-                          })}
+                          {beforeReason}
+                          <CitedText
+                            citations={action.projection.citations}
+                            sources={cited.sources}
+                            text={action.projection.justification}
+                          />
+                          {afterReason}
                         </p>
                       </div>
                       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -148,6 +169,7 @@ export function ActionPlanScreen() {
         onOpenChange={(open) => !open && setSelected(null)}
         open={Boolean(selected)}
       />
+      {cited.dialog}
     </AnalysisPage>
   )
 }

@@ -11,7 +11,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(14);
+select plan(18);
 
 create function pg_temp.as_user(user_id text)
 returns void
@@ -178,7 +178,10 @@ as $$
         'criterion_id', 'c1000000-0000-0000-0000-000000000001',
         'note', 1, 'status', 'conclu',
         'documented_sub_questions', 2, 'total_sub_questions', 3,
-        'justification', 'Weakly supported.', 'ambiguity_flag', false
+        'justification', 'Weakly supported⟦1⟧.', 'ambiguity_flag', false,
+        'citations', jsonb_build_array(jsonb_build_object(
+          'segment_id', '0a000000-0000-0000-0000-000000000001',
+          'spans', jsonb_build_array(jsonb_build_array(0, 10))))
       )),
       'answers', jsonb_build_array(
         jsonb_build_object('id', '5b000000-0000-0000-0000-000000000001',
@@ -193,7 +196,9 @@ as $$
       ),
       'evidences', jsonb_build_array(
         jsonb_build_object('sub_answer_id', '5b000000-0000-0000-0000-000000000001',
-          'segment_id', '0a000000-0000-0000-0000-000000000001', 'similarity', 0.7)
+          'segment_id', '0a000000-0000-0000-0000-000000000001', 'similarity', 0.7,
+          'interpretation', 'The needs analysis is missing.',
+          'spans', jsonb_build_array(jsonb_build_array(0, 10)))
       )
     ),
     'layer_c', jsonb_build_object('alerts', jsonb_build_array(jsonb_build_object(
@@ -238,15 +243,23 @@ as $$
       'limits', jsonb_build_object('not_concluded', 0, 'criteria', 1,
         'confidence', 0.8, 'leads', false),
       'qualified', true,
-      'status', 'completed'
+      'status', 'completed',
+      'citations', jsonb_build_array(
+        jsonb_build_object('segment_id', '0a000000-0000-0000-0000-000000000004',
+          'spans', jsonb_build_array(jsonb_build_array(0, 20))),
+        jsonb_build_object('segment_id', '0a000000-0000-0000-0000-000000000009',
+          'spans', jsonb_build_array(jsonb_build_array(0, 5))))
     ),
     'items', jsonb_build_array(
       jsonb_build_object(
         'id', '51000000-0000-0000-0000-000000000001',
-        'section', 'progres', 'position', 1, 'text', 'Budget execution is documented.',
+        'section', 'progres', 'position', 1, 'text', 'Budget execution is documented⟦1⟧.',
         'pillar_id', 'd0000000-0000-0000-0000-000000000001',
         'program_version_id', '90000000-0000-0000-0000-000000000001',
-        'segment_ids', jsonb_build_array(progress_segment)),
+        'segment_ids', jsonb_build_array(progress_segment),
+        'citations', jsonb_build_array(jsonb_build_object(
+          'segment_id', progress_segment,
+          'spans', jsonb_build_array(jsonb_build_array(0, 20))))),
       jsonb_build_object(
         'id', '51000000-0000-0000-0000-000000000002',
         'section', 'faiblesse', 'position', 1, 'text', 'Relevance is weakly supported.',
@@ -266,7 +279,18 @@ as $$
       'alert_id', 'ac000000-0000-0000-0000-000000000001',
       'segment_ids', jsonb_build_array('0a000000-0000-0000-0000-000000000001'),
       'projections', pg_temp.projections(projections)
-    ))
+    )),
+    -- Segment 4 : preuve de la couche A, sans interprétation ; segment 1 :
+    -- celle de la couche B est gardée.
+    'readings', jsonb_build_array(
+      jsonb_build_object('segment_id', '0a000000-0000-0000-0000-000000000004',
+        'interpretation', 'Budget execution is recorded.',
+        'translations', jsonb_build_object('fr', 'L''exécution est consignée.'),
+        'spans', jsonb_build_array(jsonb_build_array(0, 20))),
+      jsonb_build_object('segment_id', '0a000000-0000-0000-0000-000000000001',
+        'interpretation', 'Must not replace layer B.', 'translations', '{}'::jsonb,
+        'spans', null)
+    )
   );
 $$;
 
@@ -333,6 +357,51 @@ select is(
    where action_id = '52000000-0000-0000-0000-000000000001'),
   1,
   'l''action cite une preuve de son alerte'
+);
+select results_eq(
+  $$select segment_id, criterion_id is not null, interpretation,
+      interpretation_translations, spans
+    from public.evidences
+    where run_id = pg_temp.run_id()
+      and segment_id in ('0a000000-0000-0000-0000-000000000001',
+        '0a000000-0000-0000-0000-000000000004')
+    order by segment_id, criterion_id nulls first$$,
+  $$values
+    ('0a000000-0000-0000-0000-000000000001'::uuid, false, null::text,
+      '{}'::jsonb, null::jsonb),
+    ('0a000000-0000-0000-0000-000000000001'::uuid, true,
+      'The needs analysis is missing.', '{}'::jsonb, '[[0, 10]]'::jsonb),
+    ('0a000000-0000-0000-0000-000000000004'::uuid, false,
+      'Budget execution is recorded.', '{"fr": "L''exécution est consignée."}'::jsonb,
+      '[[0, 20]]'::jsonb)$$,
+  'une preuve porte son interprétation ; la restitution ne remplace pas celle de la couche B'
+);
+select is(
+  (select citations from public.syntheses where run_id = pg_temp.run_id()),
+  jsonb_build_array(
+    jsonb_build_object('e', (select id from public.evidences
+      where run_id = pg_temp.run_id()
+        and segment_id = '0a000000-0000-0000-0000-000000000004'),
+      's', '[[0, 20]]'::jsonb),
+    jsonb_build_object('e', null, 's', '[[0, 5]]'::jsonb)),
+  'les sources de la conclusion désignent des preuves du run, dans l''ordre des numéros'
+);
+select is(
+  (select citations -> 0 -> 'e' from public.synthesis_items
+   where id = '51000000-0000-0000-0000-000000000001'),
+  to_jsonb((select id from public.evidences
+    where run_id = pg_temp.run_id()
+      and segment_id = '0a000000-0000-0000-0000-000000000004')),
+  'la source d''une puce désigne sa preuve'
+);
+select is(
+  (select citations -> 0 -> 'e' from public.layer_b_notes
+   where run_id = pg_temp.run_id()),
+  to_jsonb((select id from public.evidences
+    where run_id = pg_temp.run_id()
+      and segment_id = '0a000000-0000-0000-0000-000000000001'
+      and criterion_id = 'c1000000-0000-0000-0000-000000000001')),
+  'la source d''une justification désigne de préférence une preuve de son critère'
 );
 select is(
   (select metadata -> 'restitution_ai' ->> 'status' from public.audit_events

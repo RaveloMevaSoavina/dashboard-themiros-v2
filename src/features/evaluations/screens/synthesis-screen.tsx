@@ -8,6 +8,10 @@ import {
   AnalysisPage,
   PageSection,
 } from "@/features/evaluations/components/analysis-layout"
+import {
+  CitedText,
+  useCitationSources,
+} from "@/features/evaluations/components/cited-text"
 import { CorpusLimits } from "@/features/evaluations/components/corpus-limits"
 import { EvidenceDrawer } from "@/features/evaluations/components/evidence-drawer"
 import { LayerBanner } from "@/features/evaluations/components/layer-banner"
@@ -50,6 +54,14 @@ export function SynthesisScreen() {
   const data = restitution.data
   const stale = results.data?.corpusChanged ?? false
   const run = results.data?.run
+  /* Sources citees dans les constats et la conclusion (prompt v1.3). */
+  const cited = useCitationSources(
+    [
+      data?.conclusionCitations,
+      ...(data?.items.map((item) => item.citations) ?? []),
+    ],
+    locale
+  )
 
   /* GF-6 : la validation humaine clôt la lecture des résultats. */
   return (
@@ -123,7 +135,13 @@ export function SynthesisScreen() {
                           className="flex flex-col gap-3 rounded-xl border border-border p-4"
                           key={item.id}
                         >
-                          <p className="text-sm leading-6">{item.text}</p>
+                          <p className="text-sm leading-6">
+                            <CitedText
+                              citations={item.citations}
+                              sources={cited.sources}
+                              text={item.text}
+                            />
+                          </p>
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <OriginBadge
                               origin={item.origin}
@@ -148,9 +166,15 @@ export function SynthesisScreen() {
           <PageSection title={t("evaluation.synthesis.conclusionTitle")}>
             <div className="flex flex-col gap-4 rounded-xl border border-border p-5 text-sm leading-7">
               {/* Conclusion narrative : un paragraphe par bloc (prompt v1.1). */}
-              {data.conclusion
-                ?.split(/\n\s*\n/)
-                .map((paragraph) => <p key={paragraph}>{paragraph}</p>) ?? (
+              {data.conclusion?.split(/\n\s*\n/).map((paragraph) => (
+                <p key={paragraph}>
+                  <CitedText
+                    citations={data.conclusionCitations}
+                    sources={cited.sources}
+                    text={paragraph}
+                  />
+                </p>
+              )) ?? (
                 <span className="text-muted-foreground">
                   {t(`evaluation.synthesis.noConclusion.${data.status}`)}
                 </span>
@@ -165,6 +189,7 @@ export function SynthesisScreen() {
         onOpenChange={(open) => !open && setSelected(null)}
         open={Boolean(selected)}
       />
+      {cited.dialog}
     </AnalysisPage>
   )
 }
