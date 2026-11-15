@@ -93,7 +93,11 @@ export function EvidenceDrawer({
               </dd>
             </dl>
             <div className="py-5">
-              <EvidenceReading evidence={evidence} key={evidence.id} />
+              <EvidenceReading
+                evidence={evidence}
+                key={evidence.id}
+                onOpen={(spans) => viewer.open(evidence, spans)}
+              />
             </div>
           </div>
         )}

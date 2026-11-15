@@ -182,8 +182,14 @@ export type Evidence = {
   section: string | null
   /** Texte brut du segment, tel qu'extrait du document. */
   excerpt: string
-  /** Ce que l'extrait etablit, redige par l'IA ; `null` : extrait non lu. */
+  /**
+   * Ce que l'extrait etablit sur le projet, redige par l'IA ; `null` :
+   * extrait non lu. Peut porter des marqueurs « ⟦1⟧ » renvoyant a des
+   * phrases de l'extrait lui-meme (`interpretationCitations`).
+   */
   interpretation?: string | null
+  /** Sources des marqueurs de l'interpretation, dans l'ordre des numeros. */
+  interpretationCitations?: Citation[]
   /** Positions [debut, fin) des phrases citees dans `excerpt`. */
   spans?: Span[] | null
   pillarName: string | null

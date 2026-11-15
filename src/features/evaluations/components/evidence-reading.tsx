@@ -2,22 +2,31 @@ import { ChevronDown, ChevronUp } from "lucide-react"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
+import {
+  type CitationSources,
+  CitedText,
+} from "@/features/evaluations/components/cited-text"
 import { citedPassage, cleanText } from "@/features/evaluations/model/passages"
-import type { Evidence } from "@/features/evaluations/model/types"
+import type { Evidence, Span } from "@/features/evaluations/model/types"
 import { cn } from "@/shared/lib/utils"
 
 /**
- * Lecture d'une preuve : ce que l'extrait etablit (interpretation de l'IA),
- * puis le passage cite, et l'extrait complet replie. Sans interpretation
- * (preuve que l'IA n'a pas lue, run anterieur), l'extrait nettoye, replie
- * a quelques lignes.
+ * Lecture d'une preuve : ce que l'extrait etablit sur le projet
+ * (interpretation de l'IA), puis le passage cite, et l'extrait complet
+ * replie. Les marqueurs de l'interpretation (« [Source 1] ») ouvrent le
+ * document a la phrase qui la fonde, surlignee (`onOpen`). Sans
+ * interpretation (preuve que l'IA n'a pas lue, run anterieur), l'extrait
+ * nettoye, replie a quelques lignes.
  */
 export function EvidenceReading({
   evidence,
   size = "base",
+  onOpen,
 }: {
   evidence: Evidence
   size?: "base" | "sm"
+  /** Ouvre le document de la preuve, ces phrases surlignees. */
+  onOpen?: (spans: Span[]) => void
 }) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
@@ -30,13 +39,24 @@ export function EvidenceReading({
   const foldable = !passage || passage !== excerpt
   // Repli au-dela de quatre lignes environ.
   const long = excerpt.length > 280
+  // Les sources d'une interpretation sont des phrases de la preuve elle-meme.
+  const sources: CitationSources = {
+    evidence: (id) => (id === evidence.id && onOpen ? evidence : undefined),
+    open: (citation) => onOpen?.(citation.spans),
+  }
 
   return (
     <div className="flex flex-col gap-3">
       {evidence.interpretation ? (
         <div>
           <p className={label}>{t("evaluation.evidence.interpretation")}</p>
-          <p className={cn("mt-2", text)}>{evidence.interpretation}</p>
+          <p className={cn("mt-2", text)}>
+            <CitedText
+              citations={evidence.interpretationCitations}
+              sources={sources}
+              text={evidence.interpretation}
+            />
+          </p>
         </div>
       ) : null}
       {passage ? (

@@ -134,7 +134,11 @@ export function EvidenceListDrawer({
                   </span>
                 </div>
                 <div className="mt-3">
-                  <EvidenceReading evidence={evidence} size="sm" />
+                  <EvidenceReading
+                    evidence={evidence}
+                    onOpen={(spans) => viewer.open(evidence, spans)}
+                    size="sm"
+                  />
                 </div>
                 <Button
                   className="mt-3"

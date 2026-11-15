@@ -186,6 +186,7 @@ type EvidenceRow = {
   excerpt: string
   interpretation?: string | null
   interpretation_translations?: Record<string, string> | null
+  interpretation_citations?: CitationRow[] | null
   spans?: Span[] | null
   variable_code: string | null
   documents: {
@@ -958,7 +959,7 @@ export async function listSubAnswers(
   }))
 }
 
-const evidenceSelect = `id, document_id, page_number, section_title, excerpt, interpretation, interpretation_translations, spans, variable_code, documents(original_filename, storage_path, mime_type), pillars(${pillarTextSelect}), criteria(name)`
+const evidenceSelect = `id, document_id, page_number, section_title, excerpt, interpretation, interpretation_translations, interpretation_citations, spans, variable_code, documents(original_filename, storage_path, mime_type), pillars(${pillarTextSelect}), criteria(name)`
 
 function toEvidence(row: EvidenceRow, locale: string): Evidence {
   return {
@@ -972,6 +973,7 @@ function toEvidence(row: EvidenceRow, locale: string): Evidence {
     excerpt: row.excerpt,
     interpretation:
       row.interpretation_translations?.[locale] ?? row.interpretation ?? null,
+    interpretationCitations: toCitations(row.interpretation_citations),
     spans: row.spans ?? null,
     pillarName: row.pillars ? localizePillar(row.pillars, locale).name : null,
     criterionName: row.criteria?.name ?? null,
