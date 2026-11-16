@@ -23,11 +23,14 @@ export function EvidenceDrawer({
   open,
   evidences,
   confidence,
+  interpretationExpected = false,
   onOpenChange,
 }: {
   open: boolean
   evidences: Evidence[]
   confidence: number | null
+  /** L'IA a lu les segments du run : une interpretation est attendue. */
+  interpretationExpected?: boolean
   onOpenChange: (open: boolean) => void
 }) {
   const { t } = useTranslation()
@@ -95,6 +98,7 @@ export function EvidenceDrawer({
             <div className="py-5">
               <EvidenceReading
                 evidence={evidence}
+                interpretationExpected={interpretationExpected}
                 key={evidence.id}
                 onOpen={(spans) => viewer.open(evidence, spans)}
               />

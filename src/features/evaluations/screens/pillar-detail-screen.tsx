@@ -19,7 +19,9 @@ import {
   PageSection,
 } from "@/features/evaluations/components/analysis-layout"
 import {
-  CitedText,
+  type CitationSources,
+  CitedParagraphs,
+  Interpretation,
   useCitationSources,
 } from "@/features/evaluations/components/cited-text"
 import {
@@ -35,6 +37,7 @@ import {
 import { RunNotices } from "@/features/evaluations/components/run-notices"
 import { ScoreGauge } from "@/features/evaluations/components/score-gauge"
 import { latestVersionScores } from "@/features/evaluations/model/layer-a"
+import { withoutMarkers } from "@/features/evaluations/model/passages"
 import type {
   Evidence,
   IntermediateVariable,
@@ -66,46 +69,71 @@ function StatItem({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
-/** Bandeau de synthese : la jauge, puis les indicateurs qui la qualifient. */
+/**
+ * Bandeau de synthese : la jauge, puis les indicateurs qui la qualifient,
+ * et l'interpretation du pilier, ses sources cliquables.
+ */
 function PillarScoreSummary({
   score,
   pendingAlerts,
+  sources,
+  interpretationExpected,
   onAlerts,
 }: {
   score: LayerAScore
   pendingAlerts: number
+  sources: CitationSources
+  interpretationExpected: boolean
   onAlerts: () => void
 }) {
   const { t } = useTranslation()
+  const expected = interpretationExpected && score.score !== null
   return (
-    <section className="flex flex-col gap-6 rounded-xl border border-border p-5 sm:flex-row sm:items-center">
-      <ScoreGauge
-        className="mx-auto shrink-0 sm:mx-0"
-        label={score.pillarName}
-        max={100}
-        value={score.score}
-      />
-      <dl className="grid flex-1 grid-cols-2 gap-x-6 gap-y-4 lg:grid-cols-3">
-        <StatItem label={t("evaluation.evidence.confidence")}>
-          <span className="flex items-center gap-1.5 tabular-nums">
-            <ShieldCheck className="size-4 shrink-0" />
-            {Math.round(score.confidence * 100)}% · {score.documentsCount} docs
-          </span>
-        </StatItem>
-        <StatItem label={t("evaluation.pillar.version")}>
-          {score.versionLabel}
-        </StatItem>
-        <StatItem label={t("evaluation.analysis.pendingAlerts")}>
-          <button
-            className="flex items-center gap-1.5 tabular-nums hover:underline"
-            onClick={onAlerts}
-            type="button"
-          >
-            <AlertTriangle className="size-4 shrink-0" />
-            {pendingAlerts}
-          </button>
-        </StatItem>
-      </dl>
+    <section className="flex flex-col gap-6 rounded-xl border border-border p-5">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+        <ScoreGauge
+          className="mx-auto shrink-0 sm:mx-0"
+          label={score.pillarName}
+          max={100}
+          value={score.score}
+        />
+        <dl className="grid flex-1 grid-cols-2 gap-x-6 gap-y-4 lg:grid-cols-3">
+          <StatItem label={t("evaluation.evidence.confidence")}>
+            <span className="flex items-center gap-1.5 tabular-nums">
+              <ShieldCheck className="size-4 shrink-0" />
+              {Math.round(score.confidence * 100)}% · {score.documentsCount}{" "}
+              docs
+            </span>
+          </StatItem>
+          <StatItem label={t("evaluation.pillar.version")}>
+            {score.versionLabel}
+          </StatItem>
+          <StatItem label={t("evaluation.analysis.pendingAlerts")}>
+            <button
+              className="flex items-center gap-1.5 tabular-nums hover:underline"
+              onClick={onAlerts}
+              type="button"
+            >
+              <AlertTriangle className="size-4 shrink-0" />
+              {pendingAlerts}
+            </button>
+          </StatItem>
+        </dl>
+      </div>
+      {score.interpretation?.trim() || expected ? (
+        <div className="border-t border-border pt-5">
+          <p className={subTitleClassName}>
+            {t("evaluation.interpretation.pillar")}
+          </p>
+          <Interpretation
+            citations={score.interpretationCitations}
+            className="mt-2 text-[14px] leading-7"
+            expected={expected}
+            sources={sources}
+            text={score.interpretation}
+          />
+        </div>
+      ) : null}
     </section>
   )
 }
@@ -160,10 +188,16 @@ function CriterionRow({
 function CriterionDetail({
   note,
   runId,
+  interpretationExpected,
+  evidenceInterpretationExpected,
   onOpenCriterion,
 }: {
   note: LayerBNote
   runId: string
+  /** L'IA a redige les reponses aux sous-questions de ce run. */
+  interpretationExpected: boolean
+  /** L'IA a lu les segments de ce run. */
+  evidenceInterpretationExpected: boolean
   onOpenCriterion: () => void
 }) {
   const { i18n, t } = useTranslation()
@@ -194,7 +228,10 @@ function CriterionDetail({
       ),
   })
   const cited = useCitationSources(
-    [note.citations],
+    [
+      note.citations,
+      ...(answers.data ?? []).map((answer) => answer.interpretationCitations),
+    ],
     i18n.resolvedLanguage ?? "fr"
   )
 
@@ -215,13 +252,12 @@ function CriterionDetail({
         <CriterionNoteValue className="shrink-0 text-xl" note={note.note} />
       </div>
       {note.justification ? (
-        <p className="text-[13px] leading-6">
-          <CitedText
-            citations={note.citations}
-            sources={cited.sources}
-            text={note.justification}
-          />
-        </p>
+        <CitedParagraphs
+          citations={note.citations}
+          className="text-[13px] leading-6"
+          sources={cited.sources}
+          text={note.justification}
+        />
       ) : null}
 
       <div>
@@ -241,7 +277,18 @@ function CriterionDetail({
                 className="flex items-start justify-between gap-4 py-2.5"
                 key={answer.id}
               >
-                <p className="text-[13px] leading-5">{answer.text}</p>
+                <div className="min-w-0">
+                  <p className="text-[13px] leading-5">{answer.text}</p>
+                  <Interpretation
+                    citations={answer.interpretationCitations}
+                    className="mt-1.5 text-[13px] leading-6 text-muted-foreground"
+                    expected={
+                      interpretationExpected && answer.status === "documentee"
+                    }
+                    sources={cited.sources}
+                    text={answer.interpretation}
+                  />
+                </div>
                 <Badge
                   className="shrink-0"
                   variant={
@@ -284,6 +331,7 @@ function CriterionDetail({
         }
         emptyLabel={t("evaluation.pillar.noEvidence")}
         evidences={evidences.data ?? []}
+        interpretationExpected={evidenceInterpretationExpected}
         isError={evidences.isError}
         isLoading={evidences.isFetching && !evidences.data}
         onOpenChange={setEvidenceOpen}
@@ -300,10 +348,15 @@ function CriterionDetail({
 function VariablesSection({
   variables,
   isLoading,
+  sources,
+  interpretationExpected,
   onShowEvidence,
 }: {
   variables: IntermediateVariable[]
   isLoading: boolean
+  sources: CitationSources
+  /** L'IA a lu les segments, variables et piliers de ce run. */
+  interpretationExpected: boolean
   onShowEvidence: (variable: IntermediateVariable) => void
 }) {
   const { i18n, t } = useTranslation()
@@ -393,6 +446,15 @@ function VariablesSection({
               >
                 <Eye /> {t("evaluation.viewEvidence")}
               </Button>
+              <Interpretation
+                citations={variable.interpretationCitations}
+                className="text-[13px] leading-6 sm:col-span-5"
+                expected={
+                  interpretationExpected && variable.state !== "non_renseigne"
+                }
+                sources={sources}
+                text={variable.interpretation}
+              />
             </div>
           ))}
         </div>
@@ -451,8 +513,9 @@ function AlertsSection({
                   <Badge variant="secondary">{alert.criterionName}</Badge>
                 ) : null}
               </div>
-              <p className="mt-2 line-clamp-3 text-[13px] leading-5">
-                {alert.message}
+              {/* Resume cliquable : sources dans l'ecran des alertes. */}
+              <p className="mt-2 whitespace-pre-line text-[13px] leading-5">
+                {withoutMarkers(alert.message)}
               </p>
             </button>
           ))}
@@ -602,6 +665,22 @@ export function PillarDetailScreen() {
     enabled: Boolean(selectedVariable && runId),
   })
 
+  /* Sources des interpretations du pilier et de ses variables, chargees
+     d'une requete. */
+  const pillarScore = latestVersionScores(results.data?.layerA ?? []).find(
+    (item) => item.pillarId === pillarId
+  )
+  const cited = useCitationSources(
+    [
+      pillarScore?.interpretationCitations,
+      ...(variables.data ?? []).map(
+        (variable) => variable.interpretationCitations
+      ),
+    ],
+    i18n.resolvedLanguage ?? "fr"
+  )
+  const ai = results.data?.run?.ai
+
   if (results.isPending)
     return <Skeleton className="mx-auto h-[560px] w-full max-w-6xl" />
 
@@ -616,9 +695,7 @@ export function PillarDetailScreen() {
     />
   )
   const data = results.data
-  const score = latestVersionScores(data?.layerA ?? []).find(
-    (item) => item.pillarId === pillarId
-  )
+  const score = pillarScore
   const pillar = pillars.data?.find((item) => item.id === pillarId)
   if (!data || !score) {
     return (
@@ -684,19 +761,24 @@ export function PillarDetailScreen() {
       eyebrow={t("evaluation.layerA.title")}
       title={score.pillarName}
     >
+      {cited.dialog}
       <PillarScoreSummary
+        interpretationExpected={ai?.reading ?? false}
         onAlerts={openAlerts}
         pendingAlerts={
           alerts.filter((alert) => alert.status === "a_instruire").length
         }
         score={score}
+        sources={cited.sources}
       />
 
       <div className="grid items-start gap-x-6 gap-y-10 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <VariablesSection
+            interpretationExpected={ai?.reading ?? false}
             isLoading={variables.isPending}
             onShowEvidence={setSelectedVariable}
+            sources={cited.sources}
             variables={variables.data ?? []}
           />
         </div>
@@ -738,6 +820,8 @@ export function PillarDetailScreen() {
             </div>
             {selectedCriterion ? (
               <CriterionDetail
+                evidenceInterpretationExpected={ai?.reading ?? false}
+                interpretationExpected={ai?.layerB ?? false}
                 key={selectedCriterion.criterionId}
                 note={selectedCriterion}
                 onOpenCriterion={() =>
@@ -755,11 +839,13 @@ export function PillarDetailScreen() {
       <EvidenceDrawer
         confidence={selectedVariable?.confidence ?? null}
         evidences={variableEvidences.data ?? []}
+        interpretationExpected={ai?.reading ?? false}
         onOpenChange={(open) => !open && setSelectedVariable(null)}
         open={Boolean(selectedVariable)}
       />
       <PillarEvidenceDrawer
         evidences={pillarEvidences.data ?? []}
+        interpretationExpected={ai?.reading ?? false}
         isError={pillarEvidences.isError}
         isLoading={pillarEvidences.isFetching && !pillarEvidences.data}
         onOpenChange={setAllEvidenceOpen}

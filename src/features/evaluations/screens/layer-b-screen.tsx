@@ -8,7 +8,8 @@ import {
   PageSection,
 } from "@/features/evaluations/components/analysis-layout"
 import {
-  CitedText,
+  CitedParagraphs,
+  Interpretation,
   useCitationSources,
 } from "@/features/evaluations/components/cited-text"
 import {
@@ -34,11 +35,14 @@ function CriterionResultCard({
   note,
   runId,
   pillars,
+  interpretationExpected,
   onEvidence,
   onPillar,
 }: {
   note: LayerBNote
   runId: string
+  /** L'IA a redige les reponses aux sous-questions de ce run. */
+  interpretationExpected: boolean
   /** Piliers du cadre auxquels le critere est rattache. */
   pillars: { id: string; name: string }[]
   onEvidence: (note: LayerBNote) => void
@@ -57,7 +61,10 @@ function CriterionResultCard({
       listSubAnswers(runId, note.criterionId, i18n.resolvedLanguage ?? "fr"),
   })
   const cited = useCitationSources(
-    [note.citations],
+    [
+      note.citations,
+      ...(answers.data ?? []).map((answer) => answer.interpretationCitations),
+    ],
     i18n.resolvedLanguage ?? "fr"
   )
   const percentage =
@@ -103,13 +110,12 @@ function CriterionResultCard({
         </div>
       </div>
       {note.justification ? (
-        <p className="mt-5 text-[13px] leading-6 text-muted-foreground">
-          <CitedText
-            citations={note.citations}
-            sources={cited.sources}
-            text={note.justification}
-          />
-        </p>
+        <CitedParagraphs
+          citations={note.citations}
+          className="mt-5 text-[13px] leading-6 text-muted-foreground"
+          sources={cited.sources}
+          text={note.justification}
+        />
       ) : null}
       {cited.dialog}
       {note.ambiguous ? (
@@ -126,14 +132,25 @@ function CriterionResultCard({
         <div className="mt-5 divide-y divide-border border-t border-border">
           {(answers.data ?? []).map((answer) => (
             <div
-              className="flex items-center justify-between gap-4 py-3"
+              className="flex items-start justify-between gap-4 py-3"
               key={answer.id}
             >
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <p className="text-[13px] leading-5">{answer.text}</p>
-                <Badge variant="outline">
-                  {t(`evaluation.answerStatus.${answer.status}`)}
-                </Badge>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-[13px] leading-5">{answer.text}</p>
+                  <Badge variant="outline">
+                    {t(`evaluation.answerStatus.${answer.status}`)}
+                  </Badge>
+                </div>
+                <Interpretation
+                  citations={answer.interpretationCitations}
+                  className="mt-2 text-[13px] leading-6 text-muted-foreground"
+                  expected={
+                    interpretationExpected && answer.status === "documentee"
+                  }
+                  sources={cited.sources}
+                  text={answer.interpretation}
+                />
               </div>
               <Button
                 className="shrink-0"
@@ -262,6 +279,9 @@ export function LayerBScreen() {
                 stale={results.data?.corpusChanged ?? false}
               >
                 <CriterionResultCard
+                  interpretationExpected={
+                    results.data?.run?.ai?.layerB ?? false
+                  }
                   note={note}
                   onEvidence={setSelected}
                   onPillar={(pillarId) =>
@@ -294,6 +314,7 @@ export function LayerBScreen() {
       <EvidenceDrawer
         confidence={null}
         evidences={evidences.data ?? []}
+        interpretationExpected={results.data?.run?.ai?.reading ?? false}
         onOpenChange={(open) => !open && setSelected(null)}
         open={Boolean(selected)}
       />

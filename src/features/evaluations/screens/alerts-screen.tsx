@@ -9,6 +9,10 @@ import {
   AnalysisPage,
   PageSection,
 } from "@/features/evaluations/components/analysis-layout"
+import {
+  CitedParagraphs,
+  useCitationSources,
+} from "@/features/evaluations/components/cited-text"
 import { EvidenceDrawer } from "@/features/evaluations/components/evidence-drawer"
 import { LayerBanner } from "@/features/evaluations/components/layer-banner"
 import type { LayerCAlert } from "@/features/evaluations/model/types"
@@ -73,6 +77,11 @@ export function AlertsScreen() {
       alert.pillarId === pillarFilter ||
       (alert.criterionId !== null &&
         (filteredScore?.criterionIds.includes(alert.criterionId) ?? false))
+  )
+
+  const cited = useCitationSources(
+    alerts.map((alert) => alert.citations),
+    i18n.resolvedLanguage ?? "fr"
   )
 
   /* A instruire d'abord, majeures en tete ; les alertes instruites
@@ -150,7 +159,12 @@ export function AlertsScreen() {
           {t(`evaluation.alertStatus.${alert.status}`)}
         </Badge>
       </div>
-      <p className="mt-4 text-sm leading-6">{alert.message}</p>
+      <CitedParagraphs
+        citations={alert.citations}
+        className="mt-4 text-sm leading-6"
+        sources={cited.sources}
+        text={alert.message}
+      />
       <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-4">
         <Button onClick={() => setSelected(alert)} size="sm" variant="outline">
           <Eye /> {t("evaluation.viewEvidence")}
@@ -256,9 +270,11 @@ export function AlertsScreen() {
       <EvidenceDrawer
         confidence={null}
         evidences={evidences.data ?? []}
+        interpretationExpected={results.data?.run?.ai?.reading ?? false}
         onOpenChange={(open) => !open && setSelected(null)}
         open={Boolean(selected)}
       />
+      {cited.dialog}
     </AnalysisPage>
   )
 }

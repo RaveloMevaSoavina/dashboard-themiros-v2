@@ -4,32 +4,38 @@ import { useTranslation } from "react-i18next"
 
 import {
   type CitationSources,
-  CitedText,
+  Interpretation,
 } from "@/features/evaluations/components/cited-text"
 import { citedPassage, cleanText } from "@/features/evaluations/model/passages"
 import type { Evidence, Span } from "@/features/evaluations/model/types"
 import { cn } from "@/shared/lib/utils"
 
 /**
- * Lecture d'une preuve : ce que l'extrait etablit sur le projet
- * (interpretation de l'IA), puis le passage cite, et l'extrait complet
- * replie. Les marqueurs de l'interpretation (« [Source 1] ») ouvrent le
+ * Lecture d'une preuve : d'abord ce que le segment etablit sur le projet
+ * (interpretation de l'IA, en paragraphe), l'extrait brut au second plan,
+ * replie derriere « Voir l'extrait source » : passage cite, puis extrait
+ * complet. Les marqueurs de l'interpretation (« [Source 1] ») ouvrent le
  * document a la phrase qui la fonde, surlignee (`onOpen`). Sans
  * interpretation (preuve que l'IA n'a pas lue, run anterieur), l'extrait
- * nettoye, replie a quelques lignes.
+ * nettoye, replie a quelques lignes ; « Interpretation indisponible » si
+ * le run en attendait une (`interpretationExpected`).
  */
 export function EvidenceReading({
   evidence,
   size = "base",
+  interpretationExpected = false,
   onOpen,
 }: {
   evidence: Evidence
   size?: "base" | "sm"
+  /** L'IA a lu les segments de ce run : une interpretation est attendue. */
+  interpretationExpected?: boolean
   /** Ouvre le document de la preuve, ces phrases surlignees. */
   onOpen?: (spans: Span[]) => void
 }) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
+  const [sourceOpen, setSourceOpen] = useState(false)
   const passage = citedPassage(evidence.excerpt, evidence.spans)
   const excerpt = cleanText(evidence.excerpt)
   const text = size === "sm" ? "text-[13px] leading-6" : "text-[14px] leading-7"
@@ -45,20 +51,88 @@ export function EvidenceReading({
     open: (citation) => onOpen?.(citation.spans),
   }
 
+  const interpreted = Boolean(evidence.interpretation?.trim())
+  const toggle = (
+    <button
+      aria-expanded={sourceOpen}
+      className="flex items-center gap-1 self-start text-[12px] text-muted-foreground hover:text-foreground hover:underline"
+      onClick={() => setSourceOpen((current) => !current)}
+      type="button"
+    >
+      {sourceOpen ? (
+        <ChevronUp className="size-3.5" />
+      ) : (
+        <ChevronDown className="size-3.5" />
+      )}
+      {sourceOpen
+        ? t("evaluation.evidence.hideSource")
+        : t("evaluation.evidence.showSource")}
+    </button>
+  )
+
   return (
     <div className="flex flex-col gap-3">
-      {evidence.interpretation ? (
+      {interpreted ? (
         <div>
           <p className={label}>{t("evaluation.evidence.interpretation")}</p>
-          <p className={cn("mt-2", text)}>
-            <CitedText
-              citations={evidence.interpretationCitations}
-              sources={sources}
-              text={evidence.interpretation}
-            />
-          </p>
+          <Interpretation
+            citations={evidence.interpretationCitations}
+            className={cn("mt-2", text)}
+            sources={sources}
+            text={evidence.interpretation}
+          />
         </div>
-      ) : null}
+      ) : (
+        <Interpretation
+          citations={undefined}
+          expected={interpretationExpected}
+          sources={sources}
+          text={null}
+        />
+      )}
+      {interpreted ? toggle : null}
+      {interpreted && !sourceOpen ? null : (
+        <SourceExcerpt
+          excerpt={excerpt}
+          expanded={expanded}
+          foldable={foldable}
+          label={label}
+          labelled={Boolean(passage) || interpreted}
+          long={long}
+          onToggle={() => setExpanded((current) => !current)}
+          passage={passage}
+          text={text}
+        />
+      )}
+    </div>
+  )
+}
+
+/** Extrait brut d'une preuve : passage cite, puis extrait complet replie. */
+function SourceExcerpt({
+  passage,
+  excerpt,
+  foldable,
+  long,
+  expanded,
+  labelled,
+  label,
+  text,
+  onToggle,
+}: {
+  passage: string | null
+  excerpt: string
+  foldable: boolean
+  long: boolean
+  expanded: boolean
+  labelled: boolean
+  label: string
+  text: string
+  onToggle: () => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <>
       {passage ? (
         <div>
           <p className={label}>{t("evaluation.evidence.citedPassage")}</p>
@@ -71,7 +145,7 @@ export function EvidenceReading({
       ) : null}
       {foldable ? (
         <div>
-          {passage || evidence.interpretation ? (
+          {labelled ? (
             <p className={label}>{t("evaluation.evidence.fullExcerpt")}</p>
           ) : null}
           <blockquote
@@ -86,7 +160,7 @@ export function EvidenceReading({
           {long ? (
             <button
               className="mt-1 flex items-center gap-1 text-[12px] text-muted-foreground hover:text-foreground hover:underline"
-              onClick={() => setExpanded((current) => !current)}
+              onClick={onToggle}
               type="button"
             >
               {expanded ? (
@@ -101,6 +175,6 @@ export function EvidenceReading({
           ) : null}
         </div>
       ) : null}
-    </div>
+    </>
   )
 }

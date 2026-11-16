@@ -114,7 +114,7 @@ type ScoreRow = {
       })
     | null
   program_versions: { label: string; order_index: number } | null
-}
+} & InterpretationRow
 
 type NoteRow = {
   id: string
@@ -124,6 +124,8 @@ type NoteRow = {
   documented_sub_questions: number
   total_sub_questions: number
   justification: string | null
+  /** Justification traduite, par langue de l'interface (layer-b/1.3.0). */
+  justification_translations?: Record<string, string> | null
   ambiguity_flag: boolean
   citations?: CitationRow[] | null
   criteria: { name: string } | null
@@ -139,11 +141,34 @@ function toCitations(rows: CitationRow[] | null | undefined): Citation[] {
   }))
 }
 
+/** Interpretation en paragraphe d'une variable, d'un pilier ou d'une
+    reponse, traduite par langue de l'interface. */
+type InterpretationRow = {
+  interpretation?: string | null
+  interpretation_translations?: Record<string, string> | null
+  interpretation_citations?: CitationRow[] | null
+}
+
+const interpretationSelect =
+  "interpretation, interpretation_translations, interpretation_citations"
+
+/** Interpretation dans la langue de l'interface, sinon l'originale. */
+function toInterpretation(row: InterpretationRow, locale: string) {
+  return {
+    interpretation:
+      row.interpretation_translations?.[locale] ?? row.interpretation ?? null,
+    interpretationCitations: toCitations(row.interpretation_citations),
+  }
+}
+
 type AlertRow = {
   id: string
   alert_type: string
   severity: LayerCAlert["severity"]
   message: string
+  /** Message traduit, par langue de l'interface (layer-c/1.2.0). */
+  translations?: Record<string, string> | null
+  citations?: CitationRow[] | null
   qualified: boolean
   status: LayerCAlert["status"]
   instruction_comment: string | null
@@ -165,7 +190,7 @@ type VariableRow = {
   pillars: {
     pillar_variables: (VariableTextRow & { weight: number | null })[]
   } | null
-}
+} & InterpretationRow
 
 type AnswerRow = {
   id: string
@@ -176,6 +201,13 @@ type AnswerRow = {
     origin: "referential" | "user"
     ref_questions: RefQuestionRow
   } | null
+} & InterpretationRow
+
+/** Appel d'IA d'une etape, tel que consigne dans `runs.rules_applied`. */
+type RunAiRow = { calls?: number | string | null } | null
+
+function aiCalled(ai: RunAiRow | undefined) {
+  return Number(ai?.calls ?? 0) > 0
 }
 
 type EvidenceRow = {
@@ -601,7 +633,7 @@ export async function getLatestRun(
   let query = supabase
     .from("runs")
     .select(
-      "id, status, corpus_size, corpus_seuil, created_at, completed_at, error_code, error_message, validated_at, validated_by_name"
+      "id, status, corpus_size, corpus_seuil, created_at, completed_at, error_code, error_message, validated_at, validated_by_name, reading_ai:rules_applied->engine->reading->ai, layer_b_ai:rules_applied->engine->layer_b->ai"
     )
     .eq("workspace_id", workspaceId)
   if (completed) query = query.eq("status", "completed")
@@ -626,6 +658,13 @@ export async function getLatestRun(
     validation: data.validated_at
       ? { by: data.validated_by_name, at: data.validated_at }
       : null,
+    /* Etape « reading » consignee : moteur des interpretations en
+       paragraphes ; ses sous-questions en portent si la couche B a appele
+       l'IA. */
+    ai: {
+      reading: aiCalled(data.reading_ai as RunAiRow),
+      layerB: data.reading_ai != null && aiCalled(data.layer_b_ai as RunAiRow),
+    },
   }
 }
 
@@ -751,19 +790,19 @@ export async function getEvaluationResults(
     supabase
       .from("layer_a_scores")
       .select(
-        `id, pillar_id, score, delta, evolution_label, corpus_confidence, documents_count, pillars(${pillarTextSelect}, pillar_criteria(criterion_id)), program_versions(label, order_index)`
+        `id, pillar_id, score, delta, evolution_label, corpus_confidence, documents_count, ${interpretationSelect}, pillars(${pillarTextSelect}, pillar_criteria(criterion_id)), program_versions(label, order_index)`
       )
       .eq("run_id", run.id),
     supabase
       .from("layer_b_notes")
       .select(
-        "id, criterion_id, note, status, documented_sub_questions, total_sub_questions, justification, ambiguity_flag, citations, criteria(name)"
+        "id, criterion_id, note, status, documented_sub_questions, total_sub_questions, justification, justification_translations, ambiguity_flag, citations, criteria(name)"
       )
       .eq("run_id", run.id),
     supabase
       .from("layer_c_alerts")
       .select(
-        `id, alert_type, severity, message, qualified, status, instruction_comment, pillar_id, criterion_id, pillars(${pillarTextSelect}), criteria(name)`
+        `id, alert_type, severity, message, translations, citations, qualified, status, instruction_comment, pillar_id, criterion_id, pillars(${pillarTextSelect}), criteria(name)`
       )
       .eq("run_id", run.id),
     supabase
@@ -797,6 +836,7 @@ export async function getEvaluationResults(
     documentsCount: row.documents_count,
     versionLabel: row.program_versions?.label ?? "—",
     versionOrder: row.program_versions?.order_index ?? 0,
+    ...toInterpretation(row, locale),
   }))
   const layerB: LayerBNote[] = (
     (notesResult.data ?? []) as unknown as NoteRow[]
@@ -808,7 +848,8 @@ export async function getEvaluationResults(
     status: row.status,
     documented: row.documented_sub_questions,
     total: row.total_sub_questions,
-    justification: row.justification,
+    justification:
+      row.justification_translations?.[locale] ?? row.justification,
     citations: toCitations(row.citations),
     ambiguous: row.ambiguity_flag,
     answers: [],
@@ -819,7 +860,8 @@ export async function getEvaluationResults(
     id: row.id,
     type: row.alert_type,
     severity: row.severity,
-    message: row.message,
+    message: row.translations?.[locale] ?? row.message,
+    citations: toCitations(row.citations),
     qualified: row.qualified,
     status: row.status,
     instructionComment: row.instruction_comment,
@@ -901,7 +943,7 @@ export async function listIntermediateVariables(
   const { data, error } = await supabase
     .from("intermediate_variables")
     .select(
-      `id, pillar_id, variable_code, value, state, documents_count, corpus_confidence, program_versions(label, order_index), pillars(pillar_variables(${variableTextSelect}, weight))`
+      `id, pillar_id, variable_code, value, state, documents_count, corpus_confidence, ${interpretationSelect}, program_versions(label, order_index), pillars(pillar_variables(${variableTextSelect}, weight))`
     )
     .eq("run_id", runId)
     .eq("pillar_id", pillarId)
@@ -928,6 +970,7 @@ export async function listIntermediateVariables(
         row.corpus_confidence === null ? null : Number(row.corpus_confidence),
       versionLabel: row.program_versions?.label ?? "—",
       versionOrder: row.program_versions?.order_index ?? 0,
+      ...toInterpretation(row, locale),
     }
   })
 }
@@ -941,7 +984,7 @@ export async function listSubAnswers(
   const { data, error } = await supabase
     .from("layer_b_sub_answers")
     .select(
-      `id, sub_question_id, status, sub_questions!inner(text, criterion_id, origin, ${refQuestionSelect})`
+      `id, sub_question_id, status, ${interpretationSelect}, sub_questions!inner(text, criterion_id, origin, ${refQuestionSelect})`
     )
     .eq("run_id", runId)
     .eq("sub_questions.criterion_id", criterionId)
@@ -956,6 +999,7 @@ export async function listSubAnswers(
       ? localizeSubQuestion(row.sub_questions, locale).text
       : "—",
     status: row.status,
+    ...toInterpretation(row, locale),
   }))
 }
 
@@ -971,9 +1015,7 @@ function toEvidence(row: EvidenceRow, locale: string): Evidence {
     page: row.page_number,
     section: row.section_title,
     excerpt: row.excerpt,
-    interpretation:
-      row.interpretation_translations?.[locale] ?? row.interpretation ?? null,
-    interpretationCitations: toCitations(row.interpretation_citations),
+    ...toInterpretation(row, locale),
     spans: row.spans ?? null,
     pillarName: row.pillars ? localizePillar(row.pillars, locale).name : null,
     criterionName: row.criteria?.name ?? null,

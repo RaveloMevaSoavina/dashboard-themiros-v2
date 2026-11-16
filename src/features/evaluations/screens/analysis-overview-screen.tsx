@@ -321,6 +321,7 @@ export function AnalysisOverviewScreen() {
       <EvidenceDrawer
         confidence={null}
         evidences={evidences.data ?? []}
+        interpretationExpected={results.data?.run?.ai?.reading ?? false}
         onOpenChange={setEvidenceOpen}
         open={evidenceOpen}
       />

@@ -6,6 +6,7 @@ export const aiUsageSources = [
   "layer_b_search",
   "layer_b",
   "layer_c",
+  "reading",
   "restitution",
 ] as const
 

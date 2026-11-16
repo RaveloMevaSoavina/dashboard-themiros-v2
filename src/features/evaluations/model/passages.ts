@@ -44,3 +44,16 @@ export function citedPassage(
     .filter(Boolean)
   return parts.length ? parts.join(" … ") : null
 }
+
+/** Texte de l'IA sans ses marqueurs de sources (resume non cliquable). */
+export function withoutMarkers(text: string): string {
+  return text.replace(/[^\S\n]*⟦\d+(?:,\d+)*⟧/g, "")
+}
+
+/** Paragraphes d'un texte de l'IA, separes par une ligne vide. */
+export function paragraphs(text: string): string[] {
+  return text
+    .split(/\n[^\S\n]*\n\s*/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+}

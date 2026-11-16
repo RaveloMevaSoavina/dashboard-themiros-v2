@@ -46,6 +46,13 @@ export type AnalysisRun = {
   errorMessage: string | null
   /** Validation humaine finale (GF-6) ; null tant que le run n'est pas validé. */
   validation: { by: string | null; at: string } | null
+  /**
+   * L'IA a rédigé les interprétations de ce run : lecture des segments, des
+   * variables et des piliers (`reading`), réponses aux sous-questions
+   * (`layerB`). Une interprétation absente s'y signale comme indisponible ;
+   * un run antérieur (ou sans IA) n'en porte pas. Absent : démonstration.
+   */
+  ai?: { reading: boolean; layerB: boolean }
 }
 
 /** Raisons pour lesquelles la base refuse de valider un run (GF-6). */
@@ -112,6 +119,13 @@ export type LayerAScore = {
   versionLabel: string
   /** Rang de la version de programme : la plus récente a le plus grand. */
   versionOrder: number
+  /**
+   * Interprétation du pilier en paragraphe, dans la langue de l'interface
+   * (sinon l'originale) ; marqueurs « ⟦1⟧ » vers `interpretationCitations`.
+   * `null` : non rédigée.
+   */
+  interpretation?: string | null
+  interpretationCitations?: Citation[]
 }
 
 export type IntermediateVariable = {
@@ -130,6 +144,9 @@ export type IntermediateVariable = {
   confidence: number | null
   versionLabel: string
   versionOrder: number
+  /** Interprétation de la variable, comme celle du pilier. */
+  interpretation?: string | null
+  interpretationCitations?: Citation[]
 }
 
 export type LayerBNote = {
@@ -153,13 +170,20 @@ export type SubAnswer = {
   questionId: string
   text: string
   status: "documentee" | "non_documentee"
+  /** Interprétation de la réponse, comme celle du pilier. */
+  interpretation?: string | null
+  interpretationCitations?: Citation[]
 }
 
 export type LayerCAlert = {
   id: string
   type: string
   severity: "mineure" | "majeure"
+  /** Paragraphe dans la langue de l'interface (sinon l'original), pouvant
+      porter des marqueurs de sources « ⟦1⟧ ». */
   message: string
+  /** Sources des marqueurs du message, dans l'ordre des numeros. */
+  citations?: Citation[]
   /** `false` : ecart publie sans qualification par l'IA (gravite et
       message par defaut de la regle). */
   qualified: boolean

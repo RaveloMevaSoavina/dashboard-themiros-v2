@@ -186,6 +186,7 @@ export function SynthesisScreen() {
       <EvidenceDrawer
         confidence={null}
         evidences={evidences.data ?? []}
+        interpretationExpected={results.data?.run?.ai?.reading ?? false}
         onOpenChange={(open) => !open && setSelected(null)}
         open={Boolean(selected)}
       />

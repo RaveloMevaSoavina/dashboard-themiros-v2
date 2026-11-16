@@ -24,6 +24,7 @@ export function PillarEvidenceDrawer({
   evidences: Evidence[]
   isLoading: boolean
   isError: boolean
+  interpretationExpected?: boolean
   onRetry: () => void
   onOpenChange: (open: boolean) => void
 }) {
@@ -56,6 +57,7 @@ export function EvidenceListDrawer({
   evidences,
   isLoading,
   isError,
+  interpretationExpected = false,
   onRetry,
   onOpenChange,
 }: {
@@ -66,6 +68,8 @@ export function EvidenceListDrawer({
   evidences: Evidence[]
   isLoading: boolean
   isError: boolean
+  /** L'IA a lu les segments du run : une interpretation est attendue. */
+  interpretationExpected?: boolean
   onRetry: () => void
   onOpenChange: (open: boolean) => void
 }) {
@@ -136,6 +140,7 @@ export function EvidenceListDrawer({
                 <div className="mt-3">
                   <EvidenceReading
                     evidence={evidence}
+                    interpretationExpected={interpretationExpected}
                     onOpen={(spans) => viewer.open(evidence, spans)}
                     size="sm"
                   />

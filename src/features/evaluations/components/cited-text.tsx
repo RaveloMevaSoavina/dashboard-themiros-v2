@@ -3,7 +3,10 @@ import { Fragment, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
 import { useEvidenceDocument } from "@/features/evaluations/components/evidence-document-dialog"
-import { CITATION_MARKER } from "@/features/evaluations/model/passages"
+import {
+  CITATION_MARKER,
+  paragraphs,
+} from "@/features/evaluations/model/passages"
 import type { Citation, Evidence } from "@/features/evaluations/model/types"
 import { listEvidencesByIds } from "@/features/evaluations/services/evaluation-service"
 import { cn } from "@/shared/lib/utils"
@@ -88,6 +91,68 @@ export function CitedText({
   }
   parts.push(text.slice(cursor))
   return <>{parts}</>
+}
+
+/**
+ * Texte de l'IA en paragraphes (lignes vides conservees), entier, sans
+ * troncature, chaque marqueur rendu en sources cliquables.
+ */
+export function CitedParagraphs({
+  text,
+  citations,
+  sources,
+  className,
+}: {
+  text: string
+  citations: Citation[] | undefined
+  sources: CitationSources
+  className?: string
+}) {
+  return (
+    <div className={cn("flex flex-col gap-2", className)}>
+      {paragraphs(text).map((paragraph) => (
+        <p key={paragraph}>
+          <CitedText citations={citations} sources={sources} text={paragraph} />
+        </p>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * Interpretation d'un niveau (pilier, variable, reponse, preuve). Absente
+ * d'un run dont l'IA a redige les interpretations (`expected`), une mention
+ * discrete la signale : jamais de texte de secours. Sinon, rien.
+ */
+export function Interpretation({
+  text,
+  citations,
+  sources,
+  expected = false,
+  className,
+}: {
+  text: string | null | undefined
+  citations: Citation[] | undefined
+  sources: CitationSources
+  expected?: boolean
+  className?: string
+}) {
+  const { t } = useTranslation()
+  if (text?.trim())
+    return (
+      <CitedParagraphs
+        citations={citations}
+        className={className}
+        sources={sources}
+        text={text}
+      />
+    )
+  if (!expected) return null
+  return (
+    <p className={cn("text-[12px] italic text-muted-foreground", className)}>
+      {t("evaluation.interpretation.unavailable")}
+    </p>
+  )
 }
 
 function SourceLinks({

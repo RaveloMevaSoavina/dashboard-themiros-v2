@@ -1498,6 +1498,8 @@ export const resources = {
           fullExcerpt: "Extrait complet",
           expandExcerpt: "Afficher tout l'extrait",
           collapseExcerpt: "Replier l'extrait",
+          showSource: "Voir l'extrait source",
+          hideSource: "Masquer l'extrait source",
           previous: "Précédente",
           next: "Suivante",
           openDocument: "Ouvrir dans le document",
@@ -1518,6 +1520,10 @@ export const resources = {
         citations: {
           source: "Source {{number}}",
           unavailable: "Source indisponible",
+        },
+        interpretation: {
+          pillar: "Interprétation du pilier",
+          unavailable: "Interprétation indisponible",
         },
       },
       usage: {
@@ -1562,6 +1568,7 @@ export const resources = {
           ingestion: "Import des documents",
           classification: "Classification du corpus",
           layer_b_search: "Recherche des extraits (couche B)",
+          reading: "Lecture des documents (interprétations)",
           layer_b: "Notes évaluatives (couche B)",
           layer_c: "Qualification des alertes (couche C)",
           restitution: "Synthèse et plan d'action",
@@ -3205,6 +3212,8 @@ export const resources = {
           fullExcerpt: "Full excerpt",
           expandExcerpt: "Show the whole excerpt",
           collapseExcerpt: "Collapse the excerpt",
+          showSource: "Show the source excerpt",
+          hideSource: "Hide the source excerpt",
           previous: "Previous",
           next: "Next",
           openDocument: "Open in document",
@@ -3225,6 +3234,10 @@ export const resources = {
         citations: {
           source: "Source {{number}}",
           unavailable: "Source unavailable",
+        },
+        interpretation: {
+          pillar: "Pillar interpretation",
+          unavailable: "Interpretation unavailable",
         },
       },
       usage: {
@@ -3269,6 +3282,7 @@ export const resources = {
           ingestion: "Document import",
           classification: "Corpus classification",
           layer_b_search: "Excerpt search (layer B)",
+          reading: "Document reading (interpretations)",
           layer_b: "Evaluative ratings (layer B)",
           layer_c: "Alert qualification (layer C)",
           restitution: "Synthesis and action plan",
