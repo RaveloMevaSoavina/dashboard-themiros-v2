@@ -12,6 +12,8 @@
 -- changement de modèle, un changement de forme se rattrape avec
 -- `python -m app.modules.ingestion.reindex`, qui revectorise les segments
 -- dont la forme diffère de la configuration du moteur.
+--
+-- Abandonné : retiré par 20261116000006_drop_embedding_context.sql.
 -- ---------------------------------------------------------------------------
 
 alter table public.segment_embeddings
