@@ -1076,8 +1076,9 @@ async function listLinkedEvidences(
   table:
     | "alert_evidences"
     | "synthesis_item_evidences"
-    | "run_action_evidences",
-  column: "alert_id" | "item_id" | "action_id",
+    | "run_action_evidences"
+    | "sub_answer_evidences",
+  column: "alert_id" | "item_id" | "action_id" | "sub_answer_id",
   id: string,
   locale: string
 ): Promise<Evidence[]> {
@@ -1093,6 +1094,23 @@ async function listLinkedEvidences(
   return (
     (data ?? []) as unknown as { evidences: EvidenceRow | null }[]
   ).flatMap((row) => (row.evidences ? [toEvidence(row.evidences, locale)] : []))
+}
+
+/** Preuves citees a l'appui d'une reponse a une sous-question. La demo n'a
+ * pas de lien par reponse : elle montre les preuves du critere. */
+export function listSubAnswerEvidences(
+  runId: string,
+  criterionId: string,
+  subAnswerId: string,
+  locale: string
+) {
+  if (isDemoId(runId)) return listEvidences({ runId, criterionId }, locale)
+  return listLinkedEvidences(
+    "sub_answer_evidences",
+    "sub_answer_id",
+    subAnswerId,
+    locale
+  )
 }
 
 export function listAlertEvidences(alertId: string, locale: string) {

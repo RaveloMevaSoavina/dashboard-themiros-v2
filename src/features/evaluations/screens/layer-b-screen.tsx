@@ -21,10 +21,11 @@ import { LayerBanner } from "@/features/evaluations/components/layer-banner"
 import { ProgressMeter } from "@/features/evaluations/components/progress-meter"
 import { RunNotices } from "@/features/evaluations/components/run-notices"
 import { StaleResult } from "@/features/evaluations/components/stale-result"
-import type { LayerBNote } from "@/features/evaluations/model/types"
+import type { LayerBNote, SubAnswer } from "@/features/evaluations/model/types"
 import {
   getEvaluationResults,
   listEvidences,
+  listSubAnswerEvidences,
   listSubAnswers,
 } from "@/features/evaluations/services/evaluation-service"
 import { Badge } from "@/shared/ui/base/badge"
@@ -45,7 +46,8 @@ function CriterionResultCard({
   interpretationExpected: boolean
   /** Piliers du cadre auxquels le critere est rattache. */
   pillars: { id: string; name: string }[]
-  onEvidence: (note: LayerBNote) => void
+  /** Sans reponse : preuves du critere entier. */
+  onEvidence: (note: LayerBNote, answer?: SubAnswer) => void
   onPillar: (pillarId: string) => void
 }) {
   const { i18n, t } = useTranslation()
@@ -155,7 +157,7 @@ function CriterionResultCard({
               <Button
                 className="shrink-0"
                 disabled={answer.status === "non_documentee"}
-                onClick={() => onEvidence(note)}
+                onClick={() => onEvidence(note, answer)}
                 size="sm"
                 variant="ghost"
               >
@@ -193,30 +195,41 @@ export function LayerBScreen() {
   const { workspaceId = "" } = useParams<{ workspaceId: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
   const filterId = searchParams.get("criterion")
-  const [selected, setSelected] = useState<LayerBNote | null>(null)
+  const [selected, setSelected] = useState<{
+    note: LayerBNote
+    answer?: SubAnswer
+  } | null>(null)
   const results = useQuery({
     queryKey: ["evaluation", workspaceId, "results", i18n.resolvedLanguage],
     queryFn: () =>
       getEvaluationResults(workspaceId, i18n.resolvedLanguage ?? "fr"),
     enabled: Boolean(workspaceId),
   })
+  const runId = results.data?.run?.id ?? ""
+  const locale = i18n.resolvedLanguage ?? "fr"
   const evidences = useQuery({
-    queryKey: [
-      "evaluation",
-      results.data?.run?.id,
-      "criterion-evidences",
-      selected?.criterionId,
-      i18n.resolvedLanguage,
-    ],
+    queryKey: selected?.answer
+      ? ["evaluation", runId, "answer-evidences", selected.answer.id, locale]
+      : [
+          "evaluation",
+          runId,
+          "criterion-evidences",
+          selected?.note.criterionId,
+          locale,
+        ],
     queryFn: () =>
-      listEvidences(
-        {
-          runId: results.data?.run?.id ?? "",
-          criterionId: selected?.criterionId,
-        },
-        i18n.resolvedLanguage ?? "fr"
-      ),
-    enabled: Boolean(selected && results.data?.run?.id),
+      selected?.answer
+        ? listSubAnswerEvidences(
+            runId,
+            selected.note.criterionId,
+            selected.answer.id,
+            locale
+          )
+        : listEvidences(
+            { runId, criterionId: selected?.note.criterionId },
+            locale
+          ),
+    enabled: Boolean(selected && runId),
   })
   const notes = filterId
     ? (results.data?.layerB.filter((item) => item.criterionId === filterId) ??
@@ -283,7 +296,7 @@ export function LayerBScreen() {
                     results.data?.run?.ai?.layerB ?? false
                   }
                   note={note}
-                  onEvidence={setSelected}
+                  onEvidence={(note, answer) => setSelected({ note, answer })}
                   onPillar={(pillarId) =>
                     void navigate(
                       `/workspaces/${workspaceId}/analysis/pillars/${pillarId}?criterion=${note.criterionId}`
