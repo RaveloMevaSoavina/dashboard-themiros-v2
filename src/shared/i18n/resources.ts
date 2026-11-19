@@ -1223,6 +1223,7 @@ export const resources = {
           runReference: "Run {{id}} · {{date}}",
           notScored: "Pas encore évalué",
           notComputed: "Non calculé : aucune variable renseignée",
+          pillarDescription: "Description du pilier",
           pillarsDescription:
             "Score objectivé sur 100 par pilier. Ouvrez une carte pour lire son détail.",
           priorities: {
@@ -2942,6 +2943,7 @@ export const resources = {
           runReference: "Run {{id}} · {{date}}",
           notScored: "Not evaluated yet",
           notComputed: "Not computed: no variable reported",
+          pillarDescription: "Pillar description",
           pillarsDescription:
             "Objective score out of 100 per pillar. Open a card to read its details.",
           priorities: {

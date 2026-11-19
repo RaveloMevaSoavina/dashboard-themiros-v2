@@ -1,6 +1,7 @@
-import { FileCheck2, ShieldCheck } from "lucide-react"
+import { FileCheck2, Info, ShieldCheck } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { ScoreGauge } from "@/features/evaluations/components/score-gauge"
+import { withoutMarkers } from "@/features/evaluations/model/passages"
 import type {
   EvaluationPillar,
   LayerAScore,
@@ -8,6 +9,11 @@ import type {
 } from "@/features/evaluations/model/types"
 import { cn } from "@/shared/lib/utils"
 import { Badge } from "@/shared/ui/base/badge"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/shared/ui/base/tooltip"
 
 /** `vertical` : jauge centree sous le titre ; `horizontal` : jauge a gauche. */
 export type PillarCardLayout = "vertical" | "horizontal"
@@ -21,34 +27,63 @@ const overlayClassName =
   "absolute inset-0 z-[1] rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
 const aboveOverlay = "relative z-10"
 
-/* Titre et description reservent toujours deux lignes chacun : d'une carte a
-   l'autre, la jauge et les blocs suivants tombent a la meme hauteur. */
+/* Le titre reserve deux lignes et le texte trois : d'une carte a l'autre,
+   la jauge et les blocs suivants tombent a la meme hauteur. Le texte est
+   l'interpretation du pilier quand l'IA l'a redigee ; la description du cadre
+   passe alors dans l'infobulle (i). Sans interpretation, la description reste
+   dans la carte. */
 function PillarHeading({
   name,
   description,
+  interpretation,
   disabled = false,
 }: {
   name: string
   description?: string
+  /** Interpretation du pilier, marqueurs de sources compris. */
+  interpretation?: string | null
   /** Pilier pas encore note : le titre s'estompe comme le reste de la carte. */
   disabled?: boolean
 }) {
+  const { t } = useTranslation()
+  const reading = interpretation?.trim() ? withoutMarkers(interpretation) : null
+  const text = reading ?? description
+  const info = reading && description?.trim() ? description : null
   return (
     <div className="min-w-0">
-      <h3
-        className={cn(
-          "line-clamp-2 min-h-10 text-sm leading-5 font-semibold",
-          disabled && "text-muted-foreground"
-        )}
-        title={name}
-      >
-        {name}
-      </h3>
+      <div className="flex items-start gap-1.5">
+        <h3
+          className={cn(
+            "line-clamp-2 min-h-10 flex-1 text-sm leading-5 font-semibold",
+            disabled && "text-muted-foreground"
+          )}
+          title={name}
+        >
+          {name}
+        </h3>
+        {info ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                aria-label={t("evaluation.analysis.pillarDescription")}
+                className={`${aboveOverlay} mt-0.5 shrink-0 rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50`}
+                onClick={(event) => event.stopPropagation()}
+                type="button"
+              >
+                <Info className="size-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" sideOffset={6}>
+              <p className="max-w-72 leading-5">{info}</p>
+            </TooltipContent>
+          </Tooltip>
+        ) : null}
+      </div>
       <p
-        className="mt-1 line-clamp-2 min-h-10 text-[12px] leading-5 text-muted-foreground"
-        title={description}
+        className="mt-1 line-clamp-3 min-h-15 text-[12px] leading-5 text-muted-foreground"
+        title={text}
       >
-        {description}
+        {text}
       </p>
     </div>
   )
@@ -84,7 +119,11 @@ export function PillarResultCard({
       </span>
     ) : null
   const header = (
-    <PillarHeading description={description} name={score.pillarName} />
+    <PillarHeading
+      description={description}
+      interpretation={score.interpretation}
+      name={score.pillarName}
+    />
   )
   const criteriaBadges =
     criteria.length > 0 ? (
