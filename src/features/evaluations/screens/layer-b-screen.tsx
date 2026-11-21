@@ -37,6 +37,7 @@ function CriterionResultCard({
   runId,
   pillars,
   interpretationExpected,
+  everyAnswer,
   onEvidence,
   onPillar,
 }: {
@@ -44,6 +45,8 @@ function CriterionResultCard({
   runId: string
   /** L'IA a redige les reponses aux sous-questions de ce run. */
   interpretationExpected: boolean
+  /** Chaque sous-question a une reponse, documentee ou non. */
+  everyAnswer: boolean
   /** Piliers du cadre auxquels le critere est rattache. */
   pillars: { id: string; name: string }[]
   /** Sans reponse : preuves du critere entier. */
@@ -148,7 +151,8 @@ function CriterionResultCard({
                   citations={answer.interpretationCitations}
                   className="mt-2 text-[13px] leading-6 text-muted-foreground"
                   expected={
-                    interpretationExpected && answer.status === "documentee"
+                    interpretationExpected &&
+                    (everyAnswer || answer.status === "documentee")
                   }
                   sources={cited.sources}
                   text={answer.interpretation}
@@ -156,7 +160,10 @@ function CriterionResultCard({
               </div>
               <Button
                 className="shrink-0"
-                disabled={answer.status === "non_documentee"}
+                disabled={
+                  answer.status === "non_documentee" &&
+                  (answer.interpretationCitations?.length ?? 0) === 0
+                }
                 onClick={() => onEvidence(note, answer)}
                 size="sm"
                 variant="ghost"
@@ -292,6 +299,7 @@ export function LayerBScreen() {
                 stale={results.data?.corpusChanged ?? false}
               >
                 <CriterionResultCard
+                  everyAnswer={results.data?.run?.ai?.everyAnswer ?? false}
                   interpretationExpected={
                     results.data?.run?.ai?.layerB ?? false
                   }

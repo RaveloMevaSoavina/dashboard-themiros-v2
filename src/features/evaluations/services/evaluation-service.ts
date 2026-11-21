@@ -204,10 +204,21 @@ type AnswerRow = {
 } & InterpretationRow
 
 /** Appel d'IA d'une etape, tel que consigne dans `runs.rules_applied`. */
-type RunAiRow = { calls?: number | string | null } | null
+type RunAiRow = {
+  calls?: number | string | null
+  prompt?: string | null
+} | null
 
 function aiCalled(ai: RunAiRow | undefined) {
   return Number(ai?.calls ?? 0) > 0
+}
+
+/** Prompt de notation v1.4 ou suivant : toute sous-question a une reponse. */
+function answersEverySubQuestion(ai: RunAiRow | undefined) {
+  const version = /_v(\d+)\.(\d+)$/.exec(ai?.prompt ?? "")
+  if (!version) return false
+  const [major, minor] = [Number(version[1]), Number(version[2])]
+  return major > 1 || (major === 1 && minor >= 4)
 }
 
 type EvidenceRow = {
@@ -664,6 +675,9 @@ export async function getLatestRun(
     ai: {
       reading: aiCalled(data.reading_ai as RunAiRow),
       layerB: data.reading_ai != null && aiCalled(data.layer_b_ai as RunAiRow),
+      everyAnswer:
+        aiCalled(data.layer_b_ai as RunAiRow) &&
+        answersEverySubQuestion(data.layer_b_ai as RunAiRow),
     },
   }
 }

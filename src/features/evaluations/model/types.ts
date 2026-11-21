@@ -51,8 +51,10 @@ export type AnalysisRun = {
    * variables et des piliers (`reading`), réponses aux sous-questions
    * (`layerB`). Une interprétation absente s'y signale comme indisponible ;
    * un run antérieur (ou sans IA) n'en porte pas. Absent : démonstration.
+   * `everyAnswer` : chaque sous-question a une réponse, documentée ou non
+   * (prompt de notation v1.4 et suivants).
    */
-  ai?: { reading: boolean; layerB: boolean }
+  ai?: { reading: boolean; layerB: boolean; everyAnswer?: boolean }
 }
 
 /** Raisons pour lesquelles la base refuse de valider un run (GF-6). */

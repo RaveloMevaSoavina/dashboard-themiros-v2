@@ -189,6 +189,7 @@ function CriterionDetail({
   note,
   runId,
   interpretationExpected,
+  everyAnswer,
   evidenceInterpretationExpected,
   onOpenCriterion,
 }: {
@@ -196,6 +197,8 @@ function CriterionDetail({
   runId: string
   /** L'IA a redige les reponses aux sous-questions de ce run. */
   interpretationExpected: boolean
+  /** Chaque sous-question a une reponse, documentee ou non. */
+  everyAnswer: boolean
   /** L'IA a lu les segments de ce run. */
   evidenceInterpretationExpected: boolean
   onOpenCriterion: () => void
@@ -283,7 +286,8 @@ function CriterionDetail({
                     citations={answer.interpretationCitations}
                     className="mt-1.5 text-[13px] leading-6 text-muted-foreground"
                     expected={
-                      interpretationExpected && answer.status === "documentee"
+                      interpretationExpected &&
+                      (everyAnswer || answer.status === "documentee")
                     }
                     sources={cited.sources}
                     text={answer.interpretation}
@@ -820,6 +824,7 @@ export function PillarDetailScreen() {
             </div>
             {selectedCriterion ? (
               <CriterionDetail
+                everyAnswer={ai?.everyAnswer ?? false}
                 evidenceInterpretationExpected={ai?.reading ?? false}
                 interpretationExpected={ai?.layerB ?? false}
                 key={selectedCriterion.criterionId}
