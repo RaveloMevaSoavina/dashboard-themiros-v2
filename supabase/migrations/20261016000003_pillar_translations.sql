@@ -214,7 +214,7 @@ Règles impératives :
 
 La réponse doit suivre exactement le schéma structuré demandé.$prompt$,
   'gpt-6-astra',
-  '{"temperature":0.3,"max_tokens":8000,"response_format":"structured_output"}'::jsonb
+  '{"max_tokens":8000,"response_format":"structured_output"}'::jsonb
 )
 on conflict (code, version) do nothing;
 

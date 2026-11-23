@@ -1,8 +1,13 @@
--- gpt-6-astra refuse le paramètre `temperature` (400 « Unsupported
+-- gpt-6-astra refuse les paramètres d'échantillonnage (400 « Unsupported
 -- parameter ») : la notation de la couche B et la génération des piliers
--- échouaient. Le moteur n'envoie `temperature` que s'il figure dans les
--- paramètres du prompt ; on le retire des prompts de ce modèle.
+-- échouaient. Les prompts ne gardent que max_tokens et response_format.
 update public.prompt_versions
-set parameters = parameters - 'temperature'
-where model = 'gpt-6-astra'
-  and parameters ? 'temperature';
+set parameters = (
+  select coalesce(jsonb_object_agg(key, value), '{}'::jsonb)
+  from jsonb_each(parameters)
+  where key in ('max_tokens', 'response_format')
+)
+where exists (
+  select 1 from jsonb_each(parameters)
+  where key not in ('max_tokens', 'response_format')
+);
