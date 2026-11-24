@@ -1,5 +1,6 @@
 import {
   ChevronsUpDown,
+  CreditCard,
   Gauge,
   Languages,
   LogOut,
@@ -11,6 +12,7 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
 import { useAuth } from "@/features/auth/model/auth-provider"
+import { BILLING_PAGE_ENABLED } from "@/features/billing/model/visibility"
 import { AI_USAGE_PAGE_ENABLED } from "@/features/usage/model/visibility"
 import { useWorkspaces } from "@/features/workspaces/model/workspace-provider"
 import { type Theme, useTheme } from "@/shared/theme/theme-provider"
@@ -49,7 +51,7 @@ export function AccountMenu() {
   const { isMobile } = useSidebar()
   const { session, signOut } = useAuth()
   const { theme, setTheme } = useTheme()
-  const { activeWorkspace } = useWorkspaces()
+  const { activeWorkspace, isOrganizationAdmin } = useWorkspaces()
 
   const metadata = session?.user.user_metadata
   const email = session?.user.email ?? ""
@@ -117,6 +119,18 @@ export function AccountMenu() {
               <UserRound />
               {t("account.profile")}
             </DropdownMenuItem>
+
+            {/* Facturation de l'organisation : administrateurs seulement. */}
+            {BILLING_PAGE_ENABLED && isOrganizationAdmin ? (
+              <DropdownMenuItem
+                onSelect={() => {
+                  void navigate("/billing")
+                }}
+              >
+                <CreditCard />
+                {t("account.billing")}
+              </DropdownMenuItem>
+            ) : null}
 
             {/* Consommation de l'espace ouvert : sans espace, rien a montrer. */}
             {AI_USAGE_PAGE_ENABLED && activeWorkspace ? (

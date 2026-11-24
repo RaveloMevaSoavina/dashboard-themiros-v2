@@ -37,6 +37,9 @@ type WorkspaceContextValue = {
   error: Error | null
   /** Persona de lecture impose par le role du compte (`profiles.role`). */
   persona: Persona
+  /** Administrateur de l'organisation (`profiles.role = 'admin'`) : ouvre
+      la facturation. */
+  isOrganizationAdmin: boolean
   selectWorkspace: (workspaceId: string) => void
   refetch: () => void
 }
@@ -120,12 +123,14 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
       isLoading: workspacesQuery.isPending || accountQuery.isPending,
       error: workspacesQuery.error ?? accountQuery.error,
       persona,
+      isOrganizationAdmin: accountQuery.data?.role === "admin",
       selectWorkspace,
       refetch: () => {
         void workspacesQuery.refetch()
       },
     }),
     [
+      accountQuery.data?.role,
       accountQuery.error,
       accountQuery.isPending,
       activeWorkspace,

@@ -32,6 +32,7 @@ export const resources = {
         fallbackName: "Mon compte",
         profile: "Profil",
         aiUsage: "Consommation IA",
+        billing: "Facturation",
         email: "Adresse e-mail",
         theme: {
           label: "Thème",
@@ -1527,6 +1528,118 @@ export const resources = {
           unavailable: "Interprétation indisponible",
         },
       },
+      billing: {
+        eyebrow: "Organisation",
+        title: "Facturation",
+        description:
+          "Offre, évaluations consommées sur la période, factures et coordonnées de facturation de votre organisation.",
+        banner: {
+          checkoutPending:
+            "Paiement reçu : activation de l'abonnement en cours…",
+          checkoutSlow:
+            "Le paiement est enregistré chez Stripe ; l'abonnement apparaîtra ici dans quelques minutes.",
+          checkoutCanceled:
+            "Souscription interrompue : aucun paiement n'a été effectué.",
+          pastDue:
+            "Le dernier paiement a échoué. Mettez à jour votre moyen de paiement pour conserver l'accès.",
+          endsSoon: "Abonnement résilié : il reste actif jusqu'au {{date}}.",
+          activated: "Abonnement activé.",
+        },
+        plan: {
+          title: "Offre en cours",
+          none: "Aucun abonnement en cours.",
+          period: "Du {{start}} au {{end}}",
+          price: "{{amount}} HT",
+          renewal: "renouvellement automatique",
+          noRenewal: "sans renouvellement",
+          manage: "Gérer le paiement",
+        },
+        status: {
+          trialing: "Pilote",
+          active: "Actif",
+          past_due: "Paiement en retard",
+          canceled: "Résilié",
+        },
+        source: {
+          manual: "Contrat",
+          stripe: "En ligne",
+        },
+        quota: {
+          title: "Évaluations",
+          usage: "{{used}} sur {{included}}",
+          unlimited: "{{used}} · volume non plafonné",
+          hint: "Une évaluation est un espace créé pendant la période de l'abonnement.",
+        },
+        plans: {
+          title: "Choisir une offre",
+          perYear: "{{amount}} HT / an",
+          onQuote: "Sur devis",
+          evaluations_one: "{{count}} évaluation par an",
+          evaluations_other: "{{count}} évaluations par an",
+          unlimited: "Volume d'évaluations non plafonné",
+          subscribe: "Souscrire",
+          redirecting: "Redirection…",
+          bespoke:
+            "Volume, accompagnement et conditions adaptés à votre organisation.",
+          contact: "Nous contacter",
+          contactSubject: "Offre {{plan}}",
+          taxNote:
+            "Prix hors taxes, facturés annuellement. Paiement par carte ou prélèvement SEPA via Stripe ; la TVA est calculée selon votre pays et votre numéro de TVA.",
+        },
+        invoices: {
+          title: "Factures",
+          empty: "Aucune facture émise.",
+          number: "Numéro",
+          label: "Libellé",
+          issuedOn: "Date",
+          amount: "HT",
+          tax: "TVA",
+          total: "TTC",
+          status: "Statut",
+          download: "Télécharger",
+          downloadNumber: "Télécharger la facture {{number}}",
+          overdue: "En retard",
+          statuses: {
+            issued: "À régler",
+            paid: "Payée",
+            void: "Annulée",
+          },
+        },
+        contact: {
+          title: "Coordonnées de facturation",
+          email: "E-mail de facturation",
+          address: "Adresse",
+          vat: "Numéro de TVA intracommunautaire",
+          managedByStripe:
+            "L'adresse et le numéro de TVA se modifient depuis « Gérer le paiement ».",
+          save: "Enregistrer",
+          saving: "Enregistrement…",
+          saved: "Coordonnées enregistrées.",
+        },
+        errors: {
+          default: "Une erreur est survenue. Réessayez dans un instant.",
+          ORGANIZATION_ADMIN_REQUIRED:
+            "La facturation est réservée aux administrateurs de l'organisation.",
+          MANUAL_CONTRACT_ACTIVE:
+            "Votre contrat en cours se modifie avec l'équipe Themiros.",
+          ALREADY_SUBSCRIBED:
+            "Un abonnement est déjà en cours : gérez-le depuis « Gérer le paiement ».",
+          PLAN_NOT_SELF_SERVE: "Cette offre se souscrit sur devis.",
+          BILLING_NOT_CONFIGURED:
+            "La souscription en ligne n'est pas encore disponible.",
+          BILLING_CUSTOMER_MISSING:
+            "Aucun paiement en ligne n'est associé à l'organisation.",
+          BILLING_EMAIL_INVALID:
+            "L'adresse e-mail de facturation est invalide.",
+          INVOICE_NOT_FOUND: "Facture introuvable.",
+          INVOICE_PDF_UNAVAILABLE:
+            "Le PDF de cette facture n'est pas encore disponible.",
+          STRIPE_UNAVAILABLE: "Stripe est momentanément injoignable.",
+          STRIPE_PRICE_MISSING:
+            "Le prix de cette offre n'est pas configuré. Contactez-nous.",
+          STRIPE_REQUEST_FAILED: "Stripe a refusé la demande. Réessayez.",
+        },
+      },
       usage: {
         eyebrow: "Espace",
         title: "Consommation IA",
@@ -1778,6 +1891,7 @@ export const resources = {
         fallbackName: "My account",
         profile: "Profile",
         aiUsage: "AI usage",
+        billing: "Billing",
         email: "Email address",
         theme: {
           label: "Theme",
@@ -3240,6 +3354,112 @@ export const resources = {
         interpretation: {
           pillar: "Pillar interpretation",
           unavailable: "Interpretation unavailable",
+        },
+      },
+      billing: {
+        eyebrow: "Organization",
+        title: "Billing",
+        description:
+          "Your organization's plan, evaluations used this period, invoices and billing details.",
+        banner: {
+          checkoutPending: "Payment received: activating your subscription…",
+          checkoutSlow:
+            "Stripe has recorded the payment; the subscription will appear here within a few minutes.",
+          checkoutCanceled: "Checkout cancelled: no payment was taken.",
+          pastDue:
+            "The last payment failed. Update your payment method to keep access.",
+          endsSoon: "Subscription cancelled: it stays active until {{date}}.",
+          activated: "Subscription activated.",
+        },
+        plan: {
+          title: "Current plan",
+          none: "No active subscription.",
+          period: "From {{start}} to {{end}}",
+          price: "{{amount}} excl. VAT",
+          renewal: "renews automatically",
+          noRenewal: "does not renew",
+          manage: "Manage payment",
+        },
+        status: {
+          trialing: "Pilot",
+          active: "Active",
+          past_due: "Payment overdue",
+          canceled: "Cancelled",
+        },
+        source: {
+          manual: "Contract",
+          stripe: "Online",
+        },
+        quota: {
+          title: "Evaluations",
+          usage: "{{used}} of {{included}}",
+          unlimited: "{{used}} · no volume cap",
+          hint: "An evaluation is a workspace created during the subscription period.",
+        },
+        plans: {
+          title: "Choose a plan",
+          perYear: "{{amount}} excl. VAT / year",
+          onQuote: "On quote",
+          evaluations_one: "{{count}} evaluation per year",
+          evaluations_other: "{{count}} evaluations per year",
+          unlimited: "No cap on evaluations",
+          subscribe: "Subscribe",
+          redirecting: "Redirecting…",
+          bespoke: "Volume, support and terms tailored to your organization.",
+          contact: "Contact us",
+          contactSubject: "{{plan}} plan",
+          taxNote:
+            "Prices exclude VAT and are billed yearly. Pay by card or SEPA Direct Debit via Stripe; VAT depends on your country and VAT number.",
+        },
+        invoices: {
+          title: "Invoices",
+          empty: "No invoices issued yet.",
+          number: "Number",
+          label: "Description",
+          issuedOn: "Date",
+          amount: "Net",
+          tax: "VAT",
+          total: "Total",
+          status: "Status",
+          download: "Download",
+          downloadNumber: "Download invoice {{number}}",
+          overdue: "Overdue",
+          statuses: {
+            issued: "Due",
+            paid: "Paid",
+            void: "Void",
+          },
+        },
+        contact: {
+          title: "Billing details",
+          email: "Billing email",
+          address: "Address",
+          vat: "EU VAT number",
+          managedByStripe:
+            "Address and VAT number are edited from “Manage payment”.",
+          save: "Save",
+          saving: "Saving…",
+          saved: "Billing details saved.",
+        },
+        errors: {
+          default: "Something went wrong. Please try again shortly.",
+          ORGANIZATION_ADMIN_REQUIRED:
+            "Billing is restricted to organization administrators.",
+          MANUAL_CONTRACT_ACTIVE:
+            "Your current contract is managed with the Themiros team.",
+          ALREADY_SUBSCRIBED:
+            "A subscription is already active: manage it from “Manage payment”.",
+          PLAN_NOT_SELF_SERVE: "This plan is available on quote.",
+          BILLING_NOT_CONFIGURED: "Online subscription is not available yet.",
+          BILLING_CUSTOMER_MISSING:
+            "No online payment is linked to your organization.",
+          BILLING_EMAIL_INVALID: "The billing email address is invalid.",
+          INVOICE_NOT_FOUND: "Invoice not found.",
+          INVOICE_PDF_UNAVAILABLE: "This invoice PDF is not available yet.",
+          STRIPE_UNAVAILABLE: "Stripe is temporarily unreachable.",
+          STRIPE_PRICE_MISSING:
+            "This plan's price is not configured. Please contact us.",
+          STRIPE_REQUEST_FAILED: "Stripe declined the request. Please retry.",
         },
       },
       usage: {

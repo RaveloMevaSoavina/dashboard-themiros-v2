@@ -6,6 +6,8 @@ import { AuthGuard } from "@/features/auth/screens/auth-guard"
 import { LoginScreen } from "@/features/auth/screens/login-screen"
 import { ProfileScreen } from "@/features/auth/screens/profile-screen"
 import { PublicOnlyRoute } from "@/features/auth/screens/public-only-route"
+import { BILLING_PAGE_ENABLED } from "@/features/billing/model/visibility"
+import { BillingScreen } from "@/features/billing/screens/billing-screen"
 import { DocumentDetailScreen } from "@/features/corpus/screens/document-detail-screen"
 import { DocumentsReviewScreen } from "@/features/corpus/screens/documents-review-screen"
 import { ImportDocumentsScreen } from "@/features/corpus/screens/import-documents-screen"
@@ -183,6 +185,10 @@ export const appRouter = createBrowserRouter([
                         path: "/profile",
                         element: <ProfileScreen />,
                       },
+                      /* Facturation de l'organisation (menu du compte). */
+                      ...(BILLING_PAGE_ENABLED
+                        ? [{ path: "/billing", element: <BillingScreen /> }]
+                        : []),
                       {
                         path: "/workspaces/:workspaceId",
                         children: [
