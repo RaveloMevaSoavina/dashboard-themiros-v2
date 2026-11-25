@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useSearchParams } from "react-router-dom"
@@ -24,7 +24,6 @@ import {
   createPortalSession,
   downloadInvoicePdf,
   getOrganizationBilling,
-  updateBillingContact,
 } from "@/features/billing/services/billing-service"
 import { CorpusPageHeader } from "@/features/corpus/components/corpus-page-header"
 import { useWorkspaces } from "@/features/workspaces/model/workspace-provider"
@@ -45,7 +44,6 @@ const checkoutPollLimitMs = 30_000
 export function BillingScreen() {
   const { i18n, t } = useTranslation()
   const format = billingFormatters(i18n.resolvedLanguage ?? "fr")
-  const queryClient = useQueryClient()
   const { isOrganizationAdmin, isLoading: accountLoading } = useWorkspaces()
   const [searchParams, setSearchParams] = useSearchParams()
   const checkout = searchParams.get("checkout")
@@ -92,14 +90,6 @@ export function BillingScreen() {
   const portal = useMutation({
     mutationFn: createPortalSession,
     onSuccess: redirect,
-    onError: (error) => toast.error(billingErrorMessage(t, error)),
-  })
-  const contact = useMutation({
-    mutationFn: updateBillingContact,
-    onSuccess: async () => {
-      toast.success(t("billing.contact.saved"))
-      await queryClient.invalidateQueries({ queryKey: billingQueryKey })
-    },
     onError: (error) => toast.error(billingErrorMessage(t, error)),
   })
   const download = useMutation({
@@ -189,18 +179,7 @@ export function BillingScreen() {
                 download.mutate(invoice)
               }}
             />
-            <BillingContactForm
-              key={JSON.stringify([
-                data.organization.billingEmail,
-                data.organization.billingAddress,
-                data.organization.vatNumber,
-              ])}
-              onSave={(value) => {
-                contact.mutate(value)
-              }}
-              organization={data.organization}
-              saving={contact.isPending}
-            />
+            <BillingContactForm organization={data.organization} />
           </>
         ) : null}
       </div>

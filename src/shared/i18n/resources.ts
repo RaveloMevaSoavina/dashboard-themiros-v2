@@ -1611,10 +1611,9 @@ export const resources = {
           address: "Adresse",
           vat: "Numéro de TVA intracommunautaire",
           managedByStripe:
-            "L'adresse et le numéro de TVA se modifient depuis « Gérer le paiement ».",
-          save: "Enregistrer",
-          saving: "Enregistrement…",
-          saved: "Coordonnées enregistrées.",
+            "Ces coordonnées se modifient depuis « Gérer le paiement ».",
+          managedByTeam:
+            "Pour modifier ces coordonnées, contactez l'équipe Themiros.",
         },
         errors: {
           default: "Une erreur est survenue. Réessayez dans un instant.",
@@ -3435,11 +3434,8 @@ export const resources = {
           email: "Billing email",
           address: "Address",
           vat: "EU VAT number",
-          managedByStripe:
-            "Address and VAT number are edited from “Manage payment”.",
-          save: "Save",
-          saving: "Saving…",
-          saved: "Billing details saved.",
+          managedByStripe: "These details are edited from “Manage payment”.",
+          managedByTeam: "To change these details, contact the Themiros team.",
         },
         errors: {
           default: "Something went wrong. Please try again shortly.",

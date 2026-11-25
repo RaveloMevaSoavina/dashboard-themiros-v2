@@ -1,63 +1,36 @@
-import { type FormEvent, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import type { BillingOrganization } from "@/features/billing/model/types"
-import { Button } from "@/shared/ui/base/button"
 import { Input } from "@/shared/ui/base/input"
 import { Label } from "@/shared/ui/base/label"
 
-type Contact = {
-  billingEmail: string
-  billingAddress: string
-  vatNumber: string
-}
-
-/** Remonté (key) à chaque nouvelle lecture : les champs repartent des
-    valeurs enregistrées. */
+/**
+ * Coordonnées de facturation, en lecture seule : elles viennent de Stripe
+ * (saisies au paiement, modifiables depuis « Gérer le paiement ») ou, sans
+ * client Stripe, de l'équipe Themiros.
+ */
 export function BillingContactForm({
   organization,
-  saving,
-  onSave,
 }: {
   organization: BillingOrganization
-  saving: boolean
-  onSave: (contact: Contact) => void
 }) {
   const { t } = useTranslation()
-  const [contact, setContact] = useState<Contact>({
-    billingEmail: organization.billingEmail ?? "",
-    billingAddress: organization.billingAddress ?? "",
-    vatNumber: organization.vatNumber ?? "",
-  })
-
-  function update(field: keyof Contact, value: string) {
-    setContact((current) => ({ ...current, [field]: value }))
-  }
-
-  function submit(event: FormEvent) {
-    event.preventDefault()
-    onSave(contact)
-  }
+  const address = organization.billingAddress ?? ""
 
   return (
     <section>
       <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
         {t("billing.contact.title")}
       </h2>
-      <form
-        className="mt-3 grid gap-4 rounded-xl border border-border p-5"
-        onSubmit={submit}
-      >
+      <div className="mt-3 grid gap-4 rounded-xl border border-border p-5">
         <div className="grid gap-1.5">
           <Label htmlFor="billing-email">{t("billing.contact.email")}</Label>
           <Input
-            autoComplete="email"
+            disabled
             id="billing-email"
-            onChange={(event) => {
-              update("billingEmail", event.target.value)
-            }}
+            readOnly
             type="email"
-            value={contact.billingEmail}
+            value={organization.billingEmail ?? ""}
           />
         </div>
         <div className="grid gap-1.5">
@@ -67,39 +40,29 @@ export function BillingContactForm({
           {/* Une ligne par élément (rue, complément, code postal et ville,
               pays) : la hauteur suit le nombre de lignes. */}
           <textarea
-            autoComplete="street-address"
-            className="w-full resize-none rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm leading-6 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
-            disabled={organization.hasStripeCustomer}
+            className="w-full resize-none rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm leading-6 outline-none disabled:opacity-50"
+            disabled
             id="billing-address"
-            onChange={(event) => {
-              update("billingAddress", event.target.value)
-            }}
-            rows={Math.max(3, contact.billingAddress.split("\n").length)}
-            value={contact.billingAddress}
+            readOnly
+            rows={Math.max(3, address.split("\n").length)}
+            value={address}
           />
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="billing-vat">{t("billing.contact.vat")}</Label>
           <Input
-            disabled={organization.hasStripeCustomer}
+            disabled
             id="billing-vat"
-            onChange={(event) => {
-              update("vatNumber", event.target.value)
-            }}
-            value={contact.vatNumber}
+            readOnly
+            value={organization.vatNumber ?? ""}
           />
         </div>
-        {organization.hasStripeCustomer ? (
-          <p className="text-[12px] text-muted-foreground">
-            {t("billing.contact.managedByStripe")}
-          </p>
-        ) : null}
-        <div>
-          <Button disabled={saving} size="sm" type="submit">
-            {saving ? t("billing.contact.saving") : t("billing.contact.save")}
-          </Button>
-        </div>
-      </form>
+        <p className="text-[12px] text-muted-foreground">
+          {organization.hasStripeCustomer
+            ? t("billing.contact.managedByStripe")
+            : t("billing.contact.managedByTeam")}
+        </p>
+      </div>
     </section>
   )
 }

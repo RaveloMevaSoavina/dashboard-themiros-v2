@@ -24,22 +24,6 @@ export async function getOrganizationBilling(): Promise<OrganizationBilling> {
   return toOrganizationBilling(data as OrganizationBillingRow)
 }
 
-export async function updateBillingContact(contact: {
-  billingEmail: string
-  billingAddress: string
-  vatNumber: string
-}) {
-  await apiRequest<{ saved: boolean }>("/api/v1/billing/contact", {
-    method: "POST",
-    accessToken: await accessToken(),
-    body: JSON.stringify({
-      billing_email: contact.billingEmail.trim() || null,
-      billing_address: contact.billingAddress.trim() || null,
-      vat_number: contact.vatNumber.trim() || null,
-    }),
-  })
-}
-
 /** Page Stripe Checkout de l'offre : le navigateur y est redirigé. */
 export async function createCheckoutSession(planCode: string) {
   const { url } = await apiRequest<{ url: string }>(
