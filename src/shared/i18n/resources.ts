@@ -1510,6 +1510,7 @@ export const resources = {
               "Passage non retrouvé dans la page (scan ou tableau) : document ouvert à la page citée",
             error: "Impossible d'afficher le document.",
             original: "Ouvrir le fichier d'origine",
+            notPdf: "Aperçu intégré disponible pour les PDF uniquement.",
           },
           showForPillar: "Voir les preuves de {{name}}",
           pillarSummary_one:
@@ -3337,6 +3338,7 @@ export const resources = {
               "Passage not found on the page (scan or table): document opened at the cited page",
             error: "Unable to display the document.",
             original: "Open the original file",
+            notPdf: "Inline preview is available for PDFs only.",
           },
           showForPillar: "View evidence for {{name}}",
           pillarSummary_one:
