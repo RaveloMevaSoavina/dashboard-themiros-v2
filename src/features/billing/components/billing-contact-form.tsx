@@ -64,13 +64,17 @@ export function BillingContactForm({
           <Label htmlFor="billing-address">
             {t("billing.contact.address")}
           </Label>
+          {/* Une ligne par élément (rue, complément, code postal et ville,
+              pays) : la hauteur suit le nombre de lignes. */}
           <textarea
-            className="min-h-20 w-full rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+            autoComplete="street-address"
+            className="w-full resize-none rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm leading-6 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
             disabled={organization.hasStripeCustomer}
             id="billing-address"
             onChange={(event) => {
               update("billingAddress", event.target.value)
             }}
+            rows={Math.max(3, contact.billingAddress.split("\n").length)}
             value={contact.billingAddress}
           />
         </div>
