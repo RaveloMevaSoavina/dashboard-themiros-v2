@@ -46,7 +46,7 @@ export function AnalysisPage({
         title={title}
       />
       <div className="mt-8 flex flex-col gap-10">
-        {banner}
+        {banner ? <div className="flex flex-col gap-3">{banner}</div> : null}
         {children}
       </div>
     </div>

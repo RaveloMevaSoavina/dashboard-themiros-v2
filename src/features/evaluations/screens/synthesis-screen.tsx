@@ -154,7 +154,7 @@ export function SynthesisScreen() {
               <Quote className="size-4" />
               {t("evaluation.synthesis.conclusionTitle")}
             </div>
-            <div className="flex max-w-[72ch] flex-col gap-4 text-[15px] leading-7">
+            <div className="flex flex-col gap-4 text-[15px] leading-7">
               {/* Conclusion narrative : un paragraphe par bloc (prompt v1.1). */}
               {data.conclusion?.split(/\n\s*\n/).map((paragraph) => (
                 <p key={paragraph}>
@@ -257,7 +257,7 @@ export function SynthesisScreen() {
                           {index + 1}
                         </span>
                         <div className="flex min-w-0 flex-1 flex-col gap-3">
-                          <p className="max-w-[80ch] text-sm leading-6">
+                          <p className="text-sm leading-6">
                             <CitedText
                               citations={item.citations}
                               sources={cited.sources}

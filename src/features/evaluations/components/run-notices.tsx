@@ -4,21 +4,39 @@ import { useTranslation } from "react-i18next"
 
 import { LaunchAnalysisButton } from "@/features/evaluations/components/launch-analysis-button"
 import type { AnalysisRun } from "@/features/evaluations/model/types"
+import { cn } from "@/shared/lib/utils"
+
+/* Gravite d'un bandeau, sur le code couleur des scores. */
+const tones = {
+  danger: "border-score-low/40 bg-score-low/5 [&_[data-icon]]:text-score-low",
+  warning: "border-score-mid/40 bg-score-mid/5 [&_[data-icon]]:text-score-mid",
+  info: "border-border bg-muted/30 [&_[data-icon]]:text-muted-foreground",
+}
 
 function Notice({
   icon,
   title,
   children,
   action,
+  tone,
 }: {
+  tone: keyof typeof tones
   icon: ReactNode
   title: string
   children: ReactNode
   action?: ReactNode
 }) {
   return (
-    <div className="flex flex-wrap items-start gap-3 rounded-xl border border-border px-4 py-3 text-[13px]">
-      <span className="mt-0.5 shrink-0 text-muted-foreground">{icon}</span>
+    <div
+      className={cn(
+        "flex flex-wrap items-start gap-3 rounded-xl border px-4 py-3 text-[13px]",
+        tones[tone]
+      )}
+      role={tone === "info" ? "status" : "alert"}
+    >
+      <span className="mt-0.5 shrink-0" data-icon>
+        {icon}
+      </span>
       <div className="min-w-0 flex-1 leading-5">
         <p className="font-semibold">{title}</p>
         <p className="mt-0.5 text-muted-foreground">{children}</p>
@@ -58,6 +76,7 @@ export function RunNotices({
             />
           }
           icon={<FileWarning className="size-4" />}
+          tone="danger"
           title={t("evaluation.run.failedTitle")}
         >
           {failed.errorMessage ?? t("evaluation.run.failedDescription")}
@@ -74,6 +93,7 @@ export function RunNotices({
             />
           }
           icon={<RefreshCw className="size-4" />}
+          tone="info"
           title={t("evaluation.run.corpusChangedTitle")}
         >
           {t("evaluation.run.corpusChanged")}
@@ -82,6 +102,7 @@ export function RunNotices({
       {run?.corpusLevel === "exploratoire" ? (
         <Notice
           icon={<AlertTriangle className="size-4" />}
+          tone="warning"
           title={t("evaluation.run.exploratoryTitle")}
         >
           {t("corpus.criticalMass.exploratoryWarning", {
